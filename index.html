@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honlor Admin Dashboard</title>
+    <!-- CDNs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#7c6aff',
+                        'primary-hover': '#6a59e6',
+                        'bg-dark': '#0B0F19',
+                        'surface-dark': '#111827',
+                        'glass-white': 'rgba(255, 255, 255, 0.03)',
+                        'border-dark': 'rgba(255, 255, 255, 0.08)'
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer base {
+            :root {
+                --bg-main: #0B0F19;
+                --surface: #111827;
+                --surface-glass: rgba(17, 24, 39, 0.7);
+                --text-main: #F9FAFB;
+                --text-muted: #9CA3AF;
+                --border-color: rgba(255, 255, 255, 0.08);
+                --glass-bg: rgba(255, 255, 255, 0.03);
+                --card-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            }
+            .light {
+                --bg-main: #F8FAFC;
+                --surface: #FFFFFF;
+                --surface-glass: rgba(255, 255, 255, 0.8);
+                --text-main: #0F172A;
+                --text-muted: #64748B;
+                --border-color: rgba(0, 0, 0, 0.06);
+                --glass-bg: rgba(0, 0, 0, 0.03);
+                --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+            }
+            body { 
+                background-color: var(--bg-main);
+                color: var(--text-main);
+                @apply font-sans antialiased overflow-hidden transition-colors duration-500;
+            }
+        }
+        @layer components {
+            .nav-item { 
+                @apply flex items-center gap-3 px-4 py-3 rounded-2xl transition-all cursor-pointer; 
+                color: var(--text-muted);
+            }
+            .nav-item:hover { 
+                background-color: var(--glass-bg);
+                color: var(--text-main);
+            }
+            .nav-item.active { 
+                @apply bg-primary/10 text-primary font-bold; 
+            }
+            .stat-card { 
+                background-color: var(--surface);
+                border: 1px solid var(--border-color);
+                box-shadow: var(--card-shadow);
+                @apply p-6 rounded-3xl transition-all hover:scale-[1.02]; 
+            }
+            .btn-primary { @apply px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-2xl font-medium transition-all shadow-lg shadow-primary/20 flex items-center gap-2; }
+            .btn-secondary { 
+                background-color: var(--glass-bg);
+                border: 1px solid var(--border-color);
+                color: var(--text-main);
+                @apply px-5 py-2.5 rounded-2xl font-medium transition-all flex items-center gap-2; 
+            }
+            .badge-success { @apply px-3 py-1 bg-green-500/10 text-green-500 text-xs font-bold rounded-full border border-green-500/20; }
+            .badge-warning { @apply px-3 py-1 bg-yellow-500/10 text-yellow-600 text-xs font-bold rounded-full border border-yellow-500/20; }
+            .badge-danger { @apply px-3 py-1 bg-red-500/10 text-red-500 text-xs font-bold rounded-full border border-red-500/20; }
+            .badge-neutral { @apply px-3 py-1 bg-gray-500/10 text-gray-500 text-xs font-bold rounded-full border border-gray-500/20; }
+        }
+    </style>
+</head>
+<body class="dark h-screen flex">
+    
+    <aside id="sidebar" class="w-72 border-r transition-all duration-300 md:relative fixed inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0" style="background-color: var(--surface); border-color: var(--border-color);">
+        <div class="p-8 pb-4">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="p-2 bg-primary rounded-xl shrink-0">
+                    <i class="ph-bold ph-hexagon text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl tracking-tight">Honlor</h1>
+                    <p class="text-[10px] uppercase font-bold tracking-widest leading-tight" style="color: var(--text-muted);">Admin workspace</p>
+                </div>
+            </div>
+            
+            <nav class="space-y-1">
+                <div class="nav-item active" onclick="switchSection('overview')">
+                    <i class="ph-bold ph-squares-four text-xl"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="switchSection('users')">
+                    <i class="ph-bold ph-users text-xl"></i>
+                    <span>Users</span>
+                </div>
+                <div class="nav-item" onclick="switchSection('messages')">
+                    <i class="ph-bold ph-chats-circle text-xl"></i>
+                    <span>Messages</span>
+                </div>
+                <div class="nav-item" onclick="switchSection('channels')">
+                    <i class="ph-bold ph-graph text-xl"></i>
+                    <span>Channels</span>
+                </div>
+            </nav>
+        </div>
+        
+        <div class="p-8 py-4 flex-grow overflow-y-auto">
+            <h3 class="px-4 mb-4 text-[10px] uppercase font-bold tracking-widest" style="color: var(--text-muted);">Management</h3>
+            <nav class="space-y-1">
+                <div class="nav-item" onclick="switchSection('ads-manager')">
+                    <i class="ph-bold ph-megaphone text-xl"></i>
+                    <span>Ads Manager</span>
+                </div>
+                <div class="nav-item" onclick="switchSection('reports')">
+                    <i class="ph-bold ph-shield-warning text-xl"></i>
+                    <span>Reports</span>
+                </div>
+                <div class="nav-item" onclick="switchSection('server-health')">
+                    <i class="ph-bold ph-activity text-xl"></i>
+                    <span>Server Health</span>
+                </div>
+            </nav>
+        </div>
+        
+        <div class="p-8 border-t" style="border-color: var(--border-color);">
+            <div class="flex items-center gap-3 p-4 rounded-3xl cursor-pointer transition-all" style="background-color: var(--glass-bg);">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus" class="w-10 h-10 rounded-xl bg-primary/20" alt="Avatar">
+                <div class="overflow-hidden">
+                    <p class="font-bold text-sm truncate">Marcus Chen</p>
+                    <p class="text-[10px] uppercase font-bold" style="color: var(--text-muted);">Admin Profile</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col relative overflow-hidden h-full">
+        <!-- Topbar -->
+        <header class="h-20 border-b flex items-center justify-between px-8 shrink-0 backdrop-blur-lg sticky top-0 z-40 transition-all duration-300" style="background-color: var(--surface-glass); border-color: var(--border-color);">
+            <div class="flex items-center gap-6 flex-grow max-w-2xl">
+                <button class="md:hidden p-2" style="color: var(--text-muted);" onclick="toggleMobileSidebar()">
+                    <i class="ph-bold ph-list text-2xl"></i>
+                </button>
+                <div class="relative flex-grow group">
+                    <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 transition-colors" style="color: var(--text-muted);"></i>
+                    <input type="text" placeholder="Search records, channels, or ads..." 
+                        class="w-full border rounded-2xl py-2.5 pl-12 pr-4 outline-none focus:border-primary/50 transition-all text-sm font-medium bg-transparent" style="border-color: var(--border-color); color: var(--text-main);">
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button onclick="toggleTheme()" class="p-2.5 rounded-xl transition-all group" style="background-color: var(--glass-bg); color: var(--text-muted);">
+                    <i id="theme-icon" class="ph-bold ph-moon text-xl group-hover:text-primary transition-colors"></i>
+                </button>
+                <div class="flex items-center gap-2 mr-2">
+                    <button class="p-2.5 rounded-xl transition-all relative" style="background-color: var(--glass-bg); color: var(--text-muted);">
+                        <i class="ph-bold ph-bell text-xl"></i>
+                        <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2" style="border-color: var(--surface);"></span>
+                    </button>
+                    <button class="p-2.5 rounded-xl transition-all" style="background-color: var(--glass-bg); color: var(--text-muted);">
+                        <i class="ph-bold ph-gear text-xl"></i>
+                    </button>
+                </div>
+                <div class="h-8 w-px mx-2" style="background-color: var(--border-color);"></div>
+                <div class="flex items-center gap-3 pl-2">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5 leading-tight">Admin Level</p>
+                        <p class="text-xs font-semibold text-white">Super Admin</p>
+                    </div>
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus" class="w-10 h-10 rounded-xl bg-primary/20 border border-white/5" alt="Avatar">
+                </div>
+            </div>
+        </header>
+
+        <!-- Scrollable Content -->
+        <div id="content-container" class="flex-grow overflow-y-auto p-8 space-y-8 pb-12">
+            
+            <!-- Section: Overview -->
+            <div id="section-overview" class="section active space-y-8 animate-in fade-in duration-500">
+                <div class="flex items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight mb-2">Workspace Overview</h2>
+                        <p class="font-medium" style="color: var(--text-muted);">Real-time performance across the Honlor ecosystem.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="btn-secondary">
+                            <i class="ph-bold ph-download-simple"></i>
+                            Download Report
+                        </button>
+                        <button class="btn-primary">
+                            <i class="ph-bold ph-plus"></i>
+                            New Campaign
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="stat-card group">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="p-3 bg-primary/10 rounded-2xl text-primary transition-all group-hover:scale-110">
+                                <i class="ph-bold ph-users text-2xl"></i>
+                            </div>
+                            <span class="text-green-400 text-xs font-bold bg-green-400/10 px-2 py-1 rounded-lg border border-green-400/20">+12.4%</span>
+                        </div>
+                        <p class="text-sm font-semibold mb-1" style="color: var(--text-muted);">Total Active Users</p>
+                        <h4 class="text-4xl font-bold tracking-tight">450,230</h4>
+                        <div class="w-full h-1.5 mt-6 rounded-full overflow-hidden" style="background-color: var(--border-color);">
+                            <div class="bg-primary h-full rounded-full transition-all duration-1000" style="width: 78%;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card group">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="p-3 bg-blue-500/10 rounded-2xl text-blue-400 transition-all group-hover:scale-110">
+                                <i class="ph-bold ph-messenger-logo text-2xl"></i>
+                            </div>
+                            <span class="text-blue-400 text-xs font-bold bg-blue-400/10 px-2 py-1 rounded-lg border border-blue-400/20">+8% today</span>
+                        </div>
+                        <p class="text-sm font-semibold mb-1" style="color: var(--text-muted);">Messages Today</p>
+                        <h4 class="text-4xl font-bold tracking-tight">1,248,502</h4>
+                        <div class="w-full h-1.5 mt-6 rounded-full overflow-hidden" style="background-color: var(--border-color);">
+                            <div class="bg-blue-400 h-full rounded-full transition-all duration-1000" style="width: 62%;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card group">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="p-3 bg-orange-500/10 rounded-2xl text-orange-400 transition-all group-hover:scale-110">
+                                <i class="ph-bold ph-user-plus text-2xl"></i>
+                            </div>
+                            <span class="text-orange-400 text-xs font-bold bg-orange-400/10 px-2 py-1 rounded-lg border border-orange-400/20">Action Needed</span>
+                        </div>
+                        <p class="text-gray-400 text-sm font-semibold mb-1">Pending Requests</p>
+                        <h4 class="text-4xl font-bold tracking-tight">12,401</h4>
+                        <div class="w-full bg-border-dark h-1.5 mt-6 rounded-full overflow-hidden">
+                            <div class="bg-orange-400 h-full rounded-full transition-all duration-1000" style="width: 45%;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card group">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="p-3 bg-purple-500/10 rounded-2xl text-purple-400 transition-all group-hover:scale-110">
+                                <i class="ph-bold ph-globe text-2xl"></i>
+                            </div>
+                            <span class="text-gray-400 text-xs font-bold bg-white/5 px-2 py-1 rounded-lg border border-white/10">Global</span>
+                        </div>
+                        <p class="text-gray-400 text-sm font-semibold mb-1">Active Server Nodes</p>
+                        <h4 class="text-4xl font-bold tracking-tight">34</h4>
+                        <div class="w-full bg-border-dark h-1.5 mt-6 rounded-full overflow-hidden">
+                            <div class="bg-purple-400 h-full rounded-full transition-all duration-1000" style="width: 92%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Main Chart -->
+                    <div class="lg:col-span-2 stat-card rounded-[2.5rem]">
+                        <div class="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 class="text-xl font-bold">User Growth & Engagement</h3>
+                                <p class="text-gray-400 text-sm">Weekly comparative analytics</p>
+                            </div>
+                            <div class="bg-glass-white p-1 rounded-xl flex">
+                                <button class="px-4 py-1.5 bg-surface-dark text-white text-xs font-bold rounded-lg shadow-sm">Daily</button>
+                                <button class="px-4 py-1.5 text-gray-400 text-xs font-bold rounded-lg hover:text-white transition-colors">Weekly</button>
+                            </div>
+                        </div>
+                        <div class="h-80 w-full">
+                            <canvas id="growthChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Live Feed -->
+                    <div class="stat-card">
+                        <div class="flex items-center justify-between mb-8">
+                            <h3 class="text-xl font-bold flex items-center gap-2">
+                                Live Activity
+                                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span>
+                            </h3>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="flex gap-4 group cursor-pointer">
+                                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                    <i class="ph-bold ph-user-plus text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold">New user registered via Apple ID</p>
+                                    <p class="text-[11px] uppercase mt-0.5 font-bold" style="color: var(--text-muted);">2 minutes ago</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 group cursor-pointer">
+                                <div class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform">
+                                    <i class="ph-bold ph-check-circle text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold">Ad campaign approved by Moderator</p>
+                                    <p class="text-[11px] text-gray-400 font-bold uppercase mt-0.5">14 minutes ago</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 group cursor-pointer">
+                                <div class="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 group-hover:scale-110 transition-transform">
+                                    <i class="ph-bold ph-flag text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold">Flagged message reported: #TX-902</p>
+                                    <p class="text-[11px] text-gray-400 font-bold uppercase mt-0.5">28 minutes ago</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 group cursor-pointer">
+                                <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                                    <i class="ph-bold ph-cloud-arrow-up text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold">System Backup completed successfully</p>
+                                    <p class="text-[11px] text-gray-400 font-bold uppercase mt-0.5">1 hour ago</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="w-full mt-8 border py-3 rounded-2xl font-bold text-xs transition-all" style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">View All Logs</button>
+                    </div>
+                </div>
+
+                <!-- Footer Stats -->
+                <div class="stat-card border-none bg-transparent p-0">
+                    <h3 class="text-xl font-bold mb-6">Recent Signups</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <div class="bg-surface-dark border border-border-dark p-4 rounded-3xl text-center group transition-all hover:bg-glass-white">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" class="w-16 h-16 mx-auto rounded-2xl mb-3 bg-blue-500/10 p-1 group-hover:scale-105 transition-transform" alt="Avatar">
+                            <p class="font-bold text-sm truncate">Alex Rivera</p>
+                            <span class="badge-success mt-2 inline-block">Online</span>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark p-4 rounded-3xl text-center group transition-all hover:bg-glass-white">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" class="w-16 h-16 mx-auto rounded-2xl mb-3 bg-pink-500/10 p-1 group-hover:scale-105 transition-transform" alt="Avatar">
+                            <p class="font-bold text-sm truncate">Sarah Jenks</p>
+                            <span class="badge-neutral mt-2 inline-block">2h ago</span>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark p-4 rounded-3xl text-center group transition-all hover:bg-glass-white">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Mike" class="w-16 h-16 mx-auto rounded-2xl mb-3 bg-indigo-500/10 p-1 group-hover:scale-105 transition-transform" alt="Avatar">
+                            <p class="font-bold text-sm truncate">Mike Ross</p>
+                            <span class="badge-success mt-2 inline-block">Online</span>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark p-4 rounded-3xl text-center group transition-all hover:bg-glass-white">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Lena" class="w-16 h-16 mx-auto rounded-2xl mb-3 bg-green-500/10 p-1 group-hover:scale-105 transition-transform" alt="Avatar">
+                            <p class="font-bold text-sm truncate">Lena Smith</p>
+                            <span class="badge-neutral mt-2 inline-block">5h ago</span>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark p-4 rounded-3xl text-center group transition-all hover:bg-glass-white">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=David" class="w-16 h-16 mx-auto rounded-2xl mb-3 bg-yellow-500/10 p-1 group-hover:scale-105 transition-transform" alt="Avatar">
+                            <p class="font-bold text-sm truncate">David Lee</p>
+                            <span class="badge-success mt-2 inline-block">Online</span>
+                        </div>
+                        <div class="bg-glass-white p-4 rounded-3xl text-center flex flex-col justify-center border border-dashed border-border-dark cursor-pointer hover:bg-white/5 group">
+                            <div class="w-10 h-10 mx-auto bg-white/5 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform mb-2">
+                                <i class="ph-bold ph-plus text-xl text-gray-400"></i>
+                            </div>
+                            <p class="text-[11px] font-bold text-gray-400">VIEW ALL</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Users -->
+            <div id="section-users" class="section hidden space-y-8 animate-in slide-in-from-bottom-5 duration-500">
+                <div class="flex items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight mb-2">User Management</h2>
+                        <p class="font-medium" style="color: var(--text-muted);">Manage and monitor your Honlor community members.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="bg-glass-white border border-border-dark flex items-center px-4 py-2 rounded-2xl group focus-within:border-primary/50 transition-all">
+                            <i class="ph ph-funnel text-gray-400 mr-2"></i>
+                            <select class="bg-transparent text-sm font-medium outline-none text-white cursor-pointer appearance-none pr-8 relative">
+                                <option class="bg-surface-dark">All Roles</option>
+                                <option class="bg-surface-dark">Moderators</option>
+                                <option class="bg-surface-dark">Premium</option>
+                                <option class="bg-surface-dark">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card p-0 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b transition-colors" style="background-color: var(--glass-bg); border-color: var(--border-color);">
+                                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest" style="color: var(--text-muted);">User</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest" style="color: var(--text-muted);">Join Date</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest" style="color: var(--text-muted);">Status</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-right" style="color: var(--text-muted);">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-dark">
+                                <tr class="table-row">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Erik" class="w-10 h-10 rounded-xl bg-orange-500/10 p-0.5" alt="Avatar">
+                                            <div>
+                                                <p class="font-bold text-sm">Erik Johansson</p>
+                                                <p class="text-[11px] text-gray-500 font-medium">erik.j@honlor.cloud</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-300">Oct 24, 2023</td>
+                                    <td class="px-6 py-4"><span class="badge-success">Online</span></td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <button onclick="openModal('ban', 'Erik Johansson')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-400" title="Suspend">
+                                                <i class="ph-bold ph-prohibit text-lg"></i>
+                                            </button>
+                                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-400" title="View details">
+                                                <i class="ph-bold ph-eye text-lg"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="table-row">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Mia" class="w-10 h-10 rounded-xl bg-purple-500/10 p-0.5" alt="Avatar">
+                                            <div>
+                                                <p class="font-bold text-sm">Mia Thorne</p>
+                                                <p class="text-[11px] text-gray-500 font-medium">mia_tea@gmail.com</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-300">Oct 22, 2023</td>
+                                    <td class="px-6 py-4"><span class="badge-neutral">Offline</span></td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <button onclick="openModal('ban', 'Mia Thorne')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-400" title="Suspend">
+                                                <i class="ph-bold ph-prohibit text-lg"></i>
+                                            </button>
+                                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-400" title="View details">
+                                                <i class="ph-bold ph-eye text-lg"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="table-row">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Leo" class="w-10 h-10 rounded-xl bg-green-500/10 p-0.5" alt="Avatar">
+                                            <div>
+                                                <p class="font-bold text-sm">Leo Vance</p>
+                                                <p class="text-[11px] text-gray-500 font-medium">lvance@outlook.com</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-300">Oct 21, 2023</td>
+                                    <td class="px-6 py-4"><span class="badge-success">Online</span></td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <button onclick="openModal('ban', 'Leo Vance')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-400" title="Suspend">
+                                                <i class="ph-bold ph-prohibit text-lg"></i>
+                                            </button>
+                                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-400" title="View details">
+                                                <i class="ph-bold ph-eye text-lg"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Messages & Moderation -->
+            <div id="section-messages" class="section hidden h-[calc(100vh-12rem)] min-h-[500px] animate-in zoom-in-95 duration-500">
+                <div class="flex h-full gap-6">
+                    <!-- Chat Sidebar (Placeholder for context) -->
+                    <div class="w-80 border rounded-3xl flex flex-col overflow-hidden hidden xl:flex transition-all" style="background-color: var(--surface); border-color: var(--border-color);">
+                        <div class="p-6 border-b" style="border-color: var(--border-color);">
+                            <h3 class="font-bold text-lg">Reported Feed</h3>
+                            <p class="text-[11px] font-bold uppercase tracking-widest mt-1" style="color: var(--text-muted);">12 active flags</p>
+                        </div>
+                        <div class="flex-grow overflow-y-auto space-y-1 p-3">
+                            <div class="p-4 bg-primary/10 border-l-4 border-primary rounded-xl cursor-not-allowed">
+                                <div class="flex justify-between items-start mb-2">
+                                    <p class="font-bold text-sm text-primary">#TX-902 Flag</p>
+                                    <span class="badge-danger !py-0.5 !px-2">High</span>
+                                </div>
+                                <p class="text-xs text-gray-400 truncate">Suspected harassment in Global Chat...</p>
+                            </div>
+                            <div class="p-4 hover:bg-glass-white rounded-xl transition-all group">
+                                <div class="flex justify-between items-start mb-2">
+                                    <p class="font-bold text-sm group-hover:text-white transition-colors">#TX-883 Report</p>
+                                    <span class="badge-warning !py-0.5 !px-2">Med</span>
+                                </div>
+                                <p class="text-xs text-gray-500 truncate">Spam link detected in #announcements</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Inspector -->
+                    <div class="flex-grow border rounded-3xl flex flex-col overflow-hidden relative shadow-2xl transition-all" style="background-color: var(--surface); border-color: var(--border-color);">
+                        <!-- Inspector Header -->
+                        <div class="p-6 border-b flex items-center justify-between backdrop-blur-md sticky top-0 z-10 transition-all" style="background-color: var(--surface-glass); border-color: var(--border-color);">
+                            <div class="flex items-center gap-4">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Moderated" class="w-12 h-12 rounded-2xl bg-primary/10 border border-border-dark" alt="Avatar">
+                                <div>
+                                    <h3 class="font-bold text-lg">Case #TX-902</h3>
+                                    <p class="text-xs font-medium" style="color: var(--text-muted);">Moderating conversation thread.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="openModal('warn', '@toxic_user')" class="btn-secondary !py-2 !px-4 text-xs">
+                                    <i class="ph-bold ph-megaphone"></i> Warn
+                                </button>
+                                <button onclick="openModal('ban', '@toxic_user')" class="btn-primary bg-red-600 hover:bg-red-700 shadow-red-900/20 !py-2 !px-4 text-xs">
+                                    <i class="ph-bold ph-prohibit"></i> Ban User
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Chat Messages Screen -->
+                        <div class="flex-grow overflow-y-auto p-8 space-y-6 bg-[radial-gradient(circle_at_top_right,rgba(124,106,255,0.05),transparent_40%)]">
+                            <div class="flex justify-center mb-4">
+                                <span class="bg-white/5 px-4 py-1.5 rounded-xl border border-white/5 text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">Tuesday, October 24</span>
+                            </div>
+                            
+                            <!-- Incoming Message -->
+                            <div class="flex gap-4 max-w-2xl">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Target" class="w-8 h-8 rounded-lg bg-blue-500/10 mt-1" alt="Avatar">
+                                <div class="space-y-1">
+                                    <div class="flex items-baseline gap-2">
+                                        <p class="text-sm font-bold">Sarah Anderson</p>
+                                        <p class="text-[10px] text-gray-500 font-bold">10:42 AM</p>
+                                    </div>
+                                    <div class="bg-glass-white border border-border-dark p-4 rounded-3xl rounded-tl-sm text-sm leading-relaxed text-gray-200">
+                                        Have we finalized the Q4 presentation slides yet? I need to send them to the executive board by 2 PM.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Culprit Message -->
+                            <div class="flex gap-4 max-w-2xl">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Moderated" class="w-8 h-8 rounded-lg bg-red-500/10 mt-1" alt="Avatar">
+                                <div class="space-y-1">
+                                    <div class="flex items-baseline gap-2">
+                                        <p class="text-sm font-bold text-red-400">@toxic_user</p>
+                                        <p class="text-[10px] text-gray-500 font-bold">10:44 AM</p>
+                                        <span class="bg-red-500 w-1.5 h-1.5 rounded-full" title="Likely violation"></span>
+                                    </div>
+                                    <div class="bg-red-500/10 border border-red-500/20 p-4 rounded-3xl rounded-tl-sm text-sm leading-relaxed text-gray-200 shadow-[0_0_15px_rgba(239,68,68,0.05)]">
+                                        Keep waiting Sarah. Your slides are meaningless anyway. Nobody actually reads them lol. Stay mad.
+                                    </div>
+                                    <div class="flex gap-2 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="text-[10px] font-bold text-primary hover:underline uppercase">FLAG CONTENT</button>
+                                        <button class="text-[10px] font-bold text-red-500 hover:underline uppercase">DELETE</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Admin Intervention Placeholder -->
+                            <div class="flex flex-col items-center gap-2 py-4">
+                                <div class="h-px w-24 bg-border-dark"></div>
+                                <p class="text-[10px] text-gray-500 font-bold tracking-widest uppercase">New moderation alert</p>
+                                <div class="h-px w-24 bg-border-dark"></div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Input (Disabled for Admin View) -->
+                        <div class="p-6 border-t border-border-dark bg-bg-dark/40">
+                            <div class="bg-glass-white border border-border-dark rounded-2xl flex items-center px-4 py-2 opacity-60">
+                                <i class="ph ph-lock-key text-gray-400 mr-3"></i>
+                                <p class="text-sm text-gray-500 font-medium italic">Read-only mode: Moderation Session Active</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Section: Channels -->
+            <div id="section-channels" class="section hidden space-y-8 animate-in slide-in-from-right-5 duration-500">
+                <div class="flex items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight mb-2">Channel Management</h2>
+                        <p class="text-gray-400 font-medium">Monitor and configure workspace channels.</p>
+                    </div>
+                    <button class="btn-primary">
+                        <i class="ph-bold ph-plus"></i> Create Channel
+                    </button>
+                </div>
+
+                <div class="stat-card p-0 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-white/5 border-b border-border-dark">
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Channel Name</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Type</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Members</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-dark">
+                                <tr class="table-row">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">#</div>
+                                            <div>
+                                                <p class="font-bold text-sm">Global Strategy</p>
+                                                <p class="text-[11px] text-gray-500 font-medium">Main public hub</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4"><span class="badge-neutral border-primary/20 text-primary">Public</span></td>
+                                    <td class="px-6 py-4 text-center text-sm font-bold text-white">1,248</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-400"><i class="ph-bold ph-pencil-simple text-lg"></i></button>
+                                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-400"><i class="ph-bold ph-eye text-lg"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="table-row">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 font-bold text-xl"><i class="ph ph-lock"></i></div>
+                                            <div>
+                                                <p class="font-bold text-sm">Executive Board</p>
+                                                <p class="text-[11px] text-gray-500 font-medium">Restricted access</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4"><span class="badge-warning">Private</span></td>
+                                    <td class="px-6 py-4 text-center text-sm font-bold text-white">14</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-400"><i class="ph-bold ph-pencil-simple text-lg"></i></button>
+                                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-400"><i class="ph-bold ph-eye text-lg"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Ads Manager -->
+            <div id="section-ads-manager" class="section hidden space-y-8 animate-in slide-in-from-bottom-5 duration-500">
+                <div class="flex items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight mb-2">Ads Manager</h2>
+                        <p class="text-gray-400 font-medium">Monitor your advertising inventory and performance.</p>
+                    </div>
+                    <button onclick="openModal('create-ad')" class="btn-primary">
+                        <i class="ph-bold ph-plus"></i> Create Campaign
+                    </button>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4">Total Impressions</p>
+                        <h4 class="text-3xl font-bold">1.5M</h4>
+                        <div class="mt-4 flex items-center gap-2">
+                            <span class="text-green-400 text-xs font-bold bg-green-400/10 px-2 py-1 rounded-lg border border-green-400/20">↑ 12%</span>
+                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">vs last month</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4">Average CTR</p>
+                        <h4 class="text-3xl font-bold">3.5%</h4>
+                        <div class="mt-4 flex items-center gap-2">
+                            <span class="text-red-400 text-xs font-bold bg-red-400/10 px-2 py-1 rounded-lg border border-red-400/20">↓ 3.2%</span>
+                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">vs last week</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4">Click Growth</p>
+                        <h4 class="text-3xl font-bold">45k</h4>
+                        <div class="mt-4 flex items-center gap-2">
+                            <span class="text-green-400 text-xs font-bold bg-green-400/10 px-2 py-1 rounded-lg border border-green-400/20">↑ 8.4%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color: var(--text-muted);">Ad Revenue</p>
+                        <h4 class="text-3xl font-bold">$12,401</h4>
+                        <div class="mt-4 flex items-center gap-2">
+                            <span class="text-green-400 text-xs font-bold bg-green-400/10 px-2 py-1 rounded-lg border border-green-400/20">↑ 24%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campaigns Table -->
+                <div class="stat-card p-0 overflow-hidden">
+                    <div class="p-6 border-b flex justify-between items-center" style="border-color: var(--border-color);">
+                        <h3 class="font-bold">Recent Campaigns</h3>
+                        <div class="flex gap-4">
+                            <button class="text-xs font-bold hover:text-primary transition-colors flex items-center gap-1" style="color: var(--text-muted);">
+                                <i class="ph ph-funnel"></i> Filter
+                            </button>
+                            <button class="text-xs font-bold hover:text-primary transition-colors flex items-center gap-1" style="color: var(--text-muted);">
+                                <i class="ph ph-download"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-white/5 border-b border-border-dark">
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Name</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Budget</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">CTR</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-dark">
+                                <tr class="table-row">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-lg">
+                                                <i class="ph ph-lightning"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-bold text-sm">Summer Solstice 24</p>
+                                                <p class="text-[11px] text-gray-500 font-medium">CAM-98234</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4"><span class="badge-success">Active</span></td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-300">$500.00</td>
+                                    <td class="px-6 py-4 text-sm font-bold text-white">3.5%</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-400"><i class="ph ph-pencil"></i></button>
+                                            <button class="p-2 hover:bg-orange-500/10 hover:text-orange-400 rounded-xl transition-all text-gray-400"><i class="ph ph-pause"></i></button>
+                                            <button class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-400"><i class="ph ph-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="table-row">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 text-lg">
+                                                <i class="ph ph-target"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-bold text-sm">Winter Tech Summit</p>
+                                                <p class="text-[11px] text-gray-500 font-medium">CAM-72109</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4"><span class="badge-neutral">Paused</span></td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-300">$1,200.00</td>
+                                    <td class="px-6 py-4 text-sm font-bold text-white">2.8%</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-400"><i class="ph ph-play"></i></button>
+                                            <button class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-400"><i class="ph ph-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Reports -->
+            <div id="section-reports" class="section hidden space-y-8 animate-in slide-in-from-bottom-5 duration-500">
+                <div class="flex items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight mb-2">Moderation Queue</h2>
+                        <p class="font-medium" style="color: var(--text-muted);">Pending reports and system flags requiring action.</p>
+                    </div>
+                </div>
+
+                <div class="stat-card p-0 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-white/5 border-b border-border-dark">
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reported User</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reason</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Evidence Snippet</th>
+                                    <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Decide</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-dark">
+                                <tr class="table-row">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Toxic" class="w-10 h-10 rounded-xl bg-red-500/10 p-0.5" alt="Avatar">
+                                            <div>
+                                                <p class="font-bold text-sm text-red-400">@toxic_user</p>
+                                                <p class="text-[11px] text-gray-500 font-medium">3 previous warnings</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-xs font-bold text-white/80 uppercase tracking-widest">Verbal Abuse</td>
+                                    <td class="px-6 py-4 max-w-xs">
+                                        <p class="text-xs text-gray-400 italic truncate">"Keep waiting Sarah. Your slides are meaningless anyway..."</p>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <button onclick="openModal('ban', '@toxic_user')" class="btn-primary !p-2 !rounded-xl !bg-red-600 hover:!bg-red-700 shadow-red-900/10"><i class="ph ph-prohibit"></i></button>
+                                            <button class="btn-secondary !p-2 !rounded-xl"><i class="ph ph-check"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Server Health -->
+            <div id="section-server-health" class="section hidden space-y-8 animate-in slide-in-from-bottom-5 duration-500">
+                <div class="flex items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight mb-2">Infrastructure Status</h2>
+                        <p class="font-medium" style="color: var(--text-muted);">Real-time health monitoring of Honlor nodes and services.</p>
+                    </div>
+                </div>
+
+                <!-- Cluster Health -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="stat-card">
+                        <div class="flex justify-between items-start mb-6">
+                            <h4 class="font-bold text-lg">System Latency</h4>
+                            <span class="badge-success">Operational</span>
+                        </div>
+                        <div class="space-y-6">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold uppercase tracking-widest mb-2" style="color: var(--text-muted);">
+                                    <span>API Cluster (US East)</span>
+                                    <span style="color: var(--text-main);">42ms</span>
+                                </div>
+                                <div class="w-full h-2 rounded-full overflow-hidden" style="background-color: var(--border-color);">
+                                    <div class="bg-green-400 h-full w-[15%]"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold uppercase tracking-widest mb-2" style="color: var(--text-muted);">
+                                    <span>Database I/O</span>
+                                    <span style="color: var(--text-main);">124ms</span>
+                                </div>
+                                <div class="w-full h-2 rounded-full overflow-hidden" style="background-color: var(--border-color);">
+                                    <div class="bg-yellow-400 h-full w-[45%]"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="flex justify-between items-start mb-6">
+                            <h4 class="font-bold text-lg">Resource Allocation</h4>
+                            <span class="badge-neutral text-primary border-primary/20 bg-primary/10">Scale Active</span>
+                        </div>
+                        <div class="space-y-6">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold uppercase tracking-widest mb-2 text-gray-400">
+                                    <span>Media Storage</span>
+                                    <span class="text-white">78%</span>
+                                </div>
+                                <div class="w-full bg-border-dark h-2 rounded-full overflow-hidden">
+                                    <div class="bg-primary h-full w-[78%]"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold uppercase tracking-widest mb-2 text-gray-400">
+                                    <span>CPU Load (Avg)</span>
+                                    <span class="text-white">24%</span>
+                                </div>
+                                <div class="w-full bg-border-dark h-2 rounded-full overflow-hidden">
+                                    <div class="bg-green-400 h-full w-[24%]"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="stat-card p-6 flex flex-col items-center text-center">
+                        <div class="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center text-green-400 mb-4 border border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.1)]">
+                            <i class="ph-bold ph-globe text-3xl"></i>
+                        </div>
+                        <p class="font-bold text-lg">99.99%</p>
+                        <p class="text-xs uppercase font-bold tracking-widest" style="color: var(--text-muted);">Global Uptime</p>
+                    </div>
+                    <div class="stat-card bg-surface-dark border p-6 flex flex-col items-center text-center">
+                        <div class="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 mb-4 border border-blue-500/20">
+                            <i class="ph-bold ph-shield-check text-3xl"></i>
+                        </div>
+                        <p class="font-bold text-lg">Healthy</p>
+                        <p class="text-xs text-gray-400 uppercase font-bold tracking-widest">WAF Gateway</p>
+                    </div>
+                    <div class="stat-card bg-surface-dark border p-6 flex flex-col items-center text-center">
+                        <div class="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 mb-4 border border-purple-500/20">
+                            <i class="ph-bold ph-database text-3xl"></i>
+                        </div>
+                        <p class="font-bold text-lg">Nominal</p>
+                        <p class="text-xs text-gray-400 uppercase font-bold tracking-widest">Cloud Database</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Global UI Components -->
+    <div id="modal-container" class="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none opacity-0 transition-all duration-300">
+        <div id="modal-overlay" class="absolute inset-0 backdrop-blur-sm cursor-pointer" onclick="closeModal()" style="background-color: rgba(0,0,0,0.6);"></div>
+        <div id="modal-content" class="relative border w-full max-w-md p-8 rounded-[3rem] shadow-2xl scale-95 transition-transform duration-300 pointer-events-auto" style="background-color: var(--surface); border-color: var(--border-color);">
+            <button onclick="closeModal()" class="absolute top-6 right-6 p-2 transition-colors" style="color: var(--text-muted);"><i class="ph ph-x text-2xl"></i></button>
+            <div id="modal-body" style="color: var(--text-main);"></div>
+        </div>
+    </div>
+
+    <div id="side-drawer" class="fixed top-0 right-0 h-screen w-full max-w-md border-l z-[90] translate-x-full transition-transform duration-500 overflow-y-auto shadow-2xl" style="background-color: var(--surface); border-color: var(--border-color);">
+        <div id="drawer-overlay" class="fixed inset-0 backdrop-blur-sm -z-10 opacity-0 pointer-events-none transition-opacity duration-500" onclick="closeDrawer()" style="background-color: rgba(0,0,0,0.4);"></div>
+        <div class="sticky top-0 p-6 border-b flex justify-between items-center backdrop-blur-md z-10" style="background-color: var(--surface-glass); border-color: var(--border-color);">
+            <h3 class="font-bold uppercase tracking-widest text-[10px]" style="color: var(--text-muted);">Record Inspection</h3>
+            <button onclick="closeDrawer()" class="p-2 transition-colors" style="color: var(--text-muted);"><i class="ph ph-x text-2xl"></i></button>
+        </div>
+        <div id="drawer-content" style="color: var(--text-main);"></div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-8 right-8 z-[110] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Global Scripts -->
+    <script>
+        // --- Theme Engine ---
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light');
+            document.body.classList.toggle('dark', !isLight);
+            const icon = document.getElementById('theme-icon');
+            icon.className = isLight ? 'ph-bold ph-sun text-xl group-hover:text-primary transition-colors' : 'ph-bold ph-moon text-xl group-hover:text-primary transition-colors';
+            localStorage.setItem('honlor-theme', isLight ? 'light' : 'dark');
+            showToast(`${isLight ? 'Light' : 'Dark'} mode activated.`, 'success');
+            if (window.growthChart) updateChartTheme(isLight);
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('honlor-theme') || 'dark';
+            if (saved === 'light') {
+                document.body.classList.add('light');
+                document.body.classList.remove('dark');
+                document.getElementById('theme-icon').className = 'ph-bold ph-sun text-xl group-hover:text-primary transition-colors';
+            }
+        }
+
+        function updateChartTheme(isLight) {
+            const chart = window.growthChart;
+            const gridColor = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+            const textColor = isLight ? '#4B5563' : '#9CA3AF';
+            
+            chart.options.scales.y.grid.color = gridColor;
+            chart.options.scales.y.ticks.color = textColor;
+            chart.options.scales.x.ticks.color = textColor;
+            chart.update();
+        }
+
+        // --- Side Drawer Logic ---
+        function openDrawer(type, identity = '') {
+             const drawer = document.getElementById('side-drawer');
+             const content = document.getElementById('drawer-content');
+             const overlay = document.getElementById('drawer-overlay');
+             
+             let html = '';
+             if (type === 'user-profile') {
+                 html = `
+                    <div class="p-8 space-y-8">
+                        <div class="flex items-center gap-6">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${identity}" class="w-24 h-24 rounded-3xl bg-primary/10 border-4 border-surface shadow-xl" alt="Avatar">
+                            <div>
+                                <h3 class="text-2xl font-bold tracking-tight">${identity}</h3>
+                                <p class="text-sm font-bold text-primary">Member since Oct 2023</p>
+                                <span class="badge-success mt-2 inline-block">Active Identity</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="stat-card !p-4"><p class="text-[10px] font-bold uppercase mb-1" style="color: var(--text-muted);">Messages</p><h4 class="text-xl font-bold">1,204</h4></div>
+                            <div class="stat-card !p-4"><p class="text-[10px] font-bold uppercase mb-1" style="color: var(--text-muted);">Reputation</p><h4 class="text-xl font-bold">98/100</h4></div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold mb-4 flex items-center gap-2 text-sm uppercase tracking-widest" style="color: var(--text-main);"><i class="ph ph-clock-counter-clockwise"></i> Activity Timeline</h4>
+                            <div class="space-y-4 ml-3 pl-6 border-l-2" style="border-color: var(--border-color);">
+                                <div class="relative"><span class="absolute -left-[31px] top-1 w-3 h-3 bg-primary rounded-full border-2" style="border-color: var(--surface);"></span><p class="text-xs font-bold">Logged in from Stockholm</p><p class="text-[10px] uppercase font-bold" style="color: var(--text-muted);">14 mins ago</p></div>
+                                <div class="relative"><span class="absolute -left-[31px] top-1 w-3 h-3 bg-green-400 rounded-full border-2" style="border-color: var(--surface);"></span><p class="text-xs font-bold">Uploaded 3 files to #strategy</p><p class="text-[10px] uppercase font-bold" style="color: var(--text-muted);">2 hours ago</p></div>
+                            </div>
+                        </div>
+                    </div>
+                 `;
+             } else if (type === 'ad-performance') {
+                 const bars = [40, 60, 30, 80, 95, 50, 70].map(h => `<div class="bg-primary rounded-t-sm" style="height:${h}%"></div>`).join('');
+                 html = `
+                    <div class="p-8 space-y-8">
+                        <h3 class="text-2xl font-bold tracking-tight">${identity} Analysis</h3>
+                        <div class="stat-card">
+                            <h4 class="text-sm font-bold mb-2">Conversion Heatmap</h4>
+                            <div class="grid grid-cols-7 gap-1 h-32 items-end">${bars}</div>
+                        </div>
+                        <div class="space-y-4">
+                            <h4 class="font-bold flex items-center gap-2 text-sm uppercase tracking-widest" style="color: var(--text-main);"><i class="ph ph-lightning"></i> REAL-TIME KPIS</h4>
+                            ${['Impressions:124,092', 'Clicks:3,401', 'Conversion:2.7%'].map(stat => {
+                                const [label, val] = stat.split(':');
+                                return `<div class="flex justify-between items-center p-4 border rounded-2xl transition-all" style="background-color: var(--glass-bg); border-color: var(--border-color);">
+                                    <p class="text-xs font-bold" style="color: var(--text-muted);">${label}</p><p class="text-xl font-bold" style="color: var(--text-main);">${val}</p>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                 `;
+             }
+             content.innerHTML = html;
+             drawer.classList.remove('translate-x-full');
+             overlay.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function closeDrawer() {
+             document.getElementById('side-drawer').classList.add('translate-x-full');
+             document.getElementById('drawer-overlay').classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        // --- Navigation ---
+        function switchSection(sectionId) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            if (event.currentTarget.classList.contains('nav-item')) event.currentTarget.classList.add('active');
+
+            document.querySelectorAll('.section').forEach(section => section.classList.add('hidden'));
+            const target = document.getElementById('section-' + sectionId);
+            if (target) {
+                target.classList.remove('hidden');
+                document.getElementById('content-container').scrollTop = 0;
+            }
+            if(window.innerWidth < 768) toggleMobileSidebar();
+            if(sectionId === 'server-health') showToast('Live status feed connected.');
+        }
+
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        }
+
+        // --- UI Persistence (Simulated) ---
+        function performAction(actionType, identity) {
+            closeModal();
+            let msg = '', type = 'success';
+            switch(actionType) {
+                case 'suspended': msg = `User ${identity} restricted.`; type = 'danger'; updateRowStatus(identity, 'Suspended', 'badge-danger'); break;
+                case 'warn_sent': msg = `Warning sent to ${identity}.`; type = 'warning'; break;
+                case 'campaign_launch': msg = `Campaign initialized.`; addMockAdRow(document.getElementById('camp-name')?.value || 'New Creative'); break;
+                case 'deleted': msg = `Purged ${identity}.`; type = 'danger'; removeRow(identity); break;
+                case 'paused': msg = `Status: PAUSED.`; type = 'warning'; updateRowStatus(identity, 'Paused', 'badge-neutral'); break;
+                case 'resumed': msg = `Status: ACTIVE.`; updateRowStatus(identity, 'Active', 'badge-success'); break;
+                case 'resolved': msg = `Report ID: ${identity} marked resolved.`; removeRow(identity); break;
+                case 'refresh-health': msg = `Health stats updated.`; randomizeHealth(); break;
+            }
+            showToast(msg, type);
+        }
+
+        function updateRowStatus(identity, text, badgeClass) {
+            document.querySelectorAll('tr').forEach(row => {
+               if (row.innerText.includes(identity)) {
+                   const badge = row.querySelector('span[class*="badge-"]');
+                   if (badge) {
+                       badge.innerText = text;
+                       badge.className = `px-3 py-1 text-xs font-semibold rounded-full border ${badgeClass}`;
+                   }
+               }
+            });
+        }
+
+        function removeRow(identity) {
+            document.querySelectorAll('tr').forEach(row => {
+               if (row.innerText.includes(identity)) {
+                   row.classList.add('opacity-0', 'scale-90');
+                   setTimeout(() => row.remove(), 400);
+               }
+            });
+        }
+
+        function randomizeHealth() {
+             document.querySelectorAll('.stat-card p.text-white').forEach(p => {
+                 if (p.innerText.includes('ms')) p.innerText = Math.floor(Math.random() * 200) + 'ms';
+                 if (p.innerText.includes('%')) p.innerText = Math.floor(Math.random() * 100) + '%';
+             });
+        }
+
+        function addMockAdRow(name) {
+             const tbody = document.querySelector('#section-ads-manager tbody');
+             if (!tbody) return;
+             const row = document.createElement('tr');
+             row.className = 'table-row animate-in slide-in-from-left-5';
+             row.innerHTML = `
+                <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-lg"><i class="ph ph-lightning"></i></div><div><p class="font-bold text-sm" style="color: var(--text-main);">${name}</p><p class="text-[11px] font-medium" style="color: var(--text-muted);">NEW-CAM</p></div></div></td>
+                <td class="px-6 py-4"><span class="badge-success">Active</span></td>
+                <td class="px-6 py-4 text-sm font-medium" style="color: var(--text-muted);">$0.00</td>
+                <td class="px-6 py-4 text-sm font-bold" style="color: var(--text-main);">0.0%</td>
+                <td class="px-6 py-4 text-right"><div class="flex justify-end gap-2"><button onclick="performAction('paused', '${name}')" class="p-2 hover:bg-orange-500/10 rounded-xl transition-all" style="color: var(--text-muted);"><i class="ph ph-pause"></i></button></div></td>
+             `;
+             tbody.insertBefore(row, tbody.firstChild);
+        }
+
+        // --- Core Utils ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const icons = { success: 'ph-bold ph-check-circle text-green-400', warning: 'ph-bold ph-info text-yellow-400', danger: 'ph-bold ph-warning-circle text-red-400' };
+            const bgs = { success: 'border-green-400/20 bg-green-400/10', warning: 'border-yellow-400/20 bg-yellow-400/10', danger: 'border-red-400/20 bg-red-400/10' };
+            toast.className = `flex items-center gap-3 px-6 py-4 rounded-2xl border backdrop-blur-md animate-in slide-in-from-right-10 pointer-events-auto ${bgs[type] || 'border-white/10 bg-surface/80'}`;
+            toast.innerHTML = `<i class="${icons[type] || 'ph ph-info'} text-xl"></i><p class="text-sm font-semibold">${message}</p>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.add('animate-out', 'fade-out', 'translate-x-full'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        function openModal(type, identity = '') {
+            const container = document.getElementById('modal-container');
+            const body = document.getElementById('modal-body');
+            let html = '';
+            if (type === 'ban') {
+                html = `<div class="text-center pt-4"><div class="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 mx-auto mb-6 border border-red-500/20"><i class="ph-bold ph-prohibit text-3xl"></i></div><h3 class="text-xl font-bold mb-2">Suspend User?</h3><p class="text-sm mb-8 leading-relaxed px-4" style="color: var(--text-muted);">Suspend <span style="color: var(--text-main);" class="font-bold">${identity}</span>? Action reversible by Admins.</p><div class="flex flex-col gap-3"><button onclick="performAction('suspended', '${identity}')" class="btn-primary !bg-red-600 hover:!bg-red-700 !justify-center py-3.5">Confirm</button><button onclick="closeModal()" class="btn-secondary !justify-center py-3.5">Cancel</button></div></div>`;
+            } else if (type === 'warn') {
+                html = `<div class="text-left pt-2"><div class="flex items-center gap-3 mb-6"><div class="p-3 bg-yellow-500/10 rounded-xl text-yellow-500 border border-yellow-500/20"><i class="ph-bold ph-info text-2xl"></i></div><h3 class="text-xl font-bold">Issue Warning</h3></div><p class="text-[10px] uppercase mb-1.5 ml-1 font-bold" style="color: var(--text-muted);">RECIPIENT: ${identity}</p><textarea class="w-full border rounded-2xl p-4 outline-none focus:border-primary/50 text-sm h-32 mb-6 bg-transparent" style="border-color: var(--border-color); color: var(--text-main);" placeholder="Reason..."></textarea><div class="flex gap-3 pt-2"><button onclick="performAction('warn_sent', '${identity}')" class="btn-primary flex-1 !justify-center py-3">Send Notice</button></div></div>`;
+            } else if (type === 'create-ad') {
+                html = `<div class="space-y-6"><div><h3 class="text-2xl font-bold tracking-tight">New Creative</h3><span class="badge-neutral text-primary">Draft v1.0</span></div><div class="space-y-4"><div><label class="text-[10px] uppercase mb-2 block font-bold" style="color: var(--text-muted);">Campaign Reference</label><input type="text" id="camp-name" class="w-full border rounded-2xl px-5 py-3 outline-none focus:border-primary/50 bg-transparent" style="border-color: var(--border-color); color: var(--text-main);" placeholder="e.g. Winter Sale"></div></div><div class="pt-4 flex gap-3"><button onclick="performAction('campaign_launch', '')" class="btn-primary flex-1 !justify-center py-3.5">Launch</button></div></div>`;
+            } else if (type === 'delete') {
+                html = `<div class="text-center pt-4"><div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mx-auto mb-6"><i class="ph ph-trash text-3xl"></i></div><h3 class="text-xl font-bold mb-2">Purge?</h3><p class="text-sm mb-8" style="color: var(--text-muted);">Record: <span style="color: var(--text-main);" class="font-bold">${identity}</span>.</p><div class="flex gap-3"><button onclick="performAction('deleted', '${identity}')" class="btn-primary !bg-red-600 flex-1 !justify-center">Purge</button></div></div>`;
+            }
+            body.innerHTML = html;
+            container.classList.remove('pointer-events-none', 'opacity-0');
+            document.getElementById('modal-content').classList.remove('scale-95');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-container').classList.add('pointer-events-none', 'opacity-0');
+            document.getElementById('modal-content').classList.add('scale-95');
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            initCharts();
+            initSimulation();
+            
+            // Re-bind all dynamic elements
+            document.querySelectorAll('.ph-bell').forEach(i => i.parentElement.onclick = () => showToast('0 New Alerts. Environment nominal.'));
+            document.querySelectorAll('.ph-gear').forEach(i => i.parentElement.onclick = () => showToast('Settings locked for your level.', 'warning'));
+            document.querySelectorAll('.ph-arrow-clockwise').forEach(i => i.parentElement.onclick = () => performAction('refresh-health'));
+            
+            document.querySelectorAll('table button').forEach(btn => {
+                 if (!btn.getAttribute('onclick')) {
+                     const row = btn.closest('tr');
+                     const id = row?.querySelector('p.font-bold, td:first-child')?.innerText || 'Record';
+                     const icon = btn.querySelector('i');
+                     if (icon?.classList.contains('ph-eye')) btn.onclick = () => openDrawer('user-profile', id);
+                     if (icon?.classList.contains('ph-graph')) btn.onclick = () => openDrawer('ad-performance', id);
+                     if (icon?.classList.contains('ph-check')) btn.onclick = () => performAction('resolved', id);
+                     if (icon?.classList.contains('ph-x-circle')) btn.onclick = () => performAction('deleted', id);
+                 }
+            });
+        });
+
+        function initCharts() {
+            const ctx = document.getElementById('growthChart')?.getContext('2d');
+            if (!ctx) return;
+            window.growthChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Users', data: [15, 28, 24, 28, 48, 19, 45], borderColor: '#7c6aff', tension: 0.4, fill: true, backgroundColor: 'rgba(124, 106, 255, 0.1)' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9CA3AF' } }, x: { grid: { display: false }, ticks: { color: '#9CA3AF' } } } }
+            });
+            updateChartTheme(document.body.classList.contains('light'));
+        }
+
+        function toggleChartRange(range) {
+             const chart = window.growthChart;
+             if (!chart) return;
+             chart.data.datasets[0].data = range === 'Daily' ? [45, 42, 48, 50, 40, 38, 46] : [15, 28, 24, 28, 48, 19, 45];
+             chart.update();
+             showToast(`Viewing ${range} aggregation.`);
+        }
+
+        function initSimulation() {
+             setInterval(() => {
+                 const feed = document.querySelector('#section-overview .space-y-6');
+                 if (!feed) return;
+                 const log = document.createElement('div');
+                 log.className = 'flex gap-4 group cursor-pointer animate-in fade-in';
+                 log.innerHTML = `<div class="w-10 h-10 rounded-xl bg-glass-white flex items-center justify-center text-primary"><i class="ph ph-lightning"></i></div><div><p class="text-sm font-semibold">Incoming data packet processed.</p></div>`;
+                 feed.insertBefore(log, feed.firstChild);
+                 if (feed.children.length > 5) feed.lastElementChild.remove();
+             }, 10000);
+        }
+    </script>
+    </script>
+</body>
+</html>
+
+</html>
