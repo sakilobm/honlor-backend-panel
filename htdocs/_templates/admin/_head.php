@@ -10,6 +10,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <script>
+    // Blocking theme script to prevent FOUC (Flash of Dark Mode)
+    (function() {
+        const theme = localStorage.getItem('admin-theme');
+        if (theme === 'light') {
+            document.documentElement.classList.add('light');
+        } else {
+            document.documentElement.classList.remove('light');
+        }
+    })();
+</script>
+
+<script>
     tailwind.config = {
         darkMode: 'class',
         theme: {

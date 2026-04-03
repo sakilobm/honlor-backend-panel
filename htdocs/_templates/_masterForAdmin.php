@@ -4,7 +4,7 @@
 <head>
     <?php Session::loadTemplate('admin/_head'); ?>
 </head>
-<body class="dark h-screen flex">
+<body class="h-screen flex transition-colors duration-500 overflow-hidden">
     
     <!-- Sidebar Component (admin/_nav) -->
     <?php Session::loadTemplate('admin/_nav'); ?>
@@ -76,26 +76,6 @@
     <!-- Application Logic (Populates chart, metrics, etc) -->
     <script src="/js/admin.min.js"></script>
 
-    <!-- UI State Handlers -->
-    <script>
-        function toggleTheme() {
-            const body = document.body;
-            const icon = document.getElementById('theme-icon');
-            if (body.classList.contains('light')) {
-                body.classList.remove('light');
-                body.classList.add('dark');
-                icon.classList.remove('ph-sun');
-                icon.classList.add('ph-moon');
-                localStorage.setItem('admin-theme', 'dark');
-            } else {
-                body.classList.remove('dark');
-                body.classList.add('light');
-                icon.classList.remove('ph-moon');
-                icon.classList.add('ph-sun');
-                localStorage.setItem('admin-theme', 'light');
-            }
-        }
-
     <!-- Global Modals System -->
     <div id="global-modal-container" class="modal-overlay hidden z-[100]">
         <div id="modal-content-target" class="w-full h-full flex items-center justify-center p-6">
@@ -113,39 +93,45 @@
     <!-- UI State Handlers -->
     <script>
         function toggleTheme() {
-            const body = document.body;
+            const html = document.documentElement;
             const icon = document.getElementById('theme-icon');
-            if (body.classList.contains('light')) {
-                body.classList.remove('light');
-                body.classList.add('dark');
-                icon.classList.remove('ph-sun');
-                icon.classList.add('ph-moon');
-                localStorage.setItem('admin-theme', 'dark');
-            } else {
-                body.classList.remove('dark');
-                body.classList.add('light');
-                icon.classList.remove('ph-moon');
-                icon.classList.add('ph-sun');
+            const isLight = html.classList.toggle('light');
+            
+            if (isLight) {
+                icon.classList.replace('ph-moon', 'ph-sun');
                 localStorage.setItem('admin-theme', 'light');
+            } else {
+                icon.classList.replace('ph-sun', 'ph-moon');
+                localStorage.setItem('admin-theme', 'dark');
             }
         }
 
         function toggleMobileSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('-translate-x-full');
+            if (sidebar) sidebar.classList.toggle('-translate-x-full');
         }
 
         function closeModal() {
-            document.getElementById('global-modal-container').classList.add('hidden');
+            const modal = document.getElementById('global-modal-container');
+            if (modal) modal.classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
 
         function closeDrawer() {
-            document.getElementById('side-drawer').classList.add('translate-x-full');
+            const drawer = document.getElementById('side-drawer');
+            if (drawer) drawer.classList.add('translate-x-full');
         }
 
-        // Apply saved theme
-        if (localStorage.getItem('admin-theme') === 'light') toggleTheme();
+        // Apply saved theme icon on load
+        (function() {
+            if (localStorage.getItem('admin-theme') === 'light') {
+                const icon = document.getElementById('theme-icon');
+                if (icon) {
+                    icon.classList.remove('ph-moon');
+                    icon.classList.add('ph-sun');
+                }
+            }
+        })();
     </script>
 
 </body>

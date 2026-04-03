@@ -12,13 +12,30 @@ const AdminApp = {
     init: function() {
         console.log("AdminApp Initializing...");
         const params = new URLSearchParams(window.location.search);
-        const page = params.get('current_page') || 'dashboard';
+        const page = params.get('page') || 'dashboard';
 
         if (page === 'dashboard') {
             this.initDashboard();
         } else if (page === 'ads') {
             this.initAdsManager();
         }
+        
+        // Handle notifications dropdown close on click outside
+        window.onclick = (event) => {
+            if (!event.target.matches('.ph-bell') && !event.target.closest('.notification-pane')) {
+                const pane = document.getElementById('notification-pane');
+                if (pane) pane.classList.add('hidden');
+            }
+        };
+    },
+
+    /**
+     * Navigation Logic
+     */
+    switchSection: function(tag) {
+        // In the current PHP framework, we use URL parameters for routing.
+        // We navigate to ?page=tag to ensure the PHP template is loaded.
+        window.location.search = `?page=${tag}`;
     },
 
     /**
@@ -125,52 +142,140 @@ const AdminApp = {
         }
     },
 
-    loadAdList: function() {
-        const tbody = document.getElementById('ads-table-body');
-        if (!tbody) return;
-
-        ApiClient.get('ads', 'list').then(ads => {
-            tbody.innerHTML = '';
-            
-            // Update badge count if exists
-            const badge = document.getElementById('ads-count-badge');
-            if (badge) badge.innerText = ads.length + ' Total';
-
-            ads.forEach(ad => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-white/5 transition-colors group';
-                
-                const status = ad.status || 'Active';
-                const badgeClass = status === 'Active' ? 'badge-success' : (status === 'Paused' ? 'badge-warning' : 'badge-neutral');
-                const ctr = ad.impressions > 0 ? ((ad.clicks / ad.impressions) * 100).toFixed(1) : '0.0';
-
-                tr.innerHTML = `
-                    <td class="px-6 py-5">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                <i class="ph ph-megaphone-simple text-xl"></i>
-                            </div>
-                            <div>
-                                <p class="font-bold text-sm text-white">${ad.name}</p>
-                                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">CAM-${ad.id}</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-5"><span class="${badgeClass}">${status}</span></td>
-                    <td class="px-6 py-5 text-sm font-bold text-gray-300">$${parseFloat(ad.budget).toLocaleString()}</td>
-                    <td class="px-6 py-5 text-center"><span class="text-sm font-bold text-white">${ctr}%</span></td>
-                    <td class="px-6 py-5 text-right">
-                        <div class="flex justify-end gap-2">
-                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500" title="Edit"><i class="ph ph-pencil-simple text-xl"></i></button>
-                            <button class="p-2 hover:bg-orange-500/10 hover:text-orange-400 rounded-xl transition-all text-gray-500" title="Pause"><i class="ph ph-pause-circle text-xl"></i></button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }).catch(err => {
-            console.error(err);
+    /**
+     * Settings Logic
+     */
+    toggleSetting: function(key, isChecked) {
+        const value = isChecked ? 'on' : 'off';
+        
+        // Use the new update API
+        fetch('/api/settings/update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: key, value: value })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                toast.error('Failed', data.error);
+            } else {
+                toast.success('Updated', `Setting '${key}' is now ${value}.`);
+            }
+        })
+        .catch(err => {
+            toast.error('System Error', 'Could not communicate with the settings server.');
         });
+    },
+
+    /**
+     * Notification Logic
+     */
+    toggleNotifications: function() {
+        // For now, toggle a simple alert or a placeholder pane
+        toast.info('Activity Feed', 'You have 3 new moderation alerts and 1 ad system update.');
+    },
+
+    /**
+     * Global Modals & Drawers
+     */
+    openModal: function(type, identity = null) {
+        const container = document.getElementById('global-modal-container');
+        const target = document.getElementById('modal-content-target');
+        if (!container || !target) return;
+
+        let html = '';
+        switch(type) {
+            case 'ban':
+                html = `
+                    <div class="stat-card max-w-lg w-full bg-[#0a0a0a] border-red-500/20 p-10 animate-in zoom-in duration-300">
+                        <div class="w-16 h-16 rounded-3xl bg-red-500/10 flex items-center justify-center text-red-500 mb-6 mx-auto">
+                            <i class="ph-bold ph-prohibit text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-center mb-2">Ban Account Activity</h3>
+                        <p class="text-sm text-gray-500 text-center mb-8 font-medium leading-relaxed">
+                            Are you absolutely sure you want to suspend <span class="text-white font-bold">${identity}</span>? 
+                            This will terminate all active sessions and block access immediately.
+                        </p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button class="btn-secondary !justify-center py-4" onclick="closeModal()">Dismiss</button>
+                            <button class="btn-primary !bg-red-500 !shadow-[0_10px_30px_rgba(239,68,68,0.3)] !justify-center py-4" onclick="AdminApp.executeAction('ban', '${identity}')">Confirm Ban</button>
+                        </div>
+                    </div>
+                `;
+                break;
+            case 'warn':
+                html = `
+                    <div class="stat-card max-w-lg w-full bg-[#0a0a0a] border-orange-400/20 p-10 animate-in zoom-in duration-300">
+                        <div class="w-16 h-16 rounded-3xl bg-orange-400/10 flex items-center justify-center text-orange-400 mb-6 mx-auto">
+                            <i class="ph-bold ph-warning-circle text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-center mb-2">Issue Formal Warning</h3>
+                        <div class="space-y-4 mb-8 mt-6">
+                            <input type="text" placeholder="Reason for warning..." class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-orange-400/50">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button class="btn-secondary !justify-center py-4" onclick="closeModal()">Dismiss</button>
+                            <button class="btn-primary !bg-orange-400 !shadow-[0_10px_30px_rgba(251,146,60,0.3)] !justify-center py-4" onclick="AdminApp.executeAction('warn', '${identity}')">Send Warning</button>
+                        </div>
+                    </div>
+                `;
+                break;
+        }
+
+        target.innerHTML = html;
+        container.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    },
+
+    openDrawer: function(type, identity) {
+        const drawer = document.getElementById('side-drawer');
+        const target = document.getElementById('drawer-content-target');
+        if (!drawer || !target) return;
+
+        target.innerHTML = `
+            <div class="p-8 h-full flex flex-col">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-xl font-bold uppercase tracking-widest text-primary">Record Inspection</h3>
+                    <button onclick="closeDrawer()" class="p-2 hover:bg-white/10 rounded-xl transition-all">
+                        <i class="ph ph-x text-2xl"></i>
+                    </button>
+                </div>
+                <!-- Profile/Ad Details -->
+                <div class="space-y-6 flex-grow">
+                     <div class="text-center p-6 bg-white/5 rounded-[2.5rem] border border-white/5">
+                         <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${identity}" class="w-24 h-24 rounded-3xl mx-auto mb-4 border-2 border-primary/20">
+                         <h4 class="text-2xl font-bold">${identity}</h4>
+                         <p class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mt-1">Verified Node</p>
+                     </div>
+                     
+                     <div class="stat-card !p-6 space-y-4">
+                         <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">Status</span>
+                            <span class="badge-success">Operational</span>
+                         </div>
+                         <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">Last Login</span>
+                            <span class="text-xs font-medium text-white">2h 14m ago</span>
+                         </div>
+                         <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">Network IP</span>
+                            <span class="text-xs font-medium text-white">192.168.1.1</span>
+                         </div>
+                     </div>
+                </div>
+                <button class="w-full btn-primary !justify-center py-4">View Full History</button>
+            </div>
+        `;
+
+        drawer.classList.remove('translate-x-full');
+    },
+
+    executeAction: function(action, identity) {
+        toast.info('Processing', `Executing ${action} on ${identity}...`);
+        setTimeout(() => {
+            toast.success('Confirmed', `Action ${action} finalized for ${identity}.`);
+            closeModal();
+        }, 1200);
     }
 };
 

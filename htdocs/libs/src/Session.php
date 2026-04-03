@@ -101,7 +101,7 @@ class Session
 
     public static function getCurrentPageIdentifier(): string
     {
-        return $_GET['current_page'] ?? 'dashboard';
+        return $_GET['page'] ?? 'dashboard';
     }
 
     public static function countAllUsers(): int

@@ -161,14 +161,14 @@ class Session
     }
 
     /**
-     * Return the current_page GET param, defaulting to 'dashboard'.
+     * Return the page GET param, defaulting to 'dashboard'.
      * Used in the admin sidebar to highlight the active nav item.
      *
      * @return string
      */
     public static function getCurrentPageIdentifier(): string
     {
-        return $_GET['current_page'] ?? 'dashboard';
+        return $_GET['page'] ?? 'dashboard';
     }
 
     /**
@@ -179,7 +179,7 @@ class Session
     public static function countAllUsers(): int
     {
         $db     = Database::getConnection();
-        $result = $db->query("SELECT COUNT(*) as count FROM `auth`");
-        return $result ? (int)$result->fetch_assoc()['count'] : 0;
+        $result = $db->query("SELECT COUNT(*) as count FROM `auth`")->fetch();
+        return (int)$result['count'];
     }
 }
