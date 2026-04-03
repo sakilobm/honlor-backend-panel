@@ -29,11 +29,11 @@
                     <i id="theme-icon" class="ph-bold ph-moon text-xl group-hover:text-primary transition-colors"></i>
                 </button>
                 <div class="flex items-center gap-2 mr-2">
-                    <button class="p-2.5 rounded-xl transition-all relative" style="background-color: var(--glass-bg); color: var(--text-muted);">
+                    <button class="p-2.5 rounded-xl transition-all relative" onclick="AdminApp.toggleNotifications()" style="background-color: var(--glass-bg); color: var(--text-muted);">
                         <i class="ph-bold ph-bell text-xl"></i>
                         <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2" style="border-color: var(--surface);"></span>
                     </button>
-                    <button class="p-2.5 rounded-xl transition-all" style="background-color: var(--glass-bg); color: var(--text-muted);">
+                    <button class="p-2.5 rounded-xl transition-all" onclick="AdminApp.switchSection('settings')" style="background-color: var(--glass-bg); color: var(--text-muted);">
                         <i class="ph-bold ph-gear text-xl"></i>
                     </button>
                 </div>
@@ -96,9 +96,52 @@
             }
         }
 
+    <!-- Global Modals System -->
+    <div id="global-modal-container" class="modal-overlay hidden z-[100]">
+        <div id="modal-content-target" class="w-full h-full flex items-center justify-center p-6">
+            <!-- Dynamic Modals (Ban, Warn, Create, Delete) injected here -->
+        </div>
+    </div>
+
+    <!-- Side Drawer (Record Inspection) -->
+    <div id="side-drawer" class="fixed inset-y-0 right-0 w-[450px] z-[90] translate-x-full transition-transform duration-500 backdrop-blur-3xl shadow-[-20px_0_50px_rgba(0,0,0,0.5)] border-l" style="background-color: var(--surface-glass); border-color: var(--border-color);">
+        <div id="drawer-content-target" class="h-full flex flex-col">
+            <!-- Dynamic Drawer Content injected here -->
+        </div>
+    </div>
+
+    <!-- UI State Handlers -->
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            if (body.classList.contains('light')) {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                icon.classList.remove('ph-sun');
+                icon.classList.add('ph-moon');
+                localStorage.setItem('admin-theme', 'dark');
+            } else {
+                body.classList.remove('dark');
+                body.classList.add('light');
+                icon.classList.remove('ph-moon');
+                icon.classList.add('ph-sun');
+                localStorage.setItem('admin-theme', 'light');
+            }
+        }
+
         function toggleMobileSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('-translate-x-full');
+        }
+
+        function closeModal() {
+            document.getElementById('global-modal-container').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function closeDrawer() {
+            document.getElementById('side-drawer').classList.add('translate-x-full');
         }
 
         // Apply saved theme

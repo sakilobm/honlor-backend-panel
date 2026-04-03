@@ -15,12 +15,35 @@ class REST
 
     public function __construct() { $this->inputs(); }
 
-    public function response(string $data, int $status): void
+    public function response($data, int $status = 200): void
     {
         $this->_code = $status;
         $this->setHeaders();
-        echo $data;
+        if (is_array($data) || is_object($data)) {
+            echo json_encode($data);
+        } else {
+            echo $data;
+        }
         exit;
+    }
+
+    /**
+     * Get JSON payload from request body.
+     */
+    public function getJsonPayload(): array
+    {
+        $input = file_get_contents('php://input');
+        return json_decode($input, true) ?? [];
+    }
+
+    /**
+     * Require the user to be authenticated.
+     */
+    public function requireAuth(): void
+    {
+        if (!\Aether\Session::isAuthenticated()) {
+            $this->response(['error' => 'Authentication required'], 401);
+        }
     }
 
     public function get_request_method(): string { return strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET'); }

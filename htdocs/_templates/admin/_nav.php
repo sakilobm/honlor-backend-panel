@@ -1,5 +1,5 @@
 <?php use Aether\Session; ?>
-<aside id="sidebar" class="w-72 border-r transition-all duration-300 md:relative fixed inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0" style="background-color: var(--surface); border-color: var(--border-color);">
+<aside id="sidebar" class="w-72 border-r transition-all duration-300 md:relative fixed inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0 overflow-hidden flex flex-col" style="background-color: var(--surface); border-color: var(--border-color);">
     <div class="p-8 pb-4">
         <!-- Brand -->
         <div class="flex items-center gap-3 mb-8">
@@ -14,19 +14,19 @@
         
         <!-- Primary Nav -->
         <nav class="space-y-1">
-            <a href="/admin?current_page=dashboard" class="nav-item <?= Session::getCurrentPageIdentifier() === 'dashboard' ? 'active' : '' ?>">
+            <a href="/admin?page=dashboard" class="nav-item <?= Session::getCurrentPageIdentifier() === 'dashboard' ? 'active' : '' ?>">
                 <i class="ph-bold ph-squares-four text-xl"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="/admin?current_page=users" class="nav-item <?= Session::getCurrentPageIdentifier() === 'users' ? 'active' : '' ?>">
+            <a href="/admin?page=users" class="nav-item <?= Session::getCurrentPageIdentifier() === 'users' ? 'active' : '' ?>">
                 <i class="ph-bold ph-users text-xl"></i>
                 <span>Users</span>
             </a>
-            <a href="/admin?current_page=messages" class="nav-item <?= Session::getCurrentPageIdentifier() === 'messages' ? 'active' : '' ?>">
+            <a href="/admin?page=messages" class="nav-item <?= Session::getCurrentPageIdentifier() === 'messages' ? 'active' : '' ?>">
                 <i class="ph-bold ph-chats-circle text-xl"></i>
                 <span>Messages</span>
             </a>
-            <a href="/admin?current_page=channels" class="nav-item <?= Session::getCurrentPageIdentifier() === 'channels' ? 'active' : '' ?>">
+            <a href="/admin?page=channels" class="nav-item <?= Session::getCurrentPageIdentifier() === 'channels' ? 'active' : '' ?>">
                 <i class="ph-bold ph-graph text-xl"></i>
                 <span>Channels</span>
             </a>
@@ -37,17 +37,29 @@
     <div class="p-8 py-4 flex-grow overflow-y-auto">
         <h3 class="px-4 mb-4 text-[10px] uppercase font-bold tracking-widest" style="color: var(--text-muted);">Management</h3>
         <nav class="space-y-1">
-            <a href="/admin?current_page=ads" class="nav-item <?= Session::getCurrentPageIdentifier() === 'ads' ? 'active' : '' ?>">
+            <a href="/admin?page=ads" class="nav-item <?= Session::getCurrentPageIdentifier() === 'ads' ? 'active' : '' ?>">
                 <i class="ph-bold ph-megaphone text-xl"></i>
                 <span>Ads Manager</span>
             </a>
-            <a href="/admin?current_page=reports" class="nav-item <?= Session::getCurrentPageIdentifier() === 'reports' ? 'active' : '' ?>">
+            <a href="/admin?page=reports" class="nav-item <?= Session::getCurrentPageIdentifier() === 'reports' ? 'active' : '' ?>">
                 <i class="ph-bold ph-shield-warning text-xl"></i>
                 <span>Reports</span>
             </a>
-            <a href="/admin?current_page=analytics" class="nav-item <?= Session::getCurrentPageIdentifier() === 'analytics' ? 'active' : '' ?>">
+            <a href="/admin?page=analytics" class="nav-item <?= Session::getCurrentPageIdentifier() === 'analytics' ? 'active' : '' ?>">
                 <i class="ph-bold ph-activity text-xl"></i>
                 <span>Analytics</span>
+            </a>
+        </nav>
+
+        <h3 class="px-4 mt-8 mb-4 text-[10px] uppercase font-bold tracking-widest" style="color: var(--text-muted);">System</h3>
+        <nav class="space-y-1">
+            <a href="/admin?page=settings" class="nav-item <?= Session::getCurrentPageIdentifier() === 'settings' ? 'active' : '' ?>">
+                <i class="ph-bold ph-sliders text-xl"></i>
+                <span>Control Center</span>
+            </a>
+            <a href="/admin?page=logs" class="nav-item <?= Session::getCurrentPageIdentifier() === 'logs' ? 'active' : '' ?>">
+                <i class="ph-bold ph-terminal-window text-xl"></i>
+                <span>Server Health</span>
             </a>
         </nav>
     </div>
