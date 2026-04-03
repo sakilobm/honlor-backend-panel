@@ -1,0 +1,19 @@
+{
+  "name": "honlor-assets-build",
+  "version": "1.0.0",
+  "description": "Grunt build system for Honlor Admin Panel",
+  "main": "Gruntfile.js",
+  "scripts": {
+    "start": "grunt",
+    "watch": "grunt watch"
+  },
+  "devDependencies": {
+    "grunt": "^1.6.1",
+    "grunt-contrib-concat": "^2.1.0",
+    "grunt-contrib-uglify": "^5.2.2",
+    "grunt-contrib-cssmin": "^5.0.0",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-obfuscator": "^0.6.1"
+  }
+}

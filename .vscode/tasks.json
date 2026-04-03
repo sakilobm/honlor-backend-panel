@@ -1,0 +1,42 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "echo",
+            "type": "shell",
+            "command": "echo Hello"
+        },
+        {
+            "label": "Apache Error Log",
+            "type": "shell",
+            "command": "tail -f /var/log/apache2/error.log"
+        },
+        {
+            "label": "Apache Access Log",
+            "type": "shell",
+            "command": "tail -f /var/log/apache2/access.log"
+        },
+        {
+            "label": "PHP Error Log",
+            "type": "shell",
+            "command": "tail -f /var/log/php/error.log"
+        },
+        {
+            "label": "PHP Access Log",
+            "type": "shell",
+            "command": "tail -f /var/log/php/access.log"
+        },
+        {
+            "label": "PHP Slow Log",
+            "type": "shell",
+            "command": "tail -f /var/log/php/slow.log"
+        },
+        {
+            "label": "PHP Slow Log",
+            "type": "shell",
+            "command": "tail -f /var/log/php/slow.log"
+        },
+    ]
+}
