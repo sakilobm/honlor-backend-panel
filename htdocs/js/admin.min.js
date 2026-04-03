@@ -2,7 +2,7 @@
  * Honlor Admin App
  * ================
  * Handles interactive logic for Dashboard and Ads Manager.
- * Optimized for High-Fidelity UI Overhaul (v8).
+ * Optimized for High-Fidelity UI Overhaul (v10).
  */
 
 const AdminApp = {
@@ -28,7 +28,6 @@ const AdminApp = {
         this.currentRange = range;
         
         ApiClient.get('dashboard', 'metrics', { range: range }).then(data => {
-            // Update Stat Cards (IDs matched to dashboard.php v8)
             if (document.getElementById('stat-total-users')) {
                 document.getElementById('stat-total-users').innerText = data.total_users.toLocaleString();
             }
@@ -39,11 +38,9 @@ const AdminApp = {
                 document.getElementById('stat-active-ads').innerText = data.active_ads || 0;
             }
 
-            // Render Chart
             this.renderGrowthChart(data.growth_data);
         }).catch(err => {
             console.error(err);
-            // toast.error('Load Failed', 'Could not fetch dashboard metrics.');
         });
     },
 
@@ -52,10 +49,7 @@ const AdminApp = {
         if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
-        
-        if (this.chart) {
-            this.chart.destroy();
-        }
+        if (this.chart) this.chart.destroy();
 
         const isLight = document.body.classList.contains('light');
         const primaryColor = '#7c6aff';
@@ -137,32 +131,38 @@ const AdminApp = {
 
         ApiClient.get('ads', 'list').then(ads => {
             tbody.innerHTML = '';
+            
+            // Update badge count if exists
+            const badge = document.getElementById('ads-count-badge');
+            if (badge) badge.innerText = ads.length + ' Total';
+
             ads.forEach(ad => {
                 const tr = document.createElement('tr');
-                tr.className = 'table-row border-b border-white/5 hover:bg-white/5 transition-colors';
+                tr.className = 'hover:bg-white/5 transition-colors group';
                 
-                const badgeClass = ad.status === 'Active' ? 'badge-success' : (ad.status === 'Paused' ? 'badge-warning' : 'badge-neutral');
+                const status = ad.status || 'Active';
+                const badgeClass = status === 'Active' ? 'badge-success' : (status === 'Paused' ? 'badge-warning' : 'badge-neutral');
                 const ctr = ad.impressions > 0 ? ((ad.clicks / ad.impressions) * 100).toFixed(1) : '0.0';
 
                 tr.innerHTML = `
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-lg">
-                                <i class="ph ph-lightning"></i>
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                <i class="ph ph-megaphone-simple text-xl"></i>
                             </div>
                             <div>
                                 <p class="font-bold text-sm text-white">${ad.name}</p>
-                                <p class="text-[11px] text-gray-500 font-medium">CAM-${ad.id}</p>
+                                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">CAM-${ad.id}</p>
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4"><span class="${badgeClass}">${ad.status}</span></td>
-                    <td class="px-6 py-4 text-sm font-medium text-gray-300">$${parseFloat(ad.budget).toLocaleString()}</td>
-                    <td class="px-6 py-4 text-sm font-bold text-white">${ctr}%</td>
-                    <td class="px-6 py-4 text-right">
+                    <td class="px-6 py-5"><span class="${badgeClass}">${status}</span></td>
+                    <td class="px-6 py-5 text-sm font-bold text-gray-300">$${parseFloat(ad.budget).toLocaleString()}</td>
+                    <td class="px-6 py-5 text-center"><span class="text-sm font-bold text-white">${ctr}%</span></td>
+                    <td class="px-6 py-5 text-right">
                         <div class="flex justify-end gap-2">
-                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-400"><i class="ph ph-pencil"></i></button>
-                            <button class="p-2 hover:bg-orange-500/10 hover:text-orange-400 rounded-xl transition-all text-gray-400"><i class="ph ph-pause"></i></button>
+                            <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500" title="Edit"><i class="ph ph-pencil-simple text-xl"></i></button>
+                            <button class="p-2 hover:bg-orange-500/10 hover:text-orange-400 rounded-xl transition-all text-gray-500" title="Pause"><i class="ph ph-pause-circle text-xl"></i></button>
                         </div>
                     </td>
                 `;
