@@ -139,22 +139,28 @@ $allSettings = Settings::getAll();
             <div class="stat-card">
                  <h3 class="text-sm font-bold mb-6 uppercase tracking-widest" style="color: var(--text-muted);">Audit Trail</h3>
                  <div class="space-y-4">
+                     <?php
+                     $db = Aether\Database::getConnection();
+                     $stmt = $db->query("SELECT l.*, a.username FROM logs l LEFT JOIN auth a ON l.user_id = a.id WHERE l.action LIKE 'Updated setting%' ORDER BY l.created_at DESC LIMIT 5");
+                     $auditLogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                     if ($auditLogs):
+                         foreach ($auditLogs as $log):
+                     ?>
                      <div class="flex gap-4">
                          <div class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
                          <div>
-                             <p class="text-xs font-bold">Admin Marcus</p>
-                             <p class="text-[10px] text-gray-500">Updated Ad Serving: ON</p>
-                             <p class="text-[9px] text-gray-600 uppercase font-bold mt-0.5">14m ago</p>
+                             <p class="text-xs font-bold"><?= htmlspecialchars($log['username'] ?? 'System') ?></p>
+                             <p class="text-[10px] text-gray-500"><?= htmlspecialchars($log['action']) ?></p>
+                             <p class="text-[9px] text-gray-600 uppercase font-bold mt-0.5"><?= date('H:i', strtotime($log['created_at'])) ?> ago</p>
                          </div>
                      </div>
-                     <div class="flex gap-4">
-                         <div class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
-                         <div>
-                             <p class="text-xs font-bold">System Root</p>
-                             <p class="text-[10px] text-gray-500">Backup sequence complete</p>
-                             <p class="text-[9px] text-gray-600 uppercase font-bold mt-0.5">1h ago</p>
-                         </div>
-                     </div>
+                     <?php 
+                         endforeach;
+                     else:
+                     ?>
+                     <p class="text-[10px] text-gray-500 italic">No recent configuration changes.</p>
+                     <?php endif; ?>
                  </div>
             </div>
         </div>

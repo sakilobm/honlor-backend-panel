@@ -26,6 +26,7 @@ ${basename(__FILE__, '.php')} = function () {
             'total_users'       => DashboardStats::getTotalUsers(),
             'messages_today'    => DashboardStats::getMessagesToday(),
             'active_channels'   => DashboardStats::getActiveChannels(),
+            'active_ads'        => \App\Ad::getActiveCount(),
             'growth_data'       => DashboardStats::getUserGrowth($range),
             'server_health'     => [
                 'status' => 'Operational',

@@ -66,6 +66,7 @@ const AdminApp = {
 
             this.renderGrowthChart(data.growth_data);
             this.loadRecentActivity();
+            this.loadRecentMembers();
         }).catch(err => {
             console.error(err);
         });
@@ -91,6 +92,30 @@ const AdminApp = {
                 `;
             });
             target.innerHTML = html || '<p class="text-center text-gray-500 py-8">No recent activity</p>';
+        });
+    },
+
+    loadRecentMembers: function() {
+        // The recent members grid is the last grid in the overview section
+        const target = document.querySelector('#section-overview .grid-cols-2.md\\:grid-cols-4.lg\\:grid-cols-6');
+        if (!target) return;
+
+        ApiClient.get('users', 'recent').then(data => {
+            let html = '';
+            data.users.forEach(user => {
+                const statusBadge = user.active == 1 ? 'badge-success' : 'badge-neutral';
+                const statusText = user.active == 1 ? 'Online' : 'Offline';
+                const name = user.firstname ? user.firstname : user.username;
+                
+                html += `
+                    <div class="border p-4 rounded-3xl text-center group transition-all hover:bg-glass-white" style="border-color: var(--border-color); background-color: var(--surface);">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}" class="w-16 h-16 mx-auto rounded-2xl mb-3 bg-blue-500/10 p-1 group-hover:scale-105 transition-transform" alt="Avatar">
+                        <p class="font-bold text-sm truncate">${name}</p>
+                        <span class="${statusBadge} mt-2 inline-block">${statusText}</span>
+                    </div>
+                `;
+            });
+            target.innerHTML = html || '<p class="text-center text-gray-500 py-8 col-span-full">No recent members</p>';
         });
     },
 

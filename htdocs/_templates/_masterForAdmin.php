@@ -139,6 +139,7 @@
     </main>
 
     <?php Session::loadTemplate('admin/_toastv3'); ?>
+    <?php Session::loadTemplate('admin/_modals'); ?>
 
     <!-- CDNs and Infrastructure Scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>

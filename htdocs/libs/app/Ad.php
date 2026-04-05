@@ -62,6 +62,17 @@ class Ad
     }
 
     /**
+     * Get active ads count.
+     *
+     * @return int
+     */
+    public static function getActiveCount(): int
+    {
+        $db = Database::getConnection();
+        return (int)$db->query("SELECT COUNT(*) FROM `ads` WHERE `status` = 'Active'")->fetchColumn();
+    }
+
+    /**
      * Ad Constructor.
      *
      * @param int $id

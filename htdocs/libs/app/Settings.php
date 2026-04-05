@@ -24,7 +24,9 @@ class Settings {
         $db = Database::getConnection();
         $stmt = $db->prepare("INSERT INTO settings (s_key, s_value, s_description) 
                             VALUES (:key, :value, :desc) 
-                            ON DUPLICATE KEY UPDATE s_value = :value, s_description = COALESCE(:desc, s_description)");
+                            ON DUPLICATE KEY UPDATE 
+                                s_value = VALUES(s_value), 
+                                s_description = COALESCE(VALUES(s_description), s_description)");
         return $stmt->execute([
             'key' => $key,
             'value' => $value,
