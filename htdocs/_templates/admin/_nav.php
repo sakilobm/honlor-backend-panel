@@ -76,7 +76,7 @@
     
     <!-- Footer / Profile -->
     <div class="p-6">
-        <div class="stat-card !p-4 !rounded-[2rem] bg-glass-white backdrop-blur-xl border-white/5 flex items-center justify-between group transition-all hover:scale-[1.05]">
+        <div class="stat-card !p-4 !rounded-[2rem] bg-glass-white backdrop-blur-xl border-white/5 flex items-center justify-between group transition-all hover:scale-[1.05] cursor-pointer" onclick="AdminApp.openDrawer('user', '<?php echo Session::getUser()->id; ?>')">
             <div class="flex items-center gap-3 overflow-hidden">
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus" class="w-10 h-10 rounded-xl bg-primary/20 border border-primary/20" alt="Avatar">
                 <div class="overflow-hidden">
@@ -84,7 +84,7 @@
                     <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Online Agent</p>
                 </div>
             </div>
-            <a href="/admin?logout=1" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-lg" title="Logout">
+            <a href="/admin?logout=1" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/20" title="Logout">
                 <i class="ph-bold ph-power"></i>
             </a>
         </div>

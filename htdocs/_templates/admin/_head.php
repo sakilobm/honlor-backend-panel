@@ -145,6 +145,22 @@
         .badge-warning { @apply px-2.5 py-1 bg-yellow-500/10 text-yellow-600 text-[10px] font-bold rounded-full border border-yellow-500/20 whitespace-nowrap; }
         .badge-danger { @apply px-2.5 py-1 bg-red-500/10 text-red-500 text-[10px] font-bold rounded-full border border-red-500/20 whitespace-nowrap; }
         .badge-neutral { @apply px-2.5 py-1 bg-gray-500/10 text-gray-500 text-[10px] font-bold rounded-full border border-gray-500/20 whitespace-nowrap; }
+        
+        /* Modals System */
+        .modal-overlay {
+            @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6;
+        }
+        .modal-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow);
+            @apply w-full max-w-2xl rounded-[2.5rem] overflow-hidden flex flex-col max-h-[90vh];
+            animation: zoomIn 0.3s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
 
         /* Toast Notifications */
         .toast-panel {
@@ -168,6 +184,20 @@
         .toast.error { border-left: 4px solid #EF4444; }
         .toast.warning { border-left: 4px solid #F59E0B; }
         .toast.help { border-left: 4px solid #3B82F6; }
+
+        /* Animation System */
+        .fade-in { animation: fadeIn 0.5s ease forwards; }
+        .animate-in { animation-fill-mode: both; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
 
         @keyframes slideIn {
             from { transform: translateX(20px); opacity: 0; }

@@ -165,6 +165,8 @@
 
     <!-- UI State Handlers -->
     <script>
+        window.adminId = '<?php echo Session::getUser()->id; ?>';
+        
         function toggleTheme() {
             const html = document.documentElement;
             const icon = document.getElementById('theme-icon');
@@ -182,17 +184,6 @@
         function toggleMobileSidebar() {
             const sidebar = document.getElementById('sidebar');
             if (sidebar) sidebar.classList.toggle('-translate-x-full');
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('global-modal-container');
-            if (modal) modal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        function closeDrawer() {
-            const drawer = document.getElementById('side-drawer');
-            if (drawer) drawer.classList.add('translate-x-full');
         }
 
         // Apply saved theme icon on load

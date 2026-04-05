@@ -589,7 +589,7 @@ const AdminApp = {
                         </form>
                         <div class="pt-6 border-t border-white/5 space-y-3">
                             <button onclick="AdminApp.submitProfileEdit()" class="w-full btn-primary !justify-center py-4">Save Identity Changes</button>
-                            <button class="w-full btn-secondary !justify-center py-4 text-red-500 border-red-500/20 hover:bg-red-500/10" onclick="AdminApp.executeAction('toggle_block', '${user.id}')">${user.blocked ? 'Unblock User' : 'Suspend Account'}</button>
+                            ${user.id != window.adminId ? `<button class="w-full btn-secondary !justify-center py-4 text-red-500 border-red-500/20 hover:bg-red-500/10" onclick="AdminApp.executeAction('toggle_block', '${user.id}')">${user.blocked ? 'Unblock User' : 'Suspend Account'}</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -610,16 +610,16 @@ const AdminApp = {
                             <input type="hidden" name="id" value="${ad.id}">
                             <div class="space-y-2">
                                 <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Campaign Reference</label>
-                                <input type="text" name="name" value="${ad.name}" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
+                                <input type="text" name="name" value="${ad.name}" class="w-full bg-transparent border rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all" style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily Limit ($)</label>
-                                    <input type="number" step="0.01" name="budget" value="${ad.budget}" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
+                                    <input type="number" step="0.01" name="budget" value="${ad.budget}" class="w-full bg-transparent border rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all" style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">
                                 </div>
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Strategy</label>
-                                    <select name="type" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
+                                    <select name="type" class="w-full bg-transparent border rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all" style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">
                                         <option value="Social" ${ad.type === 'Social' ? 'selected' : ''}>Social</option>
                                         <option value="Search" ${ad.type === 'Search' ? 'selected' : ''}>Search</option>
                                         <option value="Display" ${ad.type === 'Display' ? 'selected' : ''}>Display</option>
@@ -628,7 +628,7 @@ const AdminApp = {
                             </div>
                             <div class="space-y-2">
                                 <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Injection Logic (Ads Code)</label>
-                                <textarea name="ad_code" rows="10" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-xs font-mono text-primary focus:border-primary outline-none transition-all resize-none" placeholder="<!-- Paste raw ad script here -->">${ad.ad_code || ''}</textarea>
+                                <textarea name="ad_code" rows="10" class="w-full bg-transparent border rounded-2xl p-4 text-xs font-mono focus:border-primary outline-none transition-all resize-none" style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);" placeholder="<!-- Paste raw ad script here -->">${ad.ad_code || ''}</textarea>
                             </div>
                         </form>
                         <div class="pt-6 border-t border-white/5">
