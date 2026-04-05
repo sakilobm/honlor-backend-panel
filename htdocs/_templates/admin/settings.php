@@ -49,7 +49,7 @@ $allSettings = Settings::getAll();
                             <input type="checkbox" class="sr-only peer" 
                                    onchange="AdminApp.toggleSetting('maintenance_mode', this.checked)"
                                    <?= Settings::get('maintenance_mode') === 'on' ? 'checked' : '' ?>>
-                            <div class="w-14 h-7 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary shadow-[0_0_15px_rgba(124,106,255,0.3)]"></div>
+                            <div class="w-14 h-7 bg-[var(--toggle-off)] border border-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary shadow-[0_0_15px_rgba(124,106,255,0.3)]"></div>
                         </label>
                     </div>
 
@@ -68,7 +68,7 @@ $allSettings = Settings::getAll();
                             <input type="checkbox" class="sr-only peer" 
                                    onchange="AdminApp.toggleSetting('public_registration', this.checked)"
                                    <?= Settings::get('public_registration') === 'on' ? 'checked' : '' ?>>
-                            <div class="w-14 h-7 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+                            <div class="w-14 h-7 bg-[var(--toggle-off)] border border-white/5 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
                         </label>
                     </div>
 
@@ -87,7 +87,7 @@ $allSettings = Settings::getAll();
                             <input type="checkbox" class="sr-only peer" 
                                    onchange="AdminApp.toggleSetting('ad_serving', this.checked)"
                                    <?= Settings::get('ad_serving') === 'on' ? 'checked' : '' ?>>
-                            <div class="w-14 h-7 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+                            <div class="w-14 h-7 bg-[var(--toggle-off)] border border-white/5 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
                         </label>
                     </div>
                 </div>

@@ -25,14 +25,17 @@ const ApiClient = (() => {
      * @returns {Promise<Object>} Parsed JSON response
      */
     async function _request(method, namespace, action, payload = {}) {
-        const url = `${BASE}${encodeURIComponent(namespace)}/${encodeURIComponent(action)}`;
+        let url = `${BASE}${encodeURIComponent(namespace)}/${encodeURIComponent(action)}`;
 
         const options = {
             method,
             credentials: 'same-origin',
         };
 
-        if (method === 'POST') {
+        if (method === 'GET' && Object.keys(payload).length > 0) {
+            const params = new URLSearchParams(payload).toString();
+            url += `?${params}`;
+        } else if (method === 'POST') {
             const formData = new FormData();
             Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
             options.body = formData;
@@ -52,8 +55,8 @@ const ApiClient = (() => {
     }
 
     return {
-        /** GET /api/{namespace}/{action} */
-        get:    (ns, action)          => _request('GET',  ns, action),
+        /** GET /api/{namespace}/{action} with query params */
+        get:    (ns, action, params)  => _request('GET',  ns, action, params),
         /** POST /api/{namespace}/{action} with FormData payload */
         post:   (ns, action, payload) => _request('POST', ns, action, payload),
         /** DELETE /api/{namespace}/{action} */

@@ -175,12 +175,53 @@ class User
         return $this->setBlocked($current === 1 ? 0 : 1);
     }
 
-    /**
-     * Toggle active status.
-     */
     public function toggleActive(): bool
     {
         $current = (int)$this->getActive();
         return $this->setActive($current === 1 ? 0 : 1);
+    }
+
+    /**
+     * Update user profile and email.
+     */
+    public function updateProfile(array $data): bool
+    {
+        $conn = Database::getConnection();
+        try {
+            if (!$conn->inTransaction()) {
+                $conn->beginTransaction();
+            }
+
+            // 1. Update auth table (email)
+            if (isset($data['email'])) {
+                $stmt = $conn->prepare("UPDATE `auth` SET `email` = ? WHERE `id` = ?");
+                $stmt->execute([$data['email'], $this->id]);
+            }
+
+            // 2. Update profiles table
+            $fields = ['firstname', 'lastname', 'bio', 'avatar'];
+            $updates = [];
+            $params = [];
+            foreach ($fields as $field) {
+                if (isset($data[$field])) {
+                    $updates[] = "`$field` = ?";
+                    $params[] = $data[$field];
+                }
+            }
+
+            if (!empty($updates)) {
+                $params[] = $this->id;
+                $sql = "UPDATE `profiles` SET " . implode(', ', $updates) . " WHERE `id` = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute($params);
+            }
+
+            $conn->commit();
+            return true;
+        } catch (Exception $e) {
+            if ($conn->inTransaction()) $conn->rollBack();
+            error_log("User::updateProfile() error: " . $e->getMessage());
+            return false;
+        }
     }
 }

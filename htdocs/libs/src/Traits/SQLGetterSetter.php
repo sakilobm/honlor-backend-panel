@@ -17,7 +17,7 @@ trait SQLGetterSetter
      */
     public function __call(string $name, array $arguments)
     {
-        $column = preg_replace('/\B([A-Z])/', '_$1', substr($name, 3));
+        $column = preg_replace('/(?<=[a-z])([A-Z])/', '_$1', substr($name, 3));
         $column = strtolower(preg_replace('/[^0-9a-zA-Z_]/', '', $column));
 
         if (str_starts_with($name, 'get')) {

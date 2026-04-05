@@ -95,4 +95,49 @@ class Ad
         $new = ($current === 'Active') ? 'Paused' : 'Active';
         return $this->setStatus($new);
     }
+
+    /**
+     * Create a new ad campaign.
+     */
+    public static function create(array $data): bool
+    {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("INSERT INTO ads (name, type, budget, start_date, end_date, ad_code) VALUES (?, ?, ?, ?, ?, ?)");
+        return $stmt->execute([
+            $data['name'],
+            $data['type'],
+            $data['budget'],
+            $data['start_date'],
+            $data['end_date'],
+            $data['ad_code'] ?? ''
+        ]);
+    }
+
+    /**
+     * Update an existing ad campaign.
+     */
+    public static function update(int $id, array $data): bool
+    {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("UPDATE ads SET name = ?, type = ?, budget = ?, start_date = ?, end_date = ?, ad_code = ? WHERE id = ?");
+        return $stmt->execute([
+            $data['name'],
+            $data['type'],
+            $data['budget'],
+            $data['start_date'],
+            $data['end_date'],
+            $data['ad_code'] ?? '',
+            $id
+        ]);
+    }
+
+    /**
+     * Delete an ad campaign.
+     */
+    public static function delete(int $id): bool
+    {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("DELETE FROM ads WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
 }

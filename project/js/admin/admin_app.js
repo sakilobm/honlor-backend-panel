@@ -30,6 +30,9 @@ const AdminApp = {
             case 'ads':
                 this.initAdsManager();
                 break;
+            case 'deletion_requests':
+                this.initDeletionRequests();
+                break;
             case 'logs':
                 this.initLogs();
                 break;
@@ -42,6 +45,17 @@ const AdminApp = {
                 if (pane) pane.classList.add('hidden');
             }
         };
+    },
+
+    toggleNotifications: function() {
+        const pane = document.getElementById('notification-pane');
+        if (pane) {
+            pane.classList.toggle('hidden');
+        }
+    },
+
+    switchSection: function(section) {
+        window.location.href = `/admin?page=${section}`;
     },
 
     /**
@@ -326,6 +340,61 @@ const AdminApp = {
     },
 
     /**
+     * Deletion Requests Logic
+     */
+    initDeletionRequests: function() {
+        this.loadDeletionRequests();
+    },
+
+    loadDeletionRequests: function() {
+        const tbody = document.getElementById('deletion-requests-table-body');
+        if (!tbody) return;
+
+        ApiClient.get('users', 'deletion_requests').then(data => {
+            let html = '';
+            data.requests.forEach(req => {
+                const statusBadge = req.status === 'pending' ? 'badge-warning' : (req.status === 'approved' ? 'badge-success' : 'badge-danger');
+                
+                html += `
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-sm">${req.username}</p>
+                            <p class="text-[11px] text-gray-500 font-medium">${req.email}</p>
+                        </td>
+                        <td class="px-6 py-4">
+                            <p class="text-xs text-gray-400 italic max-w-xs truncate">${req.reason || 'No reason provided'}</p>
+                        </td>
+                        <td class="px-6 py-4"><span class="${statusBadge} uppercase">${req.status}</span></td>
+                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(req.created_at).toLocaleDateString()}</td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex justify-end gap-2">
+                                <button onclick="AdminApp.handleDeletion('${req.id}', 'approved')" class="p-2 hover:bg-green-500/10 hover:text-green-500 rounded-xl transition-all text-gray-500" title="Approve"><i class="ph ph-check-circle text-lg"></i></button>
+                                <button onclick="AdminApp.handleDeletion('${req.id}', 'rejected')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500" title="Reject"><i class="ph ph-prohibit text-lg"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No pending requests</td></tr>';
+            
+            if (document.getElementById('pending-deletion-count')) {
+                document.getElementById('pending-deletion-count').innerText = data.stats.pending;
+            }
+        });
+    },
+
+    handleDeletion: function(id, status) {
+        if (!confirm(`Are you sure you want to ${status} this deletion request?`)) return;
+
+        ApiClient.post('users', 'process_deletion', { id, status }).then(res => {
+            toast.success('Governance', res.message);
+            this.loadDeletionRequests();
+        }).catch(err => {
+            toast.error('Error', err.error || 'Failed to process request.');
+        });
+    },
+
+    /**
      * Logs Logic
      */
     initLogs: function() {
@@ -372,14 +441,17 @@ const AdminApp = {
                 e.preventDefault();
                 const formData = new FormData(form);
                 const payload = Object.fromEntries(formData.entries());
+                const isEdit = payload.id && payload.id !== '';
 
-                ApiClient.post('ads', 'create', payload).then(res => {
-                    toast.success('Success', res.message);
+                const endpoint = isEdit ? 'update' : 'create';
+
+                ApiClient.post('ads', endpoint, payload).then(res => {
+                    toast.success('Marketing', res.message);
                     closeModal();
                     form.reset();
                     this.loadAdList();
                 }).catch(err => {
-                    toast.error('Error', err.error || 'Failed to create campaign.');
+                    toast.error('Error', err.error || 'Failed to process campaign.');
                 });
             };
         }
@@ -396,13 +468,16 @@ const AdminApp = {
                     <tr class="hover:bg-white/5 transition-colors">
                         <td class="px-6 py-4">
                             <p class="font-bold text-sm">${ad.name}</p>
-                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">${ad.type}</p>
+                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">${ad.type} ${ad.ad_code ? '• CODE SET' : ''}</p>
                         </td>
                         <td class="px-6 py-4"><span class="badge-success">${ad.status}</span></td>
                         <td class="px-6 py-4 text-sm font-bold">$${parseFloat(ad.budget).toLocaleString()}</td>
                         <td class="px-6 py-4 text-center text-xs font-bold text-gray-400">${((ad.clicks/ad.impressions)*100 || 0).toFixed(2)}%</td>
                         <td class="px-6 py-4 text-right">
-                             <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500"><i class="ph ph-dots-three-outline-vertical text-lg"></i></button>
+                             <div class="flex justify-end gap-2">
+                                <button onclick="AdminApp.openDrawer('ad', '${ad.id}')" class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500"><i class="ph ph-note-pencil text-lg"></i></button>
+                                <button onclick="AdminApp.deleteAd('${ad.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-trash text-lg"></i></button>
+                             </div>
                         </td>
                     </tr>
                 `;
@@ -412,6 +487,14 @@ const AdminApp = {
             if (document.getElementById('ads-count-badge')) {
                 document.getElementById('ads-count-badge').innerText = `${data.ads.length} Total`;
             }
+        });
+    },
+
+    deleteAd: function(id) {
+        if (!confirm('Permanently delete this campaign?')) return;
+        ApiClient.post('ads', 'delete', { id }).then(res => {
+            toast.success('Confirmed', 'Campaign removed.');
+            this.loadAdList();
         });
     },
 
@@ -456,46 +539,133 @@ const AdminApp = {
         const target = document.getElementById('drawer-content-target');
         if (!drawer || !target) return;
 
+        // Show loading state immediately to fix "empty UI" bug
+        target.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full space-y-4 opacity-50">
+                <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Fetching Intelligence...</p>
+            </div>
+        `;
+        drawer.classList.remove('translate-x-full');
+
         if (type === 'user') {
             ApiClient.get('users', 'details', { id }).then(data => {
                 const user = data.user;
                 target.innerHTML = `
                     <div class="p-8 h-full flex flex-col">
                         <div class="flex items-center justify-between mb-8">
-                            <h3 class="text-xl font-bold uppercase tracking-widest text-primary">Record Inspection</h3>
+                            <h3 class="text-xl font-bold uppercase tracking-widest text-primary">Identity Profile</h3>
                             <button onclick="closeDrawer()" class="p-2 hover:bg-white/10 rounded-xl transition-all">
                                 <i class="ph ph-x text-2xl"></i>
                             </button>
                         </div>
-                        <div class="space-y-6 flex-grow">
-                             <div class="text-center p-6 bg-white/5 rounded-[2.5rem] border border-white/5">
-                                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}" class="w-24 h-24 rounded-3xl mx-auto mb-4 border-2 border-primary/20">
-                                 <h4 class="text-2xl font-bold">${user.username}</h4>
-                                 <p class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mt-1">Verified Account</p>
-                             </div>
-                             
-                             <div class="stat-card !p-6 space-y-4">
-                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">Status</span>
-                                    <span class="${user.blocked ? 'badge-danger' : (user.active ? 'badge-success' : 'badge-neutral')}">${user.blocked ? 'Blocked' : (user.active ? 'Active' : 'Inactive')}</span>
-                                 </div>
-                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">E-mail</span>
-                                    <span class="text-xs font-medium text-white">${user.email}</span>
-                                 </div>
-                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">Created</span>
-                                    <span class="text-xs font-medium text-white">${new Date(user.joined).toLocaleDateString()}</span>
-                                 </div>
-                             </div>
+                        <form id="profile-edit-form" class="space-y-6 flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                            <input type="hidden" name="id" value="${user.id}">
+                            <div class="text-center p-6 bg-white/5 rounded-[2.5rem] border border-white/5 mb-6">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}" class="w-24 h-24 rounded-3xl mx-auto mb-4 border-2 border-primary/20">
+                                <h4 class="text-2xl font-bold">${user.username}</h4>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">First Name</label>
+                                        <input type="text" name="firstname" value="${user.firstname || ''}" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Last Name</label>
+                                        <input type="text" name="lastname" value="${user.lastname || ''}" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Private E-mail</label>
+                                    <input type="email" name="email" value="${user.email}" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Professional Bio</label>
+                                    <textarea name="bio" rows="4" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all resize-none">${user.bio || ''}</textarea>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="pt-6 border-t border-white/5 space-y-3">
+                            <button onclick="AdminApp.submitProfileEdit()" class="w-full btn-primary !justify-center py-4">Save Identity Changes</button>
+                            <button class="w-full btn-secondary !justify-center py-4 text-red-500 border-red-500/20 hover:bg-red-500/10" onclick="AdminApp.executeAction('toggle_block', '${user.id}')">${user.blocked ? 'Unblock User' : 'Suspend Account'}</button>
                         </div>
-                        <button class="w-full btn-primary !justify-center py-4" onclick="AdminApp.executeAction('toggle_block', '${user.id}')">${user.blocked ? 'Unblock User' : 'Suspend Account'}</button>
+                    </div>
+                `;
+            });
+        } else if (type === 'ad') {
+            // Fetch ad details (Assume ApiClient.get('ads', 'details', { id }) works or similar)
+            ApiClient.get('ads', 'list').then(data => {
+                const ad = data.ads.find(a => a.id == id) || {};
+                target.innerHTML = `
+                    <div class="p-8 h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-8">
+                            <h3 class="text-xl font-bold uppercase tracking-widest text-primary">Creative Console</h3>
+                            <button onclick="closeDrawer()" class="p-2 hover:bg-white/10 rounded-xl transition-all">
+                                <i class="ph ph-x text-2xl"></i>
+                            </button>
+                        </div>
+                        <form id="ad-edit-form" class="space-y-6 flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                            <input type="hidden" name="id" value="${ad.id}">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Campaign Reference</label>
+                                <input type="text" name="name" value="${ad.name}" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily Limit ($)</label>
+                                    <input type="number" step="0.01" name="budget" value="${ad.budget}" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Strategy</label>
+                                    <select name="type" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
+                                        <option value="Social" ${ad.type === 'Social' ? 'selected' : ''}>Social</option>
+                                        <option value="Search" ${ad.type === 'Search' ? 'selected' : ''}>Search</option>
+                                        <option value="Display" ${ad.type === 'Display' ? 'selected' : ''}>Display</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Injection Logic (Ads Code)</label>
+                                <textarea name="ad_code" rows="10" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-xs font-mono text-primary focus:border-primary outline-none transition-all resize-none" placeholder="<!-- Paste raw ad script here -->">${ad.ad_code || ''}</textarea>
+                            </div>
+                        </form>
+                        <div class="pt-6 border-t border-white/5">
+                            <button onclick="AdminApp.submitAdEdit()" class="w-full btn-primary !justify-center py-4">Apply Media Updates</button>
+                        </div>
                     </div>
                 `;
             });
         }
+    },
 
-        drawer.classList.remove('translate-x-full');
+    submitProfileEdit: function() {
+        const form = document.getElementById('profile-edit-form');
+        const formData = new FormData(form);
+        const payload = Object.fromEntries(formData.entries());
+
+        ApiClient.post('users', 'update_profile', payload).then(res => {
+            toast.success('Identity', res.message);
+            closeDrawer();
+            this.loadUserList();
+        }).catch(err => {
+            toast.error('Error', err.error || 'Failed to update profile.');
+        });
+    },
+
+    submitAdEdit: function() {
+        const form = document.getElementById('ad-edit-form');
+        const formData = new FormData(form);
+        const payload = Object.fromEntries(formData.entries());
+
+        ApiClient.post('ads', 'update', payload).then(res => {
+            toast.success('Marketing', res.message);
+            closeDrawer();
+            this.loadAdList();
+        }).catch(err => {
+            toast.error('Error', err.error || 'Failed to update campaign.');
+        });
     },
 
     executeAction: function(action, id) {

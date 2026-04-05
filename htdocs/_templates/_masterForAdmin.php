@@ -10,7 +10,7 @@
     <?php Session::loadTemplate('admin/_nav'); ?>
 
     <!-- Main Content Area -->
-    <main class="flex-grow flex flex-col relative overflow-hidden h-full">
+    <main class="flex-grow flex flex-col relative overflow-hidden h-full min-w-0">
         <!-- Topbar -->
         <header class="h-20 border-b flex items-center justify-between px-8 shrink-0 backdrop-blur-lg sticky top-0 z-40 transition-all duration-300" style="background-color: var(--surface-glass); border-color: var(--border-color);">
             <div class="flex items-center gap-6 flex-grow max-w-2xl">

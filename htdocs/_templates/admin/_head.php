@@ -1,7 +1,5 @@
-<?php use Aether\Session; ?>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= htmlspecialchars(get_config('project_title', 'Honlor Admin')) ?></title>
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="/assets/img/favicon.png">
 
 <!-- CDNs -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -52,6 +50,7 @@
             --text-muted: #9CA3AF;
             --border-color: rgba(255, 255, 255, 0.08);
             --glass-bg: rgba(255, 255, 255, 0.03);
+            --toggle-off: rgba(255, 255, 255, 0.1);
             --card-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
         }
         .light {
@@ -62,6 +61,7 @@
             --text-muted: #64748B;
             --border-color: rgba(0, 0, 0, 0.06);
             --glass-bg: rgba(0, 0, 0, 0.03);
+            --toggle-off: rgba(15, 23, 42, 0.08);
             --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
         }
         body { 
@@ -80,7 +80,51 @@
             color: var(--text-main);
         }
         .nav-item.active { 
-            @apply bg-primary/10 text-primary font-bold; 
+            @apply bg-primary/10 text-primary font-bold relative; 
+        }
+        .nav-item.active::before {
+            content: "";
+            @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full shadow-[0_0_10px_rgba(124,106,255,0.8)];
+        }
+        .nav-link-premium {
+            @apply flex items-center gap-3 px-4 py-3 rounded-2xl transition-all cursor-pointer relative;
+            color: var(--text-muted);
+        }
+        .nav-link-premium:hover {
+            background-color: var(--glass-bg);
+            color: var(--text-main);
+        }
+        .nav-link-premium.active {
+            @apply bg-primary/5 text-primary font-bold shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)];
+        }
+        .nav-link-premium.active::before {
+            content: "";
+            @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full shadow-[0_0_15px_#7c6aff];
+        }
+        .nav-duotone {
+            @apply w-10 h-10 rounded-xl flex items-center justify-center transition-all;
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .nav-link-premium:hover .nav-duotone {
+            @apply scale-110;
+        }
+        .nav-link-premium.active .nav-duotone {
+            @apply bg-opacity-20 border-opacity-30 opacity-100;
+        }
+        .nav-blue { @apply text-blue-400 bg-blue-400/5 border-blue-400/10; }
+        .nav-purple { @apply text-purple-400 bg-purple-400/5 border-purple-400/10; }
+        .nav-green { @apply text-green-400 bg-green-400/5 border-green-400/10; }
+        .nav-indigo { @apply text-indigo-400 bg-indigo-400/5 border-indigo-400/10; }
+        .nav-orange { @apply text-orange-400 bg-orange-400/5 border-orange-400/10; }
+        .nav-red { @apply text-red-400 bg-red-400/5 border-red-400/10; }
+        .nav-cyan { @apply text-cyan-400 bg-cyan-400/5 border-cyan-400/10; }
+        .nav-emerald { @apply text-emerald-400 bg-emerald-400/5 border-emerald-400/10; }
+        .nav-zinc { @apply text-zinc-400 bg-zinc-400/5 border-zinc-400/10; }
+        .nav-group-title {
+            @apply px-4 mb-4 text-[10px] uppercase font-black tracking-[0.2em];
+            color: var(--text-muted);
+            opacity: 0.6;
         }
         .stat-card { 
             background-color: var(--surface);

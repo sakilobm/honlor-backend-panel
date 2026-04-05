@@ -1,77 +1,92 @@
-<?php use Aether\Session; ?>
-<aside id="sidebar" class="w-72 border-r transition-all duration-300 md:relative fixed inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0 overflow-hidden flex flex-col" style="background-color: var(--surface); border-color: var(--border-color);">
+<aside id="sidebar" class="w-72 shrink-0 border-r transition-all duration-300 md:relative fixed inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0 overflow-hidden flex flex-col" style="background-color: var(--surface); border-color: var(--border-color);">
     <div class="p-8 pb-4">
         <!-- Brand -->
-        <div class="flex items-center gap-3 mb-8">
-            <div class="p-2 bg-primary rounded-xl shrink-0">
+        <div class="flex items-center gap-3 mb-10">
+            <div class="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30">
                 <i class="ph-bold ph-hexagon text-white text-xl"></i>
             </div>
             <div>
                 <h1 class="font-bold text-xl tracking-tight">Honlor</h1>
-                <p class="text-[10px] uppercase font-bold tracking-widest leading-tight" style="color: var(--text-muted);">Admin workspace</p>
+                <p class="text-[9px] uppercase font-black tracking-[0.25em] text-primary" style="opacity: 0.8;">Admin Core</p>
             </div>
         </div>
-        
-        <!-- Primary Nav -->
-        <nav class="space-y-1">
-            <a href="/admin?page=dashboard" class="nav-item <?= Session::getCurrentPageIdentifier() === 'dashboard' ? 'active' : '' ?>">
-                <i class="ph-bold ph-squares-four text-xl"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="/admin?page=users" class="nav-item <?= Session::getCurrentPageIdentifier() === 'users' ? 'active' : '' ?>">
-                <i class="ph-bold ph-users text-xl"></i>
-                <span>Users</span>
-            </a>
-            <a href="/admin?page=messages" class="nav-item <?= Session::getCurrentPageIdentifier() === 'messages' ? 'active' : '' ?>">
-                <i class="ph-bold ph-chats-circle text-xl"></i>
-                <span>Messages</span>
-            </a>
-            <a href="/admin?page=channels" class="nav-item <?= Session::getCurrentPageIdentifier() === 'channels' ? 'active' : '' ?>">
-                <i class="ph-bold ph-graph text-xl"></i>
-                <span>Channels</span>
-            </a>
-        </nav>
     </div>
     
-    <!-- Management Section -->
-    <div class="p-8 py-4 flex-grow overflow-y-auto">
-        <h3 class="px-4 mb-4 text-[10px] uppercase font-bold tracking-widest" style="color: var(--text-muted);">Management</h3>
-        <nav class="space-y-1">
-            <a href="/admin?page=ads" class="nav-item <?= Session::getCurrentPageIdentifier() === 'ads' ? 'active' : '' ?>">
-                <i class="ph-bold ph-megaphone text-xl"></i>
-                <span>Ads Manager</span>
-            </a>
-            <a href="/admin?page=reports" class="nav-item <?= Session::getCurrentPageIdentifier() === 'reports' ? 'active' : '' ?>">
-                <i class="ph-bold ph-shield-warning text-xl"></i>
-                <span>Reports</span>
-            </a>
-            <a href="/admin?page=analytics" class="nav-item <?= Session::getCurrentPageIdentifier() === 'analytics' ? 'active' : '' ?>">
-                <i class="ph-bold ph-activity text-xl"></i>
-                <span>Analytics</span>
-            </a>
-        </nav>
+    <!-- Unified Scrollable Navigation -->
+    <div class="px-8 py-0 flex-grow overflow-y-auto custom-scrollbar">
+        <!-- Workspace Nav -->
+        <div class="mb-10">
+            <h3 class="nav-group-title">Workspace</h3>
+            <nav class="space-y-1.5">
+                <a href="/admin?page=dashboard" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'dashboard' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-blue"><i class="ph-bold ph-squares-four text-lg"></i></div>
+                    <span>Overview</span>
+                </a>
+                <a href="/admin?page=users" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'users' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-purple"><i class="ph-bold ph-users text-lg"></i></div>
+                    <span>Identity Vault</span>
+                </a>
+                <a href="/admin?page=messages" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'messages' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-green"><i class="ph-bold ph-chats-circle text-lg"></i></div>
+                    <span>Moderation</span>
+                </a>
+                <a href="/admin?page=channels" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'channels' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-indigo"><i class="ph-bold ph-graph text-lg"></i></div>
+                    <span>Channels</span>
+                </a>
+            </nav>
+        </div>
 
-        <h3 class="px-4 mt-8 mb-4 text-[10px] uppercase font-bold tracking-widest" style="color: var(--text-muted);">System</h3>
-        <nav class="space-y-1">
-            <a href="/admin?page=settings" class="nav-item <?= Session::getCurrentPageIdentifier() === 'settings' ? 'active' : '' ?>">
-                <i class="ph-bold ph-sliders text-xl"></i>
-                <span>Control Center</span>
-            </a>
-            <a href="/admin?page=logs" class="nav-item <?= Session::getCurrentPageIdentifier() === 'logs' ? 'active' : '' ?>">
-                <i class="ph-bold ph-terminal-window text-xl"></i>
-                <span>Server Health</span>
-            </a>
-        </nav>
+        <div class="mb-10">
+            <h3 class="nav-group-title">Governance</h3>
+            <nav class="space-y-1.5">
+                <a href="/admin?page=ads" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'ads' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-orange"><i class="ph-bold ph-megaphone text-lg"></i></div>
+                    <span>Ads Pipeline</span>
+                </a>
+                <a href="/admin?page=reports" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'reports' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-red"><i class="ph-bold ph-shield-warning text-lg"></i></div>
+                    <span>Compliance</span>
+                </a>
+                <a href="/admin?page=deletion_requests" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'deletion_requests' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-amber"><i class="ph-bold ph-user-minus text-lg"></i></div>
+                    <span>Account Deletion</span>
+                </a>
+                <a href="/admin?page=analytics" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'analytics' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-cyan"><i class="ph-bold ph-activity text-lg"></i></div>
+                    <span>Intelligence</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="mb-4">
+            <h3 class="nav-group-title">System</h3>
+            <nav class="space-y-1.5">
+                <a href="/admin?page=settings" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'settings' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-zinc"><i class="ph-bold ph-sliders text-lg"></i></div>
+                    <span>Control Center</span>
+                </a>
+                <a href="/admin?page=logs" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'logs' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-emerald"><i class="ph-bold ph-terminal-window text-lg"></i></div>
+                    <span>Server Health</span>
+                </a>
+            </nav>
+        </div>
     </div>
     
     <!-- Footer / Profile -->
-    <div class="p-8 border-t" style="border-color: var(--border-color);">
-        <div class="flex items-center gap-3 p-4 rounded-3xl cursor-pointer transition-all hover:brightness-110" style="background-color: var(--glass-bg);">
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus" class="w-10 h-10 rounded-xl bg-primary/20" alt="Avatar">
-            <div class="overflow-hidden">
-                <p class="font-bold text-sm truncate"><?php $u = Session::getUser(); echo $u ? htmlspecialchars($u->getUsername()) : 'Admin'; ?></p>
-                <a href="/admin?logout=1" class="text-[10px] uppercase font-bold text-red-500 hover:text-red-400">Logout Session</a>
+    <div class="p-6">
+        <div class="stat-card !p-4 !rounded-[2rem] bg-glass-white backdrop-blur-xl border-white/5 flex items-center justify-between group transition-all hover:scale-[1.05]">
+            <div class="flex items-center gap-3 overflow-hidden">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus" class="w-10 h-10 rounded-xl bg-primary/20 border border-primary/20" alt="Avatar">
+                <div class="overflow-hidden">
+                    <p class="font-bold text-xs truncate leading-tight"><?php $u = Session::getUser(); echo $u ? htmlspecialchars($u->getUsername()) : 'Admin'; ?></p>
+                    <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Online Agent</p>
+                </div>
             </div>
+            <a href="/admin?logout=1" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-lg" title="Logout">
+                <i class="ph-bold ph-power"></i>
+            </a>
         </div>
     </div>
 </aside>

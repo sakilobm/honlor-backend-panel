@@ -1,41 +1,29 @@
 <?php
 
 /**
- * API Endpoint: /api/ads/create
- * =============================
+ * API: ads/create
+ * ===============
  * Creates a new ad campaign.
  */
 
 use App\Ad;
 
-${basename(__FILE__, '.php')} = function () {
-    
-    // Auth check for write operation
+${basename(__FILE__, '.php')} = function() 
+{
     if (!$this->isAuthenticated()) {
-        $this->response($this->json(['error' => 'Unauthorized access.']), 401);
+        $this->response($this->json(['error' => 'Unauthorized']), 401);
     }
 
-    // Validate required fields
-    if ($this->paramsExists(['name', 'type', 'budget', 'start_date', 'end_date'])) {
-        
-        $name      = $this->_request['name'];
-        $type      = $this->_request['type'];
-        $budget    = (float)$this->_request['budget'];
-        $startDate = $this->_request['start_date'];
-        $endDate   = $this->_request['end_date'];
+    if (!$this->paramsExists(['name', 'type', 'budget', 'start_date', 'end_date'])) {
+        $this->response($this->json(['error' => 'Missing required fields']), 400);
+    }
 
-        $id = Ad::createAd($name, $type, $budget, $startDate, $endDate);
+    try {
+        $success = Ad::create($this->_request);
+        if ($success) $this->response($this->json(['message' => 'Campaign created successfully.']), 200);
+        else throw new Exception("Database record creation failed.");
 
-        if ($id) {
-            $this->response($this->json([
-                'message' => 'Campaign created successfully.',
-                'id'      => $id
-            ]), 201);
-        } else {
-            $this->response($this->json(['error' => 'Failed to create campaign.']), 500);
-        }
-
-    } else {
-        $this->response($this->json(['error' => 'Missing required parameters.']), 400);
+    } catch (Exception $e) {
+        $this->response($this->json(['error' => $e->getMessage()]), 500);
     }
 };

@@ -34,7 +34,7 @@ ${basename(__FILE__, '.php')} = function () {
             $db = Database::getConnection();
             $stmt = $db->prepare("INSERT INTO logs (user_id, action, ip) VALUES (?, ?, ?)");
             $stmt->execute([
-                $user ? $user->getID() : 0,
+                $user ? $user->id : 0,
                 "Updated setting: {$key} to {$value}",
                 $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'
             ]);
