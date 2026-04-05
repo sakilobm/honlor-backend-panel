@@ -33,6 +33,9 @@ const AdminApp = {
             case 'deletion_requests':
                 this.initDeletionRequests();
                 break;
+            case 'reports':
+                this.initReports();
+                break;
             case 'logs':
                 this.initLogs();
                 break;
@@ -193,6 +196,7 @@ const AdminApp = {
      * Users (Identity Vault) Logic
      */
     initUsers: function() {
+        this.userPage = 1;
         this.loadUserList();
         
         const filterInput = document.getElementById('user-filter');
@@ -200,9 +204,20 @@ const AdminApp = {
             let timeout;
             filterInput.oninput = () => {
                 clearTimeout(timeout);
-                timeout = setTimeout(() => this.loadUserList(1, filterInput.value), 300);
+                timeout = setTimeout(() => {
+                    this.userPage = 1;
+                    this.loadUserList(1, filterInput.value);
+                }, 300);
             };
         }
+    },
+
+    changeUserPage: function(delta) {
+        const newPage = this.userPage + delta;
+        if (newPage < 1) return;
+        this.userPage = newPage;
+        const filter = document.getElementById('user-filter')?.value || '';
+        this.loadUserList(this.userPage, filter);
     },
 
     loadUserList: function(page = 1, filter = '') {
@@ -248,7 +263,9 @@ const AdminApp = {
             tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No users found</td></tr>';
             
             if (document.getElementById('users-count-text')) {
-                document.getElementById('users-count-text').innerText = `Showing ${data.users.length} of ${data.total} users`;
+                const start = (page - 1) * 10 + 1;
+                const end = Math.min(page * 10, data.total);
+                document.getElementById('users-count-text').innerText = `Showing ${start}-${end} of ${data.total} identities`;
             }
         });
     },
@@ -292,12 +309,20 @@ const AdminApp = {
                         <td class="px-6 py-4 text-xs font-semibold text-gray-400">${ch.member_count} Members</td>
                         <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(ch.created_at).toLocaleDateString()}</td>
                         <td class="px-6 py-4 text-right">
-                            <button class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-trash text-lg"></i></button>
+                            <button onclick="AdminApp.deleteChannel('${ch.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-trash text-lg"></i></button>
                         </td>
                     </tr>
                 `;
             });
             tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No channels found</td></tr>';
+        });
+    },
+
+    deleteChannel: function(id) {
+        if (!confirm('Permanently decommission this node?')) return;
+        ApiClient.post('channels', 'delete', { id }).then(res => {
+            toast.success('Confirmed', 'Node removed from network.');
+            this.loadChannelList();
         });
     },
 
@@ -336,6 +361,48 @@ const AdminApp = {
                 `;
             });
             tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No messages found</td></tr>';
+        });
+    },
+
+    /**
+     * Safety Center (Reports) Logic
+     */
+    initReports: function() {
+        this.loadReportList();
+    },
+
+    loadReportList: function() {
+        const tbody = document.getElementById('reports-table-body');
+        if (!tbody) return;
+
+        ApiClient.get('messages', 'list', { filter: 'flagged' }).then(data => {
+            let html = '';
+            data.messages.forEach(msg => {
+                html += `
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}" class="w-10 h-10 rounded-xl bg-primary/10 p-0.5" alt="Avatar">
+                                <div>
+                                    <p class="font-bold text-sm text-primary">@${msg.username}</p>
+                                    <p class="text-[11px] text-gray-500 font-medium">Flagged by community</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-xs font-black uppercase tracking-widest opacity-80">${msg.flag_reason || 'Unknown'}</td>
+                        <td class="px-6 py-4 max-w-xs">
+                            <p class="text-xs text-gray-400 italic truncate">"${msg.content}"</p>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex justify-end gap-2">
+                                <button onclick="AdminApp.executeAction('toggle_block', '${msg.user_id}')" class="btn-primary !p-2 !rounded-xl !bg-red-600 hover:!bg-red-700 shadow-red-900/10" title="Suspend Account"><i class="ph ph-prohibit"></i></button>
+                                <button onclick="AdminApp.executeAction('resolve_flag', '${msg.id}')" class="btn-secondary !p-2 !rounded-xl" title="Mark Resolved"><i class="ph ph-check"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="4" class="p-12 text-center text-gray-500">No active incidents found. The system is secure.</td></tr>';
         });
     },
 
@@ -673,10 +740,10 @@ const AdminApp = {
         
         let ns = 'users', method = 'status', payload = { id: id, action: action };
         
-        if (action === 'flag_message' || action === 'delete_message') {
+        if (action === 'flag_message' || action === 'delete_message' || action === 'resolve_flag') {
             ns = 'messages';
             method = 'flag';
-            payload.action = action.replace('_message', '');
+            payload.action = action.replace('_message', '').replace('_flag', '');
         }
 
         ApiClient.post(ns, method, payload).then(res => {

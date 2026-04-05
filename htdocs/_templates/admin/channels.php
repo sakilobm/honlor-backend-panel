@@ -62,18 +62,18 @@
     <!-- Create Channel Modal -->
     <div id="create-channel-modal" class="modal-overlay hidden">
         <div class="modal-card">
-            <div class="flex items-center justify-between p-6 border-b border-white/5">
-                <h3 class="text-xl font-bold text-white tracking-tight">Provision New Node</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-white transition-colors p-2"><i class="ph ph-x text-2xl"></i></button>
+            <div class="flex items-center justify-between p-6 border-b" style="border-color: var(--border-color);">
+                <h3 class="text-xl font-bold tracking-tight">Provision New Node</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-primary transition-colors p-2"><i class="ph ph-x text-2xl"></i></button>
             </div>
             <form id="create-channel-form" class="p-8 space-y-6">
                 <div class="space-y-2">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Channel Name</label>
-                    <input type="text" name="name" required class="w-full bg-transparent border rounded-2xl p-4 text-white focus:outline-none focus:border-primary transition-all font-medium" style="border-color: var(--border-color);" placeholder="e.g. engineering-alpha">
+                    <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Channel Name</label>
+                    <input type="text" name="name" required class="w-full bg-transparent border rounded-2xl p-4 focus:outline-none focus:border-primary transition-all font-medium" style="border-color: var(--border-color); color: var(--text-main);" placeholder="e.g. engineering-alpha">
                 </div>
                 <div class="space-y-2">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Propagation Type</label>
-                    <select name="type" required class="w-full bg-[#111827] border rounded-2xl p-4 text-white focus:outline-none focus:border-primary transition-all font-medium" style="border-color: var(--border-color);">
+                    <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Propagation Type</label>
+                    <select name="type" required class="w-full border rounded-2xl p-4 focus:outline-none focus:border-primary transition-all font-medium appearance-none" style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">
                         <option value="public">Global Public</option>
                         <option value="private">Encrypted Private</option>
                     </select>

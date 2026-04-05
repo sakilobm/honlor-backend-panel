@@ -55,4 +55,13 @@ class Channel
         $stmt = $db->prepare("INSERT INTO `channels` (`name`, `type`) VALUES (?, ?)");
         return $stmt->execute([$name, $type]);
     }
+
+    /**
+     * Delete this channel.
+     */
+    public function delete(): bool
+    {
+        $stmt = $this->conn->prepare("DELETE FROM `channels` WHERE `id` = ? LIMIT 1");
+        return $stmt->execute([$this->id]);
+    }
 }

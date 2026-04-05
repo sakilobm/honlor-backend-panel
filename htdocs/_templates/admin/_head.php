@@ -27,10 +27,6 @@
                 colors: {
                     primary: '#7c6aff',
                     'primary-hover': '#6a59e6',
-                    'bg-dark': '#0B0F19',
-                    'surface-dark': '#111827',
-                    'glass-white': 'rgba(255, 255, 255, 0.03)',
-                    'border-dark': 'rgba(255, 255, 255, 0.08)'
                 },
                 fontFamily: {
                     sans: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
@@ -43,15 +39,15 @@
 <style type="text/tailwindcss">
     @layer base {
         :root {
-            --bg-main: #0B0F19;
-            --surface: #111827;
+            --bg-main: #060910;
+            --surface: #0B0F19;
             --surface-glass: rgba(11, 15, 25, 0.7);
             --text-main: #F9FAFB;
             --text-muted: #9CA3AF;
             --border-color: rgba(255, 255, 255, 0.08);
             --glass-bg: rgba(255, 255, 255, 0.03);
             --toggle-off: rgba(255, 255, 255, 0.1);
-            --card-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            --card-shadow: 0 20px 50px -12px rgba(0,0,0,0.5);
         }
         .light {
             --bg-main: #F8FAFC;
@@ -126,11 +122,19 @@
             color: var(--text-muted);
             opacity: 0.6;
         }
+        .glass-card {
+            background-color: var(--surface-glass);
+            border: 1px solid var(--border-color);
+            @apply backdrop-blur-2xl rounded-[2.5rem] p-8 shadow-2xl;
+        }
+        .gradient-text {
+            @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400;
+        }
         .stat-card { 
-            background-color: var(--surface);
+            background-color: var(--surface-glass);
             border: 1px solid var(--border-color);
             box-shadow: var(--card-shadow);
-            @apply p-6 rounded-3xl transition-all hover:scale-[1.02]; 
+            @apply backdrop-blur-xl p-8 rounded-[2.5rem] transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/5; 
         }
         .btn-primary { 
             @apply px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-2xl font-medium transition-all shadow-lg shadow-primary/20 flex items-center gap-2; 

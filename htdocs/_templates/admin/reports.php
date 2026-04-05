@@ -36,46 +36,13 @@
                         <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Decide</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y" style="border-color: var(--border-color);">
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Toxic" class="w-10 h-10 rounded-xl bg-red-500/10 p-0.5" alt="Avatar">
-                                <div>
-                                    <p class="font-bold text-sm text-red-400">@toxic_user</p>
-                                    <p class="text-[11px] text-gray-500 font-medium">3 previous warnings</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-xs font-bold text-white/80 uppercase tracking-widest">Verbal Abuse</td>
-                        <td class="px-6 py-4 max-w-xs">
-                            <p class="text-xs text-gray-400 italic truncate">"Keep waiting Sarah. Your slides are meaningless anyway..."</p>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button class="btn-primary !p-2 !rounded-xl !bg-red-600 hover:!bg-red-700 shadow-red-900/10" title="Ban Account"><i class="ph ph-prohibit"></i></button>
-                                <button class="btn-secondary !p-2 !rounded-xl" title="Mark Resolved"><i class="ph ph-check"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Spam" class="w-10 h-10 rounded-xl bg-orange-500/10 p-0.5" alt="Avatar">
-                                <div>
-                                    <p class="font-bold text-sm text-orange-400">@crypto_bot_99</p>
-                                    <p class="text-[11px] text-gray-500 font-medium">Bulk messaging detected</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-xs font-bold text-white/80 uppercase tracking-widest">Spam/Scam</td>
-                        <td class="px-6 py-4 max-w-xs">
-                            <p class="text-xs text-gray-400 italic truncate">"Check my profile for 500% returns guaranteed!"</p>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button class="btn-primary !p-2 !rounded-xl !bg-red-600 hover:!bg-red-700 shadow-red-900/10"><i class="ph ph-prohibit"></i></button>
-                                <button class="btn-secondary !p-2 !rounded-xl"><i class="ph ph-check"></i></button>
+                <tbody id="reports-table-body" class="divide-y" style="border-color: var(--border-color);">
+                    <!-- Reports injected by JS -->
+                    <tr>
+                        <td colspan="4" class="p-12 text-center">
+                            <div class="flex flex-col items-center gap-3 opacity-40">
+                                <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                <p class="text-[10px] font-black uppercase tracking-widest text-primary">Monitoring Incidents...</p>
                             </div>
                         </td>
                     </tr>

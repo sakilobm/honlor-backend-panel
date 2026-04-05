@@ -25,8 +25,9 @@
                 All Users
                 <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] rounded-md">8.4k Total</span>
             </h3>
-            <div class="flex gap-2">
-                <input type="text" placeholder="Filter by username..." class="bg-transparent border rounded-xl px-4 py-1.5 text-xs outline-none focus:border-primary/50" style="border-color: var(--border-color);">
+            <div class="flex gap-2 text-primary/80">
+                <i class="ph ph-magnifying-glass absolute mt-2 ml-3"></i>
+                <input type="text" id="user-filter" placeholder="Search identities..." class="bg-transparent border rounded-xl pl-9 pr-4 py-1.5 text-xs outline-none focus:border-primary/50 transition-all" style="border-color: var(--border-color); color: var(--text-main);">
             </div>
         </div>
         <div class="overflow-x-auto">
@@ -48,8 +49,8 @@
         <div class="p-6 border-t flex justify-between items-center" style="border-color: var(--border-color);">
             <p id="users-count-text" class="text-xs font-bold text-gray-500">Loading users...</p>
             <div class="flex gap-2">
-                <button class="btn-secondary !py-1.5 !px-3 !text-xs !rounded-xl">Previous</button>
-                <button class="btn-secondary !py-1.5 !px-3 !text-xs !rounded-xl !bg-primary/20 !text-primary !border-primary/20">Next</button>
+                <button onclick="AdminApp.changeUserPage(-1)" class="btn-secondary !py-1.5 !px-3 !text-xs !rounded-xl">Previous</button>
+                <button onclick="AdminApp.changeUserPage(1)" class="btn-secondary !py-1.5 !px-3 !text-xs !rounded-xl !bg-primary/20 !text-primary !border-primary/20">Next</button>
             </div>
         </div>
     </div>

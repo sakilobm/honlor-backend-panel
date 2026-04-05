@@ -7,13 +7,13 @@
             <p class="font-medium" style="color: var(--text-muted);">Review and process user account removal applications</p>
         </div>
         <div class="flex gap-3">
-            <div class="stat-card !p-4 !px-6 flex items-center gap-4">
-                <div class="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
+            <div class="glass-card !p-3 !px-5 flex items-center gap-4 shadow-xl">
+                <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-500 border border-orange-500/20">
                     <i class="ph-bold ph-warning-circle text-xl"></i>
                 </div>
                 <div>
-                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pending Review</p>
-                    <p class="text-xl font-black text-white" id="pending-deletion-count">0</p>
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-60">Pending Review</p>
+                    <p class="text-2xl font-black" id="pending-deletion-count">0</p>
                 </div>
             </div>
         </div>
@@ -37,7 +37,7 @@
                         <th class="px-6 py-4 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="deletion-requests-table-body" class="divide-y" style="border-color: var(--border-color);">
+                <tbody id="deletion-requests-table-body" class="divide-y font-medium" style="border-color: var(--border-color);">
                     <!-- Data injected by JS -->
                 </tbody>
             </table>

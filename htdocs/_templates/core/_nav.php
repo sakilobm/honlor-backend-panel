@@ -9,8 +9,6 @@
 
         <ul class="hidden md:flex items-center gap-1 font-bold text-sm bg-black/5 dark:bg-white/5 p-1 rounded-2xl border" style="border-color: var(--border-color);">
             <li><a href="/" class="px-6 py-2 rounded-xl transition-all <?= Session::currentScript() === 'index' ? 'bg-primary text-white shadow-lg' : 'hover:bg-primary/10' ?>">Home</a></li>
-            <li><a href="/posts" class="px-6 py-2 rounded-xl transition-all hover:bg-primary/10">Community</a></li>
-            <li><a href="/docs" class="px-6 py-2 rounded-xl transition-all hover:bg-primary/10">API</a></li>
         </ul>
 
         <div class="flex items-center gap-3">

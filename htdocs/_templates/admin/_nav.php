@@ -1,13 +1,13 @@
-<aside id="sidebar" class="w-72 shrink-0 border-r transition-all duration-300 md:relative fixed inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0 overflow-hidden flex flex-col" style="background-color: var(--surface); border-color: var(--border-color);">
+<aside id="sidebar" class="w-72 shrink-0 border-r transition-all duration-300 md:relative fixed inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0 overflow-hidden flex flex-col backdrop-blur-2xl" style="background-color: var(--surface-glass); border-color: var(--border-color);">
     <div class="p-8 pb-4">
         <!-- Brand -->
         <div class="flex items-center gap-3 mb-10">
-            <div class="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30">
-                <i class="ph-bold ph-hexagon text-white text-xl"></i>
+            <div class="w-12 h-12 bg-primary/20 rounded-[1.25rem] flex items-center justify-center border border-primary/20 shadow-xl shadow-primary/20">
+                <i class="ph-bold ph-hexagon text-primary text-2xl"></i>
             </div>
             <div>
-                <h1 class="font-bold text-xl tracking-tight">Honlor</h1>
-                <p class="text-[9px] uppercase font-black tracking-[0.25em] text-primary" style="opacity: 0.8;">Admin Core</p>
+                <h1 class="font-black text-xl tracking-tight uppercase"><?= htmlspecialchars(get_config('project_title', 'Aether')) ?></h1>
+                <p class="text-[9px] uppercase font-black tracking-[0.25em] text-primary" style="opacity: 0.8;">Admin Intelligence</p>
             </div>
         </div>
     </div>
@@ -76,16 +76,16 @@
     
     <!-- Footer / Profile -->
     <div class="p-6">
-        <div class="stat-card !p-4 !rounded-[2rem] bg-glass-white backdrop-blur-xl border-white/5 flex items-center justify-between group transition-all hover:scale-[1.05] cursor-pointer" onclick="AdminApp.openDrawer('user', '<?php echo Session::getUser()->id; ?>')">
+        <div class="glass-card !p-4 !rounded-[2rem] flex items-center justify-between group transition-all hover:scale-[1.05] cursor-pointer shadow-xl shadow-black/20" onclick="AdminApp.openDrawer('user', '<?php echo Session::getUser()->id; ?>')">
             <div class="flex items-center gap-3 overflow-hidden">
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus" class="w-10 h-10 rounded-xl bg-primary/20 border border-primary/20" alt="Avatar">
                 <div class="overflow-hidden">
-                    <p class="font-bold text-xs truncate leading-tight"><?php $u = Session::getUser(); echo $u ? htmlspecialchars($u->getUsername()) : 'Admin'; ?></p>
-                    <p class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Online Agent</p>
+                    <p class="font-bold text-[11px] truncate leading-tight uppercase tracking-tight"><?php $u = Session::getUser(); echo $u ? htmlspecialchars($u->getUsername()) : 'Admin'; ?></p>
+                    <p class="text-[9px] font-black text-primary uppercase tracking-widest mt-0.5 opacity-80">Online Agent</p>
                 </div>
             </div>
             <a href="/admin?logout=1" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/20" title="Logout">
-                <i class="ph-bold ph-power"></i>
+                <i class="ph-bold ph-power text-sm"></i>
             </a>
         </div>
     </div>

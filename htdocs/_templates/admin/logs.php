@@ -199,7 +199,7 @@
             </div>
             
             <!-- Quick Action -->
-            <button class="w-full p-6 rounded-[2rem] bg-primary text-white font-bold flex items-center justify-center gap-3 shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+            <button class="w-full p-6 rounded-[2.5rem] bg-primary text-white font-black flex items-center justify-center gap-3 shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-[10px]">
                 <i class="ph ph-terminal text-xl"></i>
                 Open System Terminal
             </button>
