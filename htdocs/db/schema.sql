@@ -99,4 +99,19 @@ CREATE TABLE `ads` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- ─── logs — System & Admin Activity ────────────────────────
+DROP TABLE IF EXISTS `logs`;
+CREATE TABLE `logs` (
+  `id`         int          NOT NULL AUTO_INCREMENT,
+  `user_id`    int          DEFAULT NULL, -- NULL for system actions
+  `action`     varchar(256) NOT NULL,
+  `details`    text,
+  `ip`         varchar(45)  DEFAULT NULL,
+  `level`      varchar(32)  NOT NULL DEFAULT 'info', -- 'info', 'warning', 'error', 'security'
+  `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_log_auth` (`user_id`),
+  CONSTRAINT `logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `auth` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

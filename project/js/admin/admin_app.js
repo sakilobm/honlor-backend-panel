@@ -1,7 +1,7 @@
 /**
  * Honlor Admin App
  * ================
- * Handles interactive logic for Dashboard and Ads Manager.
+ * Handles interactive logic for Dashboard, Identity Vault, Channels, and Moderation.
  * Optimized for High-Fidelity UI Overhaul (v10).
  */
 
@@ -14,10 +14,25 @@ const AdminApp = {
         const params = new URLSearchParams(window.location.search);
         const page = params.get('page') || 'dashboard';
 
-        if (page === 'dashboard') {
-            this.initDashboard();
-        } else if (page === 'ads') {
-            this.initAdsManager();
+        switch(page) {
+            case 'dashboard':
+                this.initDashboard();
+                break;
+            case 'users':
+                this.initUsers();
+                break;
+            case 'channels':
+                this.initChannels();
+                break;
+            case 'messages':
+                this.initMessages();
+                break;
+            case 'ads':
+                this.initAdsManager();
+                break;
+            case 'logs':
+                this.initLogs();
+                break;
         }
         
         // Handle notifications dropdown close on click outside
@@ -27,15 +42,6 @@ const AdminApp = {
                 if (pane) pane.classList.add('hidden');
             }
         };
-    },
-
-    /**
-     * Navigation Logic
-     */
-    switchSection: function(tag) {
-        // In the current PHP framework, we use URL parameters for routing.
-        // We navigate to ?page=tag to ensure the PHP template is loaded.
-        window.location.search = `?page=${tag}`;
     },
 
     /**
@@ -54,10 +60,37 @@ const AdminApp = {
             if (document.getElementById('stat-active-ads')) {
                 document.getElementById('stat-active-ads').innerText = data.active_ads || 0;
             }
+            if (document.getElementById('stat-active-channels')) {
+                document.getElementById('stat-active-channels').innerText = data.active_channels || 0;
+            }
 
             this.renderGrowthChart(data.growth_data);
+            this.loadRecentActivity();
         }).catch(err => {
             console.error(err);
+        });
+    },
+
+    loadRecentActivity: function() {
+        const target = document.getElementById('recent-activity-list');
+        if (!target) return;
+
+        ApiClient.get('dashboard', 'activity').then(data => {
+            let html = '';
+            data.activity.forEach(item => {
+                html += `
+                    <div class="flex items-start gap-4 p-4 rounded-2xl hover:bg-white/5 transition-colors">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                            <i class="ph-bold ph-activity text-lg"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-sm font-bold truncate">${item.action}</p>
+                            <p class="text-[11px] text-gray-500 font-medium">${item.username || 'System'} • ${item.created_at}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            target.innerHTML = html || '<p class="text-center text-gray-500 py-8">No recent activity</p>';
         });
     },
 
@@ -118,6 +151,191 @@ const AdminApp = {
     },
 
     /**
+     * Users (Identity Vault) Logic
+     */
+    initUsers: function() {
+        this.loadUserList();
+        
+        const filterInput = document.getElementById('user-filter');
+        if (filterInput) {
+            let timeout;
+            filterInput.oninput = () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => this.loadUserList(1, filterInput.value), 300);
+            };
+        }
+    },
+
+    loadUserList: function(page = 1, filter = '') {
+        const tbody = document.getElementById('users-table-body');
+        if (!tbody) return;
+
+        ApiClient.get('users', 'list', { page, filter }).then(data => {
+            let html = '';
+            data.users.forEach(user => {
+                const badge = user.blocked == 1 ? 'badge-danger' : (user.active == 1 ? 'badge-success' : 'badge-neutral');
+                const status = user.blocked == 1 ? 'Blocked' : (user.active == 1 ? 'Active' : 'Inactive');
+                
+                html += `
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}" class="w-10 h-10 rounded-xl bg-primary/10 p-0.5" alt="Avatar">
+                                <div>
+                                    <p class="font-bold text-sm">${user.firstname || user.username} ${user.lastname || ''}</p>
+                                    <p class="text-[11px] text-gray-500 font-medium">${user.email}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4"><span class="${badge}">${status}</span></td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-16 h-1.5 rounded-full bg-gray-800">
+                                    <div class="bg-primary h-full w-[${user.active == 1 ? 85 : 10}%] rounded-full"></div>
+                                </div>
+                                <span class="text-[10px] font-bold text-gray-400">${user.active == 1 ? 85 : 10}%</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(user.created_at).toLocaleDateString()}</td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex justify-end gap-2">
+                                <button onclick="AdminApp.openDrawer('user', '${user.id}')" class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500"><i class="ph ph-eye text-lg"></i></button>
+                                <button onclick="AdminApp.executeAction('toggle_block', '${user.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-prohibit text-lg"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No users found</td></tr>';
+            
+            if (document.getElementById('users-count-text')) {
+                document.getElementById('users-count-text').innerText = `Showing ${data.users.length} of ${data.total} users`;
+            }
+        });
+    },
+
+    /**
+     * Channels Logic
+     */
+    initChannels: function() {
+        this.loadChannelList();
+        
+        const form = document.getElementById('create-channel-form');
+        if (form) {
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const payload = Object.fromEntries(formData.entries());
+
+                ApiClient.post('channels', 'create', payload).then(res => {
+                    toast.success('Success', res.message);
+                    closeModal();
+                    form.reset();
+                    this.loadChannelList();
+                }).catch(err => {
+                    toast.error('Error', err.error || 'Failed to create channel.');
+                });
+            };
+        }
+    },
+
+    loadChannelList: function() {
+        const tbody = document.getElementById('channels-table-body');
+        if (!tbody) return;
+
+        ApiClient.get('channels', 'list').then(data => {
+            let html = '';
+            data.channels.forEach(ch => {
+                html += `
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="px-6 py-4 font-bold text-sm text-primary"># ${ch.name}</td>
+                        <td class="px-6 py-4"><span class="badge-neutral uppercase">${ch.type}</span></td>
+                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${ch.member_count} Members</td>
+                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(ch.created_at).toLocaleDateString()}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-trash text-lg"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No channels found</td></tr>';
+        });
+    },
+
+    /**
+     * Messages Logic
+     */
+    initMessages: function() {
+        this.loadMessageList();
+    },
+
+    loadMessageList: function() {
+        const tbody = document.getElementById('messages-table-body');
+        if (!tbody) return;
+
+        ApiClient.get('messages', 'list').then(data => {
+            let html = '';
+            data.messages.forEach(msg => {
+                const statusBadge = msg.status === 'flagged' ? 'badge-warning' : (msg.status === 'deleted' ? 'badge-danger' : 'badge-success');
+                
+                html += `
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="px-6 py-4 text-[11px] font-bold text-primary"># ${msg.channel_name}</td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-sm mb-0.5">${msg.username}</p>
+                            <p class="text-xs text-gray-400 font-medium truncate max-w-xs">${msg.content}</p>
+                        </td>
+                        <td class="px-6 py-4"><span class="${statusBadge} uppercase">${msg.status}</span></td>
+                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(msg.created_at).toLocaleString()}</td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex justify-end gap-2">
+                                <button onclick="AdminApp.executeAction('flag_message', '${msg.id}')" class="p-2 hover:bg-orange-500/10 hover:text-orange-400 rounded-xl transition-all text-gray-500"><i class="ph ph-flag text-lg"></i></button>
+                                <button onclick="AdminApp.executeAction('delete_message', '${msg.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-trash text-lg"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No messages found</td></tr>';
+        });
+    },
+
+    /**
+     * Logs Logic
+     */
+    initLogs: function() {
+        this.loadLogList();
+    },
+
+    loadLogList: function() {
+        const tbody = document.getElementById('logs-table-body');
+        if (!tbody) return;
+
+        ApiClient.get('logs', 'list').then(data => {
+            let html = '';
+            data.logs.forEach(log => {
+                const levelBadge = log.level === 'error' ? 'badge-danger' : (log.level === 'warning' ? 'badge-warning' : 'badge-neutral');
+                
+                html += `
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="px-6 py-4 text-xs font-mono text-gray-500">#${log.id}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <span class="${levelBadge} uppercase !px-1.5 !text-[9px]">${log.level}</span>
+                                <span class="text-sm font-bold">${log.action}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-xs text-gray-400 font-medium">${log.username || 'SYSTEM'}</td>
+                        <td class="px-6 py-4 text-[11px] font-mono text-gray-500">${log.ip || '0.0.0.0'}</td>
+                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(log.created_at).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No logs found</td></tr>';
+        });
+    },
+
+    /**
      * Ads Manager Logic
      */
     initAdsManager: function() {
@@ -132,7 +350,7 @@ const AdminApp = {
 
                 ApiClient.post('ads', 'create', payload).then(res => {
                     toast.success('Success', res.message);
-                    if (window.closeModal) closeModal();
+                    closeModal();
                     form.reset();
                     this.loadAdList();
                 }).catch(err => {
@@ -142,141 +360,154 @@ const AdminApp = {
         }
     },
 
+    loadAdList: function() {
+        const tbody = document.getElementById('ads-table-body');
+        if (!tbody) return;
+
+        ApiClient.get('ads', 'list').then(data => {
+            let html = '';
+            data.ads.forEach(ad => {
+                html += `
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-sm">${ad.name}</p>
+                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">${ad.type}</p>
+                        </td>
+                        <td class="px-6 py-4"><span class="badge-success">${ad.status}</span></td>
+                        <td class="px-6 py-4 text-sm font-bold">$${parseFloat(ad.budget).toLocaleString()}</td>
+                        <td class="px-6 py-4 text-center text-xs font-bold text-gray-400">${((ad.clicks/ad.impressions)*100 || 0).toFixed(2)}%</td>
+                        <td class="px-6 py-4 text-right">
+                             <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500"><i class="ph ph-dots-three-outline-vertical text-lg"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No campaigns found</td></tr>';
+            
+            if (document.getElementById('ads-count-badge')) {
+                document.getElementById('ads-count-badge').innerText = `${data.ads.length} Total`;
+            }
+        });
+    },
+
     /**
      * Settings Logic
      */
     toggleSetting: function(key, isChecked) {
         const value = isChecked ? 'on' : 'off';
         
-        // Use the new update API
-        fetch('/api/settings/update.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key: key, value: value })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                toast.error('Failed', data.error);
-            } else {
-                toast.success('Updated', `Setting '${key}' is now ${value}.`);
-            }
-        })
-        .catch(err => {
-            toast.error('System Error', 'Could not communicate with the settings server.');
+        ApiClient.post('settings', 'update', { key: key, value: value }).then(res => {
+            toast.success('Updated', `Setting '${key}' is now ${value}.`);
+        }).catch(err => {
+            toast.error('System Error', err.error || 'Could not update setting.');
         });
     },
 
-    /**
-     * Notification Logic
-     */
-    toggleNotifications: function() {
-        // For now, toggle a simple alert or a placeholder pane
-        toast.info('Activity Feed', 'You have 3 new moderation alerts and 1 ad system update.');
+    saveSettings: function() {
+        const sessionTimeout = document.getElementById('session_timeout').value;
+        const authRetryLimit = document.getElementById('auth_retry_limit').value;
+
+        const p1 = ApiClient.post('settings', 'update', { key: 'session_timeout', value: sessionTimeout });
+        const p2 = ApiClient.post('settings', 'update', { key: 'auth_retry_limit', value: authRetryLimit });
+
+        Promise.all([p1, p2]).then(() => {
+            toast.success('Success', 'Advanced configuration saved.');
+        }).catch(err => {
+            toast.error('Error', 'Failed to save some settings.');
+        });
     },
 
     /**
      * Global Modals & Drawers
      */
-    openModal: function(type, identity = null) {
-        const container = document.getElementById('global-modal-container');
-        const target = document.getElementById('modal-content-target');
-        if (!container || !target) return;
-
-        let html = '';
-        switch(type) {
-            case 'ban':
-                html = `
-                    <div class="stat-card max-w-lg w-full bg-[#0a0a0a] border-red-500/20 p-10 animate-in zoom-in duration-300">
-                        <div class="w-16 h-16 rounded-3xl bg-red-500/10 flex items-center justify-center text-red-500 mb-6 mx-auto">
-                            <i class="ph-bold ph-prohibit text-3xl"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold text-center mb-2">Ban Account Activity</h3>
-                        <p class="text-sm text-gray-500 text-center mb-8 font-medium leading-relaxed">
-                            Are you absolutely sure you want to suspend <span class="text-white font-bold">${identity}</span>? 
-                            This will terminate all active sessions and block access immediately.
-                        </p>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button class="btn-secondary !justify-center py-4" onclick="closeModal()">Dismiss</button>
-                            <button class="btn-primary !bg-red-500 !shadow-[0_10px_30px_rgba(239,68,68,0.3)] !justify-center py-4" onclick="AdminApp.executeAction('ban', '${identity}')">Confirm Ban</button>
-                        </div>
-                    </div>
-                `;
-                break;
-            case 'warn':
-                html = `
-                    <div class="stat-card max-w-lg w-full bg-[#0a0a0a] border-orange-400/20 p-10 animate-in zoom-in duration-300">
-                        <div class="w-16 h-16 rounded-3xl bg-orange-400/10 flex items-center justify-center text-orange-400 mb-6 mx-auto">
-                            <i class="ph-bold ph-warning-circle text-3xl"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold text-center mb-2">Issue Formal Warning</h3>
-                        <div class="space-y-4 mb-8 mt-6">
-                            <input type="text" placeholder="Reason for warning..." class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-orange-400/50">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button class="btn-secondary !justify-center py-4" onclick="closeModal()">Dismiss</button>
-                            <button class="btn-primary !bg-orange-400 !shadow-[0_10px_30px_rgba(251,146,60,0.3)] !justify-center py-4" onclick="AdminApp.executeAction('warn', '${identity}')">Send Warning</button>
-                        </div>
-                    </div>
-                `;
-                break;
-        }
-
-        target.innerHTML = html;
-        container.classList.remove('hidden');
+    openModal: function(id) {
+        const container = document.getElementById(id);
+        if (container) container.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     },
 
-    openDrawer: function(type, identity) {
+    openDrawer: function(type, id) {
         const drawer = document.getElementById('side-drawer');
         const target = document.getElementById('drawer-content-target');
         if (!drawer || !target) return;
 
-        target.innerHTML = `
-            <div class="p-8 h-full flex flex-col">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-xl font-bold uppercase tracking-widest text-primary">Record Inspection</h3>
-                    <button onclick="closeDrawer()" class="p-2 hover:bg-white/10 rounded-xl transition-all">
-                        <i class="ph ph-x text-2xl"></i>
-                    </button>
-                </div>
-                <!-- Profile/Ad Details -->
-                <div class="space-y-6 flex-grow">
-                     <div class="text-center p-6 bg-white/5 rounded-[2.5rem] border border-white/5">
-                         <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${identity}" class="w-24 h-24 rounded-3xl mx-auto mb-4 border-2 border-primary/20">
-                         <h4 class="text-2xl font-bold">${identity}</h4>
-                         <p class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mt-1">Verified Node</p>
-                     </div>
-                     
-                     <div class="stat-card !p-6 space-y-4">
-                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">Status</span>
-                            <span class="badge-success">Operational</span>
-                         </div>
-                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">Last Login</span>
-                            <span class="text-xs font-medium text-white">2h 14m ago</span>
-                         </div>
-                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">Network IP</span>
-                            <span class="text-xs font-medium text-white">192.168.1.1</span>
-                         </div>
-                     </div>
-                </div>
-                <button class="w-full btn-primary !justify-center py-4">View Full History</button>
-            </div>
-        `;
+        if (type === 'user') {
+            ApiClient.get('users', 'details', { id }).then(data => {
+                const user = data.user;
+                target.innerHTML = `
+                    <div class="p-8 h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-8">
+                            <h3 class="text-xl font-bold uppercase tracking-widest text-primary">Record Inspection</h3>
+                            <button onclick="closeDrawer()" class="p-2 hover:bg-white/10 rounded-xl transition-all">
+                                <i class="ph ph-x text-2xl"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-6 flex-grow">
+                             <div class="text-center p-6 bg-white/5 rounded-[2.5rem] border border-white/5">
+                                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}" class="w-24 h-24 rounded-3xl mx-auto mb-4 border-2 border-primary/20">
+                                 <h4 class="text-2xl font-bold">${user.username}</h4>
+                                 <p class="text-[10px] font-bold text-gray-500 tracking-widest uppercase mt-1">Verified Account</p>
+                             </div>
+                             
+                             <div class="stat-card !p-6 space-y-4">
+                                 <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">Status</span>
+                                    <span class="${user.blocked ? 'badge-danger' : (user.active ? 'badge-success' : 'badge-neutral')}">${user.blocked ? 'Blocked' : (user.active ? 'Active' : 'Inactive')}</span>
+                                 </div>
+                                 <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">E-mail</span>
+                                    <span class="text-xs font-medium text-white">${user.email}</span>
+                                 </div>
+                                 <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-gray-500 uppercase tracking-tighter">Created</span>
+                                    <span class="text-xs font-medium text-white">${new Date(user.joined).toLocaleDateString()}</span>
+                                 </div>
+                             </div>
+                        </div>
+                        <button class="w-full btn-primary !justify-center py-4" onclick="AdminApp.executeAction('toggle_block', '${user.id}')">${user.blocked ? 'Unblock User' : 'Suspend Account'}</button>
+                    </div>
+                `;
+            });
+        }
 
         drawer.classList.remove('translate-x-full');
     },
 
-    executeAction: function(action, identity) {
-        toast.info('Processing', `Executing ${action} on ${identity}...`);
-        setTimeout(() => {
-            toast.success('Confirmed', `Action ${action} finalized for ${identity}.`);
-            closeModal();
-        }, 1200);
+    executeAction: function(action, id) {
+        toast.info('Processing', `Executing ${action}...`);
+        
+        let ns = 'users', method = 'status', payload = { id: id, action: action };
+        
+        if (action === 'flag_message' || action === 'delete_message') {
+            ns = 'messages';
+            method = 'flag';
+            payload.action = action.replace('_message', '');
+        }
+
+        ApiClient.post(ns, method, payload).then(res => {
+            toast.success('Confirmed', res.message);
+            if (ns === 'users') this.loadUserList();
+            if (ns === 'messages') this.loadMessageList();
+            if (window.closeDrawer) closeDrawer();
+        }).catch(err => {
+            toast.error('Failed', err.error || 'Action could not be completed.');
+        });
     }
 };
 
 document.addEventListener('DOMContentLoaded', () => AdminApp.init());
+
+/** Global Helpers **/
+window.closeModal = function() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+    document.body.style.overflow = 'auto';
+};
+
+window.closeDrawer = function() {
+    const drawer = document.getElementById('side-drawer');
+    if (drawer) drawer.classList.add('translate-x-full');
+};
+
+window.openModal = function(id) {
+    AdminApp.openModal(id);
+};

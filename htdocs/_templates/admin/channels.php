@@ -34,36 +34,55 @@
     </div>
 
     <!-- Active Propagation Table -->
-    <div class="stat-card">
-        <div class="flex items-center justify-between mb-8">
-            <h3 class="text-xl font-bold">Priority Channels</h3>
-            <span class="badge-neutral border-primary/20 text-primary">Live Optimization</span>
+    <div class="stat-card !p-0 overflow-hidden">
+        <div class="p-6 border-b flex justify-between items-center" style="border-color: var(--border-color);">
+            <h3 class="font-bold flex items-center gap-2">
+                Priority Channels
+                <span class="badge-neutral border-primary/20 text-primary">Live Optimization</span>
+            </h3>
         </div>
-        <div class="space-y-6">
-            <div class="flex items-center justify-between p-5 rounded-[2rem] border hover:bg-white/5 transition-all cursor-pointer" style="border-color: var(--border-color);">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">#hq</div>
-                    <div>
-                        <p class="font-bold text-base">Global HQ</p>
-                        <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500">1.2M ACTIVE USERS • 14ms LATENCY</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <span class="badge-success">Optimal</span>
-                </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b" style="border-color: var(--border-color); background-color: var(--glass-bg);">
+                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Channel Name</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Type</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Members</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Created</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="channels-table-body" class="divide-y" style="border-color: var(--border-color);">
+                    <!-- Rows injected by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create Channel Modal -->
+    <div id="create-channel-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="flex items-center justify-between p-6 border-b border-white/5">
+                <h3 class="text-xl font-bold text-white tracking-tight">Provision New Node</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white transition-colors p-2"><i class="ph ph-x text-2xl"></i></button>
             </div>
-            <div class="flex items-center justify-between p-5 rounded-[2rem] border hover:bg-white/5 transition-all cursor-pointer" style="border-color: var(--border-color);">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold text-xl">#mkt</div>
-                    <div>
-                        <p class="font-bold text-base">Marketing Alpha</p>
-                        <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500">45k ACTIVE USERS • 82ms LATENCY</p>
-                    </div>
+            <form id="create-channel-form" class="p-8 space-y-6">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Channel Name</label>
+                    <input type="text" name="name" required class="w-full bg-transparent border rounded-2xl p-4 text-white focus:outline-none focus:border-primary transition-all font-medium" style="border-color: var(--border-color);" placeholder="e.g. engineering-alpha">
                 </div>
-                <div class="text-right">
-                    <span class="badge-warning">Scaling</span>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Propagation Type</label>
+                    <select name="type" required class="w-full bg-[#111827] border rounded-2xl p-4 text-white focus:outline-none focus:border-primary transition-all font-medium" style="border-color: var(--border-color);">
+                        <option value="public">Global Public</option>
+                        <option value="private">Encrypted Private</option>
+                    </select>
                 </div>
-            </div>
+                <div class="pt-6 flex gap-3">
+                    <button type="button" onclick="closeModal()" class="btn-secondary flex-1 !justify-center py-4">Cancel</button>
+                    <button type="submit" class="btn-primary flex-1 !justify-center py-4 text-lg">Initialize Node</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

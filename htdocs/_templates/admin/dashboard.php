@@ -74,7 +74,7 @@
                 <span class="badge-success">Healthy</span>
             </div>
             <p class="text-sm font-semibold mb-1" style="color: var(--text-muted);">Server Clusters</p>
-            <h4 class="text-4xl font-bold tracking-tight">34</h4>
+            <h4 class="text-4xl font-bold tracking-tight" id="stat-active-channels">...</h4>
             <div class="w-full h-1.5 mt-6 rounded-full overflow-hidden" style="background-color: var(--border-color);">
                 <div class="bg-purple-400 h-full rounded-full transition-all duration-1000" style="width: 92%;"></div>
             </div>
@@ -108,26 +108,8 @@
                     <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span>
                 </h3>
             </div>
-            <div class="space-y-6 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
-                <div class="flex gap-4 group cursor-pointer">
-                    <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                        <i class="ph-bold ph-user-plus text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold">New user registered via Apple ID</p>
-                        <p class="text-[11px] uppercase mt-0.5 font-bold" style="color: var(--text-muted);">2 minutes ago</p>
-                    </div>
-                </div>
-                <div class="flex gap-4 group cursor-pointer">
-                    <div class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform">
-                        <i class="ph-bold ph-check-circle text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold">Ad campaign approved</p>
-                        <p class="text-[11px] uppercase mt-0.5 font-bold" style="color: var(--text-muted);">14 minutes ago</p>
-                    </div>
-                </div>
-                <!-- ... other items ... -->
+            <div id="recent-activity-list" class="space-y-6 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                <p class="text-center text-gray-500 py-8">Loading updates...</p>
             </div>
             <button class="w-full mt-8 border py-3 rounded-2xl font-bold text-xs transition-all hover:bg-white/5" style="border-color: var(--border-color); color: var(--text-main);">View All Logs</button>
         </div>

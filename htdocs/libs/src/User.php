@@ -114,4 +114,73 @@ class User
         $this->username = $row['username'];
         $this->email    = $row['email'];
     }
+
+    /**
+     * Fetch all users with pagination and filtering.
+     */
+    public static function listAll(int $limit = 10, int $offset = 0, string $filter = ''): array
+    {
+        $db = Database::getConnection();
+        $sql = "SELECT a.id, a.username, a.email, a.active, a.blocked, a.created_at, 
+                       p.firstname, p.lastname, p.bio, p.avatar
+                FROM `auth` a
+                LEFT JOIN `profiles` p ON a.id = p.id";
+        
+        if (!empty($filter)) {
+            $sql .= " WHERE a.username LIKE ? OR a.email LIKE ? OR p.firstname LIKE ? OR p.lastname LIKE ?";
+        }
+        
+        $sql .= " ORDER BY a.created_at DESC LIMIT ? OFFSET ?";
+        
+        $stmt = $db->prepare($sql);
+        
+        $params = [];
+        if (!empty($filter)) {
+            $f = "%$filter%";
+            $params = [$f, $f, $f, $f];
+        }
+        $params[] = $limit;
+        $params[] = $offset;
+
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get total count of users for pagination.
+     */
+    public static function getTotalCount(string $filter = ''): int
+    {
+        $db = Database::getConnection();
+        $sql = "SELECT COUNT(*) FROM `auth` a LEFT JOIN `profiles` p ON a.id = p.id";
+        
+        $params = [];
+        if (!empty($filter)) {
+            $sql .= " WHERE a.username LIKE ? OR a.email LIKE ? OR p.firstname LIKE ? OR p.lastname LIKE ?";
+            $f = "%$filter%";
+            $params = [$f, $f, $f, $f];
+        }
+        
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Toggle blocked status.
+     */
+    public function toggleBlock(): bool
+    {
+        $current = (int)$this->getBlocked();
+        return $this->setBlocked($current === 1 ? 0 : 1);
+    }
+
+    /**
+     * Toggle active status.
+     */
+    public function toggleActive(): bool
+    {
+        $current = (int)$this->getActive();
+        return $this->setActive($current === 1 ? 0 : 1);
+    }
 }

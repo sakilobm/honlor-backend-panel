@@ -74,40 +74,29 @@
         </div>
     </div>
 
-    <!-- Active Traffic Log -->
-    <div class="stat-card">
-        <h3 class="font-bold text-lg mb-6">Recent Deliveries</h3>
-        <div class="space-y-4">
-             <div class="flex items-center justify-between p-4 rounded-2xl border hover:bg-white/5 transition-all" style="border-color: var(--border-color);">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400">
-                        <i class="ph ph-chat-centered-text text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="font-bold text-sm">Encrypted Message Packet</p>
-                        <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400">Source: #market-alpha</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-xs font-bold text-white">Delivered</p>
-                    <p class="text-[10px] uppercase font-bold text-gray-500">24ms ago</p>
-                </div>
-            </div>
-            <div class="flex items-center justify-between p-4 rounded-2xl border hover:bg-white/5 transition-all" style="border-color: var(--border-color);">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-                        <i class="ph ph-image text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="font-bold text-sm">Media Cluster Upload</p>
-                        <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400">Source: UI-Mobile</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-xs font-bold text-white">Processing</p>
-                    <p class="text-[10px] uppercase font-bold text-gray-500">1m ago</p>
-                </div>
-            </div>
+    <!-- Active Traffic Log (Moderation View) -->
+    <div class="stat-card !p-0 overflow-hidden">
+        <div class="p-6 border-b flex justify-between items-center" style="border-color: var(--border-color);">
+            <h3 class="font-bold flex items-center gap-2">
+                Recent Messages
+                <span class="badge-neutral border-primary/20 text-primary">Live Moderation</span>
+            </h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b" style="border-color: var(--border-color); background-color: var(--glass-bg);">
+                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Channel</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">User / Content</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Timestamp</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="messages-table-body" class="divide-y" style="border-color: var(--border-color);">
+                    <!-- Rows injected by JS -->
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

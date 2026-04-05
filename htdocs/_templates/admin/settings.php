@@ -16,7 +16,7 @@ $allSettings = Settings::getAll();
                 <i class="ph-bold ph-arrow-clockwise"></i>
                 Reset Values
             </button>
-            <button class="btn-primary">
+            <button class="btn-primary" onclick="AdminApp.saveSettings()">
                 <i class="ph-bold ph-floppy-disk"></i>
                 Save Changes
             </button>
@@ -49,7 +49,7 @@ $allSettings = Settings::getAll();
                             <input type="checkbox" class="sr-only peer" 
                                    onchange="AdminApp.toggleSetting('maintenance_mode', this.checked)"
                                    <?= Settings::get('maintenance_mode') === 'on' ? 'checked' : '' ?>>
-                            <div class="w-14 h-7 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary shadow-[0_0_15px_rgba(124,106,255,0.3)]"></div>
+                            <div class="w-14 h-7 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary shadow-[0_0_15px_rgba(124,106,255,0.3)]"></div>
                         </label>
                     </div>
 
@@ -68,7 +68,7 @@ $allSettings = Settings::getAll();
                             <input type="checkbox" class="sr-only peer" 
                                    onchange="AdminApp.toggleSetting('public_registration', this.checked)"
                                    <?= Settings::get('public_registration') === 'on' ? 'checked' : '' ?>>
-                            <div class="w-14 h-7 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+                            <div class="w-14 h-7 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
                         </label>
                     </div>
 
@@ -87,7 +87,7 @@ $allSettings = Settings::getAll();
                             <input type="checkbox" class="sr-only peer" 
                                    onchange="AdminApp.toggleSetting('ad_serving', this.checked)"
                                    <?= Settings::get('ad_serving') === 'on' ? 'checked' : '' ?>>
-                            <div class="w-14 h-7 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+                            <div class="w-14 h-7 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
                         </label>
                     </div>
                 </div>
@@ -99,13 +99,13 @@ $allSettings = Settings::getAll();
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Session Timeout (Seconds)</label>
-                        <input type="number" value="<?= Settings::get('session_timeout', 3600) ?>" 
-                               class="w-full bg-transparent border rounded-2xl p-4 text-white font-medium focus:border-primary outline-none transition-all" style="border-color: var(--border-color);">
+                        <input type="number" id="session_timeout" value="<?= Settings::get('session_timeout', 3600) ?>" 
+                               class="w-full bg-transparent border rounded-2xl p-4 font-medium focus:border-primary outline-none transition-all" style="border-color: var(--border-color); color: var(--text-main);">
                     </div>
                     <div class="space-y-2">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Auth Retry Limit</label>
-                        <input type="number" value="5" 
-                               class="w-full bg-transparent border rounded-2xl p-4 text-white font-medium focus:border-primary outline-none transition-all" style="border-color: var(--border-color);">
+                        <input type="number" id="auth_retry_limit" value="<?= Settings::get('auth_retry_limit', 5) ?>" 
+                               class="w-full bg-transparent border rounded-2xl p-4 font-medium focus:border-primary outline-none transition-all" style="border-color: var(--border-color); color: var(--text-main);">
                     </div>
                 </div>
             </div>

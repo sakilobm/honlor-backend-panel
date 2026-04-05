@@ -25,7 +25,7 @@
             <div class="space-y-4">
                 <div class="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-gray-400">
                     <span>Week 1</span>
-                    <span class="text-white">92%</span>
+                    <span style="color: var(--text-main);">92%</span>
                 </div>
                 <div class="w-full bg-border-dark h-3 rounded-full overflow-hidden">
                     <div class="bg-primary h-full w-[92%]"></div>
@@ -33,7 +33,7 @@
                 
                 <div class="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-gray-400">
                     <span>Week 2</span>
-                    <span class="text-white">78%</span>
+                    <span style="color: var(--text-main);">78%</span>
                 </div>
                 <div class="w-full bg-border-dark h-3 rounded-full overflow-hidden">
                     <div class="bg-primary/80 h-full w-[78%]"></div>
@@ -41,7 +41,7 @@
 
                 <div class="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-gray-400">
                     <span>Week 4</span>
-                    <span class="text-white">64%</span>
+                    <span style="color: var(--text-main);">64%</span>
                 </div>
                 <div class="w-full bg-border-dark h-3 rounded-full overflow-hidden">
                     <div class="bg-primary/60 h-full w-[64%]"></div>
@@ -49,28 +49,28 @@
             </div>
         </div>
 
-        <div class="stat-card bg-surface-dark/50">
+        <div class="stat-card">
             <h3 class="font-bold text-lg mb-6">Regional Distribution</h3>
             <div class="space-y-6">
                 <div class="flex items-center gap-4">
                     <div class="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]"></div>
                     <div class="flex-grow">
                          <div class="flex justify-between text-sm font-bold mb-1"><span>North America</span><span>42%</span></div>
-                         <div class="w-full h-1.5 bg-white/5 rounded-full"><div class="bg-blue-400 h-full w-[42%] rounded-full"></div></div>
+                         <div class="w-full h-1.5 rounded-full" style="background-color: var(--glass-bg);"><div class="bg-blue-400 h-full w-[42%] rounded-full"></div></div>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="w-2 h-2 rounded-full bg-purple-400"></div>
                     <div class="flex-grow">
                          <div class="flex justify-between text-sm font-bold mb-1"><span>Europe</span><span>28%</span></div>
-                         <div class="w-full h-1.5 bg-white/5 rounded-full"><div class="bg-purple-400 h-full w-[28%] rounded-full"></div></div>
+                         <div class="w-full h-1.5 rounded-full" style="background-color: var(--glass-bg);"><div class="bg-purple-400 h-full w-[28%] rounded-full"></div></div>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="w-2 h-2 rounded-full bg-orange-400"></div>
                     <div class="flex-grow">
                          <div class="flex justify-between text-sm font-bold mb-1"><span>Asia Pacific</span><span>15%</span></div>
-                         <div class="w-full h-1.5 bg-white/5 rounded-full"><div class="bg-orange-400 h-full w-[15%] rounded-full"></div></div>
+                         <div class="w-full h-1.5 rounded-full" style="background-color: var(--glass-bg);"><div class="bg-orange-400 h-full w-[15%] rounded-full"></div></div>
                     </div>
                 </div>
             </div>

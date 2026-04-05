@@ -121,33 +121,23 @@
             <div class="p-8 rounded-[2.5rem] border" style="background-color: var(--surface); border-color: var(--border-color);">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-xl font-bold">Live System Log</h3>
-                    <button class="text-xs font-bold uppercase tracking-widest text-primary hover:underline">Clear Logs</button>
+                    <button onclick="AdminApp.loadLogList()" class="text-xs font-bold uppercase tracking-widest text-primary hover:underline">Refresh Logs</button>
                 </div>
-                <div class="space-y-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
-                    <?php
-                    $logs = [
-                        ['time' => '14:23:01', 'type' => 'INFO', 'msg' => 'Admin session extended for user #4122'],
-                        ['time' => '14:20:15', 'type' => 'WARN', 'msg' => 'Multiple failed login attempts from 192.168.1.104'],
-                        ['time' => '14:15:22', 'type' => 'SUCCESS', 'msg' => 'Database backup routine completed'],
-                        ['time' => '14:10:05', 'type' => 'INFO', 'msg' => 'Template engine cache cleared'],
-                        ['time' => '14:05:44', 'type' => 'INFO', 'msg' => 'New user registered: sarah_dev'],
-                        ['time' => '13:58:12', 'type' => 'CRITICAL', 'msg' => 'API endpoint /v1/channels returned 500 error'],
-                        ['time' => '13:45:30', 'type' => 'SUCCESS', 'msg' => 'SSL Certificate renewed successfully'],
-                    ];
-
-                    foreach ($logs as $log):
-                        $badge = 'badge-neutral';
-                        if ($log['type'] == 'SUCCESS') $badge = 'badge-success';
-                        if ($log['type'] == 'WARN') $badge = 'badge-warning';
-                        if ($log['type'] == 'CRITICAL') $badge = 'badge-danger';
-                    ?>
-                    <div class="flex items-center gap-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors px-2 rounded-xl">
-                        <span class="text-xs font-mono" style="color: var(--text-muted);"><?= $log['time'] ?></span>
-                        <span class="<?= $badge ?>"><?= $log['type'] ?></span>
-                        <span class="text-sm font-medium flex-grow"><?= $log['msg'] ?></span>
-                        <i class="ph ph-caret-right text-gray-600"></i>
-                    </div>
-                    <?php endforeach; ?>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5">
+                                <th class="pb-3 px-2">ID</th>
+                                <th class="pb-3 px-2">Event</th>
+                                <th class="pb-3 px-2">Actor</th>
+                                <th class="pb-3 px-2">Node IP</th>
+                                <th class="pb-3 px-2 text-right">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body" class="divide-y divide-white/5">
+                            <!-- Logs injected by JS -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

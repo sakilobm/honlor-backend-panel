@@ -51,6 +51,78 @@
             </div>
         </header>
 
+        <!-- Notification Pane (Interactive Feed) -->
+        <div id="notification-pane" class="hidden absolute top-24 right-8 w-[380px] z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
+            <div class="rounded-[2.5rem] border backdrop-blur-2xl shadow-2xl p-6" style="background-color: var(--surface-glass); border-color: var(--border-color);">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold">Activity Feed</h3>
+                    <span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-lg">4 New</span>
+                </div>
+                
+                <div class="space-y-4 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">
+                    <!-- Notification Item -->
+                    <div class="p-4 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer group">
+                        <div class="flex gap-4">
+                            <div class="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center text-primary shrink-0">
+                                <i class="ph-bold ph-user-plus text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold truncate">New User Registration</h4>
+                                <p class="text-xs mt-1 leading-relaxed opacity-70">A new member 'alex_dev' just joined the community.</p>
+                                <span class="text-[10px] font-bold opacity-40 uppercase mt-2 block">2 minutes ago</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Item -->
+                    <div class="p-4 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer group">
+                        <div class="flex gap-4">
+                            <div class="w-10 h-10 rounded-2xl bg-orange-400/20 flex items-center justify-center text-orange-400 shrink-0">
+                                <i class="ph-bold ph-warning-circle text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold truncate">Mod Alert: Reported Post</h4>
+                                <p class="text-xs mt-1 leading-relaxed opacity-70">Post #8412 has been flagged for manual review.</p>
+                                <span class="text-[10px] font-bold opacity-40 uppercase mt-2 block">14 minutes ago</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Item -->
+                    <div class="p-4 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer group">
+                        <div class="flex gap-4">
+                            <div class="w-10 h-10 rounded-2xl bg-green-500/20 flex items-center justify-center text-green-500 shrink-0">
+                                <i class="ph-bold ph-check-circle text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold truncate">Ad Campaign Approved</h4>
+                                <p class="text-xs mt-1 leading-relaxed opacity-70">Your 'Summer Sale' campaign is now live.</p>
+                                <span class="text-[10px] font-bold opacity-40 uppercase mt-2 block">1 hour ago</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Item (Low Priority) -->
+                    <div class="p-4 rounded-3xl hover:bg-white/5 transition-all cursor-pointer group">
+                        <div class="flex gap-4">
+                            <div class="w-10 h-10 rounded-2xl bg-gray-500/10 flex items-center justify-center text-gray-400 shrink-0">
+                                <i class="ph-bold ph-info text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold truncate">System Update</h4>
+                                <p class="text-xs mt-1 leading-relaxed opacity-70">Version 10.4 deployment was successful.</p>
+                                <span class="text-[10px] font-bold opacity-40 uppercase mt-2 block">4 hours ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-white/5">
+                    <button class="w-full py-3 text-xs font-bold uppercase tracking-widest text-primary hover:text-primary-hover transition-all">View All Notifications</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Scrollable Content Container -->
         <div id="content-container" class="section-content">
             <?php

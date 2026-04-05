@@ -40,70 +40,13 @@
                         <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y" style="border-color: var(--border-color);">
-                    <!-- Row 1 -->
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus" class="w-10 h-10 rounded-xl bg-primary/10 p-0.5" alt="Avatar">
-                                <div>
-                                    <p class="font-bold text-sm">Marcus Aurelius</p>
-                                    <p class="text-[11px] text-gray-500 font-medium">marcus@honlor.io</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4"><span class="badge-success">Active</span></td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 h-1.5 rounded-full bg-gray-800">
-                                    <div class="bg-primary h-full w-[85%] rounded-full"></div>
-                                </div>
-                                <span class="text-[10px] font-bold text-gray-400">85%</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">Oct 12, 2023</td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500"><i class="ph ph-eye text-lg"></i></button>
-                                <button class="p-2 hover:bg-orange-500/10 hover:text-orange-400 rounded-xl transition-all text-gray-500"><i class="ph ph-pencil text-lg"></i></button>
-                                <button class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-prohibit text-lg"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                    <!-- Row 2 -->
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Elena" class="w-10 h-10 rounded-xl bg-pink-500/10 p-0.5" alt="Avatar">
-                                <div>
-                                    <p class="font-bold text-sm">Elena Sorrows</p>
-                                    <p class="text-[11px] text-gray-500 font-medium">elena.s@web3.com</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4"><span class="badge-warning">Flagged</span></td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 h-1.5 rounded-full bg-gray-800">
-                                    <div class="bg-orange-400 h-full w-[40%] rounded-full"></div>
-                                </div>
-                                <span class="text-[10px] font-bold text-gray-400">40%</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">Nov 04, 2023</td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500"><i class="ph ph-eye text-lg"></i></button>
-                                <button class="p-2 hover:bg-orange-500/10 hover:text-orange-400 rounded-xl transition-all text-gray-500"><i class="ph ph-pencil text-lg"></i></button>
-                                <button class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-prohibit text-lg"></i></button>
-                            </div>
-                        </td>
-                    </tr>
+                <tbody id="users-table-body" class="divide-y" style="border-color: var(--border-color);">
+                    <!-- Rows injected by JS -->
                 </tbody>
             </table>
         </div>
         <div class="p-6 border-t flex justify-between items-center" style="border-color: var(--border-color);">
-            <p class="text-xs font-bold text-gray-500">Showing 1-10 of 8,421 users</p>
+            <p id="users-count-text" class="text-xs font-bold text-gray-500">Loading users...</p>
             <div class="flex gap-2">
                 <button class="btn-secondary !py-1.5 !px-3 !text-xs !rounded-xl">Previous</button>
                 <button class="btn-secondary !py-1.5 !px-3 !text-xs !rounded-xl !bg-primary/20 !text-primary !border-primary/20">Next</button>
