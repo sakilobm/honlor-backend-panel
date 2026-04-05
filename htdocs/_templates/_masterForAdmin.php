@@ -56,7 +56,7 @@
             <div class="rounded-[2.5rem] border backdrop-blur-2xl shadow-2xl p-6" style="background-color: var(--surface-glass); border-color: var(--border-color);">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-bold">Activity Feed</h3>
-                    <span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-lg">4 New</span>
+                    <span id="notif-count-badge" class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-lg">4 New</span>
                 </div>
                 
                 <div class="space-y-4 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">

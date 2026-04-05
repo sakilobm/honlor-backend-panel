@@ -7,11 +7,11 @@
             <p class="font-medium" style="color: var(--text-muted);">Manage global user accounts and security protocols.</p>
         </div>
         <div class="flex gap-3">
-            <button class="btn-secondary">
+            <button class="btn-secondary" onclick="AdminApp.exportUserCSV()">
                 <i class="ph-bold ph-export"></i>
                 Export CSV
             </button>
-            <button class="btn-primary">
+            <button class="btn-primary" onclick="AdminApp.openModal('invite-user-modal')">
                 <i class="ph-bold ph-user-plus"></i>
                 Invite User
             </button>
@@ -23,7 +23,7 @@
         <div class="p-6 border-b flex justify-between items-center" style="border-color: var(--border-color);">
             <h3 class="font-bold flex items-center gap-2">
                 All Users
-                <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] rounded-md">8.4k Total</span>
+                <span id="users-total-count" class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] rounded-md">8.4k Total</span>
             </h3>
             <div class="flex gap-2 text-primary/80">
                 <i class="ph ph-magnifying-glass absolute mt-2 ml-3"></i>

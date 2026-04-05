@@ -56,4 +56,74 @@
     </div>
 </div>
 
-<!-- Add more global modals here as needed -->
+<!-- Global Modal: Custom Range Picker -->
+<div id="custom-range-modal" class="modal-overlay hidden">
+    <div class="modal-card !max-w-md">
+        <div class="flex items-center justify-between p-6 border-b" style="border-color: var(--border-color);">
+            <h3 class="text-xl font-bold tracking-tight">Timeline Selection</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-primary transition-colors p-2"><i class="ph ph-x text-2xl"></i></button>
+        </div>
+        <form class="p-6 space-y-6">
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Start Date</label>
+                <input type="date" name="start" required class="w-full bg-transparent border rounded-2xl p-4 font-medium focus:outline-none focus:border-primary transition-all" style="border-color: var(--border-color); color: var(--text-main);">
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">End Date</label>
+                <input type="date" name="end" required class="w-full bg-transparent border rounded-2xl p-4 font-medium focus:outline-none focus:border-primary transition-all" style="border-color: var(--border-color); color: var(--text-main);">
+            </div>
+            <button type="button" onclick="AdminApp.initDashboard(30); closeModal();" class="w-full btn-primary !justify-center py-4 text-xs font-black uppercase tracking-widest">Apply Range</button>
+        </form>
+    </div>
+</div>
+
+<!-- Global Modal: Invite User -->
+<div id="invite-user-modal" class="modal-overlay hidden">
+    <div class="modal-card !max-w-md">
+        <div class="flex items-center justify-between p-6 border-b" style="border-color: var(--border-color);">
+            <h3 class="text-xl font-bold tracking-tight">Identity Invitation</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-primary transition-colors p-2"><i class="ph ph-x text-2xl"></i></button>
+        </div>
+        <form class="p-6 space-y-6">
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">E-mail Address</label>
+                <input type="email" name="email" required placeholder="agent@aether.net" class="w-full bg-transparent border rounded-2xl p-4 font-medium focus:outline-none focus:border-primary transition-all" style="border-color: var(--border-color); color: var(--text-main);">
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Access Authorization</label>
+                <select name="role" required class="w-full bg-transparent border rounded-2xl p-4 font-bold focus:outline-none focus:border-primary transition-all text-xs uppercase tracking-widest" style="border-color: var(--border-color); color: var(--text-main);">
+                    <option value="agent">Moderation Agent</option>
+                    <option value="admin">System Administrator</option>
+                    <option value="marketing">Marketing Specialist</option>
+                </select>
+            </div>
+            <button type="button" onclick="toast.success('Invitation Sent', 'Security link delivered to recipient.'); closeModal();" class="w-full btn-primary !justify-center py-4 text-xs font-black uppercase tracking-widest">Authorize & Deliver</button>
+        </form>
+    </div>
+</div>
+<!-- Global Modal: Policy Preview -->
+<div id="policy-preview-modal" class="modal-overlay hidden">
+    <div class="modal-card !max-w-3xl">
+        <div class="flex items-center justify-between p-8 border-b" style="border-color: var(--border-color);">
+            <div>
+                <h3 class="text-xl font-bold">Protocol Preview</h3>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Live Governance Draft</p>
+            </div>
+            <button onclick="closeModal()" class="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
+                <i class="ph-bold ph-x text-lg"></i>
+            </button>
+        </div>
+        <div class="p-10 overflow-y-auto custom-scrollbar max-h-[60vh]">
+            <article id="policy-preview-content" class="prose prose-invert max-w-none text-sm font-medium leading-relaxed" style="color: var(--text-main);">
+                <!-- Content injected by JS -->
+            </article>
+        </div>
+        <div class="p-8 bg-white/5 border-t flex justify-end gap-3" style="border-color: var(--border-color);">
+            <button onclick="closeModal()" class="btn-secondary">Dismiss</button>
+            <button onclick="closeModal(); AdminApp.submitPolicy();" class="btn-primary !px-8">
+                <i class="ph-bold ph-rocket-launch"></i>
+                Deploy Guidelines
+            </button>
+        </div>
+    </div>
+</div>

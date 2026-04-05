@@ -18,19 +18,19 @@
         <div class="mb-10">
             <h3 class="nav-group-title">Workspace</h3>
             <nav class="space-y-1.5">
-                <a href="/admin?page=dashboard" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'dashboard' ? 'active' : '' ?>">
+                <a href="javascript:AdminApp.switchSection('dashboard')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'dashboard' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-blue"><i class="ph-bold ph-squares-four text-lg"></i></div>
                     <span>Overview</span>
                 </a>
-                <a href="/admin?page=users" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'users' ? 'active' : '' ?>">
+                <a href="javascript:AdminApp.switchSection('users')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'users' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-purple"><i class="ph-bold ph-users text-lg"></i></div>
                     <span>Identity Vault</span>
                 </a>
-                <a href="/admin?page=messages" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'messages' ? 'active' : '' ?>">
+                <a href="javascript:AdminApp.switchSection('messages')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'messages' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-green"><i class="ph-bold ph-chats-circle text-lg"></i></div>
                     <span>Moderation</span>
                 </a>
-                <a href="/admin?page=channels" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'channels' ? 'active' : '' ?>">
+                <a href="javascript:AdminApp.switchSection('channels')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'channels' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-indigo"><i class="ph-bold ph-graph text-lg"></i></div>
                     <span>Channels</span>
                 </a>
@@ -40,21 +40,25 @@
         <div class="mb-10">
             <h3 class="nav-group-title">Governance</h3>
             <nav class="space-y-1.5">
-                <a href="/admin?page=ads" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'ads' ? 'active' : '' ?>">
+                <a href="javascript:AdminApp.switchSection('ads')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'ads' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-orange"><i class="ph-bold ph-megaphone text-lg"></i></div>
                     <span>Ads Pipeline</span>
                 </a>
-                <a href="/admin?page=reports" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'reports' ? 'active' : '' ?>">
+                <a href="javascript:AdminApp.switchSection('reports')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'reports' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-red"><i class="ph-bold ph-shield-warning text-lg"></i></div>
                     <span>Compliance</span>
                 </a>
-                <a href="/admin?page=deletion_requests" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'deletion_requests' ? 'active' : '' ?>">
+                <a href="javascript:AdminApp.switchSection('deletion_requests')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'deletion_requests' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-amber"><i class="ph-bold ph-user-minus text-lg"></i></div>
                     <span>Account Deletion</span>
                 </a>
-                <a href="/admin?page=analytics" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'analytics' ? 'active' : '' ?>">
+                <a href="javascript:AdminApp.switchSection('analytics')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'analytics' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-cyan"><i class="ph-bold ph-activity text-lg"></i></div>
                     <span>Intelligence</span>
+                </a>
+                <a href="javascript:AdminApp.switchSection('policy_editor')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'policy_editor' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-rose"><i class="ph-bold ph-read-cv-logo text-lg"></i></div>
+                    <span>Policy Studio</span>
                 </a>
             </nav>
         </div>
@@ -62,11 +66,11 @@
         <div class="mb-4">
             <h3 class="nav-group-title">System</h3>
             <nav class="space-y-1.5">
-                <a href="/admin?page=settings" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'settings' ? 'active' : '' ?>">
+                <a href="javascript:AdminApp.switchSection('settings')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'settings' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-zinc"><i class="ph-bold ph-sliders text-lg"></i></div>
                     <span>Control Center</span>
                 </a>
-                <a href="/admin?page=logs" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'logs' ? 'active' : '' ?>">
+                <a href="javascript:AdminApp.switchSection('logs')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'logs' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-emerald"><i class="ph-bold ph-terminal-window text-lg"></i></div>
                     <span>Server Health</span>
                 </a>
@@ -84,8 +88,8 @@
                     <p class="text-[9px] font-black text-primary uppercase tracking-widest mt-0.5 opacity-80">Online Agent</p>
                 </div>
             </div>
-            <a href="/admin?logout=1" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/20" title="Logout">
-                <i class="ph-bold ph-power text-sm"></i>
+            <a href="/admin?logout=1" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-[0_10px_20px_rgba(239,68,68,0.15)] hover:shadow-red-500/40" title="Logout">
+                <i class="ph-bold ph-power text-lg"></i>
             </a>
         </div>
     </div>

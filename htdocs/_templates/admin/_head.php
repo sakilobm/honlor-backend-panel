@@ -117,6 +117,8 @@
         .nav-cyan { @apply text-cyan-400 bg-cyan-400/5 border-cyan-400/10; }
         .nav-emerald { @apply text-emerald-400 bg-emerald-400/5 border-emerald-400/10; }
         .nav-zinc { @apply text-zinc-400 bg-zinc-400/5 border-zinc-400/10; }
+        .nav-amber { @apply text-amber-500 bg-amber-500/5 border-amber-500/10; }
+        .nav-rose { @apply text-rose-500 bg-rose-500/5 border-rose-500/10; }
         .nav-group-title {
             @apply px-4 mb-4 text-[10px] uppercase font-black tracking-[0.2em];
             color: var(--text-muted);

@@ -95,7 +95,7 @@ $allSettings = Settings::getAll();
 
             <!-- Advanced Configuration -->
             <div class="stat-card">
-                <h3 class="text-xl font-bold mb-8">Security & Performance</h3>
+                <h3 class="text-xl font-bold mb-8">Security & Throttling</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Session Timeout (Seconds)</label>
@@ -103,8 +103,20 @@ $allSettings = Settings::getAll();
                                class="w-full bg-transparent border rounded-2xl p-4 font-medium focus:border-primary outline-none transition-all" style="border-color: var(--border-color); color: var(--text-main);">
                     </div>
                     <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rate Limit (Req/Min)</label>
+                        <input type="number" id="rate_limit" value="<?= Settings::get('rate_limit', 60) ?>" 
+                               class="w-full bg-transparent border rounded-2xl p-4 font-medium focus:border-primary outline-none transition-all" style="border-color: var(--border-color); color: var(--text-main);">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="space-y-2">
                         <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Auth Retry Limit</label>
                         <input type="number" id="auth_retry_limit" value="<?= Settings::get('auth_retry_limit', 5) ?>" 
+                               class="w-full bg-transparent border rounded-2xl p-4 font-medium focus:border-primary outline-none transition-all" style="border-color: var(--border-color); color: var(--text-main);">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Global IP Blocklist (CSV)</label>
+                        <input type="text" id="ip_blocklist" value="<?= Settings::get('ip_blocklist', '127.0.0.1') ?>" 
                                class="w-full bg-transparent border rounded-2xl p-4 font-medium focus:border-primary outline-none transition-all" style="border-color: var(--border-color); color: var(--text-main);">
                     </div>
                 </div>

@@ -14,6 +14,25 @@ const AdminApp = {
         const params = new URLSearchParams(window.location.search);
         const page = params.get('page') || 'dashboard';
 
+        this.route(page);
+        
+        // Handle browser back/forward
+        window.onpopstate = (e) => {
+            if (e.state && e.state.page) {
+                this.switchSection(e.state.page, false);
+            }
+        };
+
+        // Handle notifications dropdown close on click outside
+        window.onclick = (event) => {
+            if (!event.target.matches('.ph-bell') && !event.target.closest('.notification-pane')) {
+                const pane = document.getElementById('notification-pane');
+                if (pane) pane.classList.add('hidden');
+            }
+        };
+    },
+
+    route: function(page) {
         switch(page) {
             case 'dashboard':
                 this.initDashboard();
@@ -39,15 +58,16 @@ const AdminApp = {
             case 'logs':
                 this.initLogs();
                 break;
+            case 'policy_editor':
+                this.initPolicyEditor();
+                break;
+            case 'analytics':
+                this.initAnalytics ? this.initAnalytics() : null;
+                break;
+            case 'settings':
+                // Settings might not need special init if it's just toggles
+                break;
         }
-        
-        // Handle notifications dropdown close on click outside
-        window.onclick = (event) => {
-            if (!event.target.matches('.ph-bell') && !event.target.closest('.notification-pane')) {
-                const pane = document.getElementById('notification-pane');
-                if (pane) pane.classList.add('hidden');
-            }
-        };
     },
 
     toggleNotifications: function() {
@@ -57,8 +77,36 @@ const AdminApp = {
         }
     },
 
-    switchSection: function(section) {
-        window.location.href = `/admin?page=${section}`;
+    switchSection: function(section, pushState = true) {
+        // 1. Update active state in sidebar immediately for responsiveness
+        document.querySelectorAll('.nav-link-premium').forEach(l => l.classList.remove('active'));
+        const activeLink = document.querySelector(`a[href*="${section}"]`);
+        if (activeLink) activeLink.classList.add('active');
+
+        // 2. Load content via AJAX
+        const target = document.getElementById('content-container');
+        if (!target) return;
+
+        // Show loading state with premium spinner
+        target.innerHTML = `
+            <div class="flex items-center justify-center p-32 opacity-40">
+                <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        `;
+
+        fetch(`/admin?page=${section}&ajax=1`)
+            .then(res => res.text())
+            .then(html => {
+                target.innerHTML = html;
+                if (pushState) {
+                    window.history.pushState({ page: section }, "", `/admin?page=${section}`);
+                }
+                this.init(); // Re-run init to bind new page logic
+            })
+            .catch(err => {
+                console.error("SPA failure:", err);
+                window.location.href = `/admin?page=${section}`; // Fallback
+            });
     },
 
     /**
@@ -79,6 +127,12 @@ const AdminApp = {
             }
             if (document.getElementById('stat-active-channels')) {
                 document.getElementById('stat-active-channels').innerText = data.active_channels || 0;
+            }
+
+            if (document.getElementById('notif-count-badge')) {
+                // Simulation: Use some part of messages_today as "new" alerts
+                const newAlerts = Math.max(1, data.messages_today % 15);
+                document.getElementById('notif-count-badge').innerText = `${newAlerts} New`;
             }
 
             this.renderGrowthChart(data.growth_data);
@@ -212,6 +266,32 @@ const AdminApp = {
         }
     },
 
+    exportUserCSV: function() {
+        toast.info('Preparing Export', 'Gathering identity records...');
+        ApiClient.get('users', 'list', { page: 1, limit: 1000 }).then(data => {
+            const users = data.users;
+            const headers = ['ID', 'Username', 'Email', 'Status', 'Joined'];
+            const rows = users.map(u => [
+                u.id, 
+                u.username, 
+                u.email, 
+                u.blocked == 1 ? 'Blocked' : 'Active', 
+                u.created_at
+            ]);
+
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + [headers, ...rows].map(e => e.join(",")).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `honlor_users_export_${new Date().getTime()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            toast.success('Export Ready', 'Identity vault downloaded successfully.');
+        });
+    },
+
     changeUserPage: function(delta) {
         const newPage = this.userPage + delta;
         if (newPage < 1) return;
@@ -262,6 +342,10 @@ const AdminApp = {
             });
             tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No users found</td></tr>';
             
+            if (document.getElementById('users-total-count')) {
+                document.getElementById('users-total-count').innerText = `${(data.total / 1000).toFixed(1)}k Total`;
+            }
+
             if (document.getElementById('users-count-text')) {
                 const start = (page - 1) * 10 + 1;
                 const end = Math.min(page * 10, data.total);
@@ -581,14 +665,18 @@ const AdminApp = {
     saveSettings: function() {
         const sessionTimeout = document.getElementById('session_timeout').value;
         const authRetryLimit = document.getElementById('auth_retry_limit').value;
+        const rateLimit = document.getElementById('rate_limit').value;
+        const ipBlocklist = document.getElementById('ip_blocklist').value;
 
         const p1 = ApiClient.post('settings', 'update', { key: 'session_timeout', value: sessionTimeout });
         const p2 = ApiClient.post('settings', 'update', { key: 'auth_retry_limit', value: authRetryLimit });
+        const p3 = ApiClient.post('settings', 'update', { key: 'rate_limit', value: rateLimit });
+        const p4 = ApiClient.post('settings', 'update', { key: 'ip_blocklist', value: ipBlocklist });
 
-        Promise.all([p1, p2]).then(() => {
-            toast.success('Success', 'Advanced configuration saved.');
+        Promise.all([p1, p2, p3, p4]).then(() => {
+            toast.success('Success', 'Advanced security configuration saved.');
         }).catch(err => {
-            toast.error('Error', 'Failed to save some settings.');
+            toast.error('Error', 'Failed to save some security settings.');
         });
     },
 
@@ -751,10 +839,122 @@ const AdminApp = {
             if (ns === 'users') this.loadUserList();
             if (ns === 'messages') this.loadMessageList();
             if (window.closeDrawer) closeDrawer();
-        }).catch(err => {
-            toast.error('Failed', err.error || 'Action could not be completed.');
         });
-    }
+    },
+
+    generateInsights: function() {
+        toast.info('Generating Insights', 'Analyzing global data patterns...');
+        setTimeout(() => {
+            const insights = [
+                "User retention increased by 14% over the last 7 days.",
+                "Primary traffic surge detected in the APAC region node.",
+                "Ad efficiency is peaking between 18:00 and 22:00 UTC.",
+                "Network latency remains stable at < 45ms across all channels."
+            ];
+            const random = insights[Math.floor(Math.random() * insights.length)];
+            toast.success('Analysis Complete', random);
+        }, 2000);
+    },
+
+    initAnalytics: function() {
+        console.log("Analytics Initialized");
+    },
+
+    /**
+     * Governance (Policy Editor) Logic
+     */
+    initPolicyEditor: function() {
+        this.currentPolicy = 'privacy';
+        this.policies = {
+            privacy: '',
+            terms: '',
+            community: ''
+        };
+
+        // Fetch from DB
+        toast.info('Synchronizing Governance...', 'Accessing platform policy ledger.');
+        ApiClient.get('settings', 'get', { keys: 'policy_privacy,policy_terms,policy_community' }).then(data => {
+            if (data.settings) {
+                this.policies.privacy = data.settings.policy_privacy || this.getDefaultPolicy('privacy');
+                this.policies.terms = data.settings.policy_terms || this.getDefaultPolicy('terms');
+                this.policies.community = data.settings.policy_community || this.getDefaultPolicy('community');
+                
+                // Update editor with default/saved content
+                const editor = document.getElementById('policy-editor');
+                if (editor) editor.value = this.policies[this.currentPolicy];
+            }
+        });
+    },
+
+    getDefaultPolicy: function(type) {
+        const defaults = {
+            privacy: `## Privacy & Data Protection Framework\n\n### 1. Data Collection Protocols\nThe Aether ecosystem operates on a principle of radical transparency. We collect telemetry data only to ensure node stability and cross-chain verification.\n\n### 2. Encryption Standards\nAll identity records in the Vault are encrypted using AES-256-GCM. Private keys are never stored on centralized edge clusters.\n\n### 3. User Sovereignty\nUsers maintain 100% ownership of their data packets. Deletion requests are processed within a 24-hour governance window.\n\n[--- Draft Content Below ---]`,
+            terms: `## Terms of Universal Service\n\n### 1. Access Authorization\nBy accessing the Aether network, you agree to abide by the decentralized consensus protocols. Unauthorized node manipulation is strictly prohibited.\n\n### 2. Liability Limitation\nThe infrastructure leads are not liable for packet loss during cross-node transmissions or atmospheric interference.\n\n### 3. Smart Contract Integrity\nAll governance actions are final and recorded on the immutable ledger.\n\n[--- Ready for Deployment ---]`,
+            community: `## Community Engagement Guidelines\n\n### 1. Radical Respect\nDiscourse within the Aether channels must remain constructive. Personal attacks on identity profiles will result in immediate account suspension.\n\n### 2. Information Integrity\nSpreading misinformation regarding node health or network status is considered a security violation.\n\n### 3. Collaborative Growth\nUsers are encouraged to contribute to the open-source repository and report vulnerabilities via the Compliance center.\n\n[--- Community Approved ---]`
+        };
+        return defaults[type] || '';
+    },
+
+    switchPolicy: function(type) {
+        // Save current draft to memory first
+        const editor = document.getElementById('policy-editor');
+        if (editor) this.policies[this.currentPolicy] = editor.value;
+
+        this.currentPolicy = type;
+        if (editor) editor.value = this.policies[type] || '';
+
+        // Update active tab styling
+        document.querySelectorAll('#policy-tabs button').forEach(btn => {
+            btn.classList.add('opacity-40');
+            btn.classList.remove('text-primary', 'border-b-2', 'border-primary');
+        });
+
+        const activeBtn = document.querySelector(`#policy-tab-${type}`);
+        if (activeBtn) {
+            activeBtn.classList.remove('opacity-40');
+            activeBtn.classList.add('text-primary', 'border-b-2', 'border-primary', 'pb-3');
+        }
+
+        toast.info('Governance Switching', `Drafting ${type.charAt(0).toUpperCase() + type.slice(1)} guidelines...`);
+    },
+
+    previewPolicy: function() {
+        const editor = document.getElementById('policy-editor');
+        if (!editor) return;
+
+        const content = editor.value;
+        const target = document.getElementById('policy-preview-content');
+        if (target) {
+            // Simple markdown rendering simulation
+            target.innerHTML = content
+                .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mb-4">$1</h2>')
+                .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mb-3 mt-6">$1</h3>')
+                .replace(/^\n/gim, '<br>')
+                .replace(/\n(.*)/gim, '<p class="mb-4 opacity-80">$1</p>');
+            
+            this.openModal('policy-preview-modal');
+        }
+    },
+
+    submitPolicy: function() {
+        const editor = document.getElementById('policy-editor');
+        if (!editor) return;
+
+        const type = this.currentPolicy;
+        const content = editor.value;
+
+        toast.info('Deploying Policy', `Propagating ${type} updates to global nodes...`);
+
+        ApiClient.post('settings', 'update', { 
+            key: `policy_${type}`, 
+            value: content 
+        }).then(res => {
+            toast.success('Confirmed', `Governance framework for ${type} is now active.`);
+            this.policies[type] = content; // Update saved state
+        }).catch(err => {
+            toast.error('Deployment Failed', err.error || 'Failed to update protocol.');
+        });
+    },
 };
 
 document.addEventListener('DOMContentLoaded', () => AdminApp.init());

@@ -7,13 +7,13 @@
             <p class="font-bold text-sm opacity-60 tracking-tight uppercase" style="color: var(--text-muted);">Real-time performance across the Aether ecosystem.</p>
         </div>
         <div class="flex gap-3 w-full md:w-auto">
-            <button class="btn-secondary !rounded-2xl flex-1 md:flex-none justify-center">
+            <button class="btn-secondary !rounded-2xl flex-1 md:flex-none justify-center" onclick="AdminApp.openModal('custom-range-modal')">
                 <i class="ph-bold ph-calendar-check text-lg"></i>
                 Timeline
             </button>
-            <button class="btn-primary !rounded-2xl flex-1 md:flex-none justify-center" onclick="openModal('create-ad-modal')">
-                <i class="ph-bold ph-plus-circle text-lg"></i>
-                New Operation
+            <button class="btn-primary !rounded-2xl flex-1 md:flex-none justify-center" onclick="AdminApp.generateInsights()">
+                <i class="ph-bold ph-magic-wand text-lg"></i>
+                Insights
             </button>
         </div>
     </div>
