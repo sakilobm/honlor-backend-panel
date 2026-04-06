@@ -152,6 +152,25 @@
         .badge-danger { @apply px-2.5 py-1 bg-red-500/10 text-red-500 text-[10px] font-bold rounded-full border border-red-500/20 whitespace-nowrap; }
         .badge-neutral { @apply px-2.5 py-1 bg-gray-500/10 text-gray-500 text-[10px] font-bold rounded-full border border-gray-500/20 whitespace-nowrap; }
         
+        /* Premium Tabs System */
+        .tab-btn {
+            @apply relative py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all cursor-pointer;
+            color: var(--text-muted);
+        }
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+        .tab-btn.active {
+            color: var(--primary);
+        }
+        .tab-underline {
+            @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-full transition-all duration-300 opacity-0 scale-x-0;
+            box-shadow: 0 0 10px var(--primary);
+        }
+        .tab-btn.active .tab-underline {
+            @apply opacity-100 scale-x-100;
+        }
+        
         /* Modals System */
         .modal-overlay {
             @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6;

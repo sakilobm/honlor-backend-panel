@@ -98,6 +98,14 @@ const AdminApp = {
             .then(res => res.text())
             .then(html => {
                 target.innerHTML = html;
+                
+                // Reset tabs to default (first tab)
+                const firstTab = target.querySelector('.tab-btn');
+                if (firstTab) {
+                    const tabId = firstTab.getAttribute('data-tab');
+                    if (tabId) this.switchTab(section, tabId);
+                }
+
                 if (pushState) {
                     window.history.pushState({ page: section }, "", `/admin?page=${section}`);
                 }
@@ -550,6 +558,52 @@ const AdminApp = {
      */
     initLogs: function() {
         this.loadLogList();
+        
+        // Polling interval for real-time telemetry (Every 3 seconds)
+        if (this.telemetryInterval) clearInterval(this.telemetryInterval);
+        
+        this.telemetryInterval = setInterval(() => {
+            this.updateTelemetry();
+            if (this.currentSection === 'logs') {
+                this.loadLogList();
+            }
+        }, 5000);
+
+        this.updateTelemetry();
+    },
+
+    updateTelemetry: function() {
+        if (this.currentSection !== 'logs') return;
+
+        // Simulated high-fidelity telemetry fluctuations
+        const cpu = Math.floor(Math.random() * (25 - 8 + 1)) + 8;
+        const ram = (2.2 + Math.random() * 0.4).toFixed(1);
+        const ramPercent = Math.floor((ram / 8) * 100);
+        const threads = Math.floor(Math.random() * (52 - 38 + 1)) + 38;
+        const ingress = (10 + Math.random() * 5).toFixed(1);
+        const egress = (45 + Math.random() * 10).toFixed(1);
+
+        const up = (id, val, suffix = '') => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = val + suffix;
+        };
+
+        const bar = (id, percent) => {
+            const el = document.getElementById(id);
+            if (el) el.style.width = percent + '%';
+        };
+
+        up('monitor-cpu-text', cpu, '%');
+        bar('monitor-cpu-bar', cpu);
+
+        up('monitor-ram-text', ram, ' GB');
+        bar('monitor-ram-bar', ramPercent);
+
+        up('monitor-threads-text', threads, ' Active');
+        bar('monitor-threads-bar', Math.min(100, (threads / 120) * 100));
+
+        up('monitor-ingress-text', ingress, ' Mbps');
+        up('monitor-egress-text', egress, ' Mbps');
     },
 
     loadLogList: function() {
@@ -559,25 +613,57 @@ const AdminApp = {
         ApiClient.get('logs', 'list').then(data => {
             let html = '';
             data.logs.forEach(log => {
-                const levelBadge = log.level === 'error' ? 'badge-danger' : (log.level === 'warning' ? 'badge-warning' : 'badge-neutral');
+                const colors = {
+                    error: { badge: 'bg-red-500/10 text-red-500 border-red-500/20', icon: 'ph-warning-circle' },
+                    warning: { badge: 'bg-orange-500/10 text-orange-500 border-orange-500/20', icon: 'ph-warning' },
+                    info: { badge: 'bg-blue-500/10 text-blue-400 border-blue-400/20', icon: 'ph-info' },
+                    status: { badge: 'bg-green-500/10 text-green-400 border-green-400/20', icon: 'ph-check-circle' }
+                };
+
+                const cfg = colors[log.level] || colors.info;
                 
                 html += `
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4 text-xs font-mono text-gray-500">#${log.id}</td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <span class="${levelBadge} uppercase !px-1.5 !text-[9px]">${log.level}</span>
-                                <span class="text-sm font-bold">${log.action}</span>
+                    <tr class="hover:bg-white/5 transition-all group">
+                        <td class="py-6 px-8 text-[10px] font-black text-gray-500 tracking-widest">#${log.id}</td>
+                        <td class="py-6 px-8">
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 rounded-lg ${cfg.badge.split(' ')[0]} flex items-center justify-center border ${cfg.badge.split(' ')[2]}">
+                                    <i class="ph-bold ${cfg.icon} text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-black tracking-tight uppercase">${log.action}</p>
+                                    <p class="text-[10px] uppercase font-black opacity-40 tracking-widest mt-0.5">${log.level}</p>
+                                </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-xs text-gray-400 font-medium">${log.username || 'SYSTEM'}</td>
-                        <td class="px-6 py-4 text-[11px] font-mono text-gray-500">${log.ip || '0.0.0.0'}</td>
-                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(log.created_at).toLocaleString()}</td>
+                        <td class="py-6 px-8">
+                            <div class="flex items-center gap-3">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${log.username || 'System'}" class="w-7 h-7 rounded-lg bg-white/5 border border-white/10">
+                                <span class="text-xs font-black uppercase tracking-widest opacity-60">${log.username || 'SYSTEM'}</span>
+                            </div>
+                        </td>
+                        <td class="py-6 px-8 text-[10px] font-black text-gray-500 tracking-widest font-mono">${log.ip || '0.0.0.0'}</td>
+                        <td class="py-6 px-8 text-right">
+                            <span class="text-[10px] font-black uppercase tracking-widest opacity-40">${new Date(log.created_at).toLocaleTimeString()}</span>
+                        </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No logs found</td></tr>';
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-20 text-center"><p class="font-black text-[10px] uppercase tracking-widest opacity-40">Zero Incidents Detected</p></td></tr>';
         });
+    },
+
+    openTerminal: function() {
+        this.openModal('system-terminal-modal');
+        const output = document.getElementById('terminal-output');
+        if (output) {
+            output.innerHTML = '<p class="text-primary font-black mb-2 animate-pulse">> Initializing Kernel Synchronizer...</p>';
+            setTimeout(() => {
+                output.innerHTML += '<p class="text-green-400 font-black mb-1">[OK] Global Nodes Authenticated</p>';
+                output.innerHTML += '<p class="text-green-400 font-black mb-1">[OK] Encryption Handshake Verified</p>';
+                output.innerHTML += '<p class="text-white font-black mt-4">> Aether Core v10.4.2 Ready.</p>';
+            }, 1200);
+        }
     },
 
     /**
@@ -585,6 +671,17 @@ const AdminApp = {
      */
     initAdsManager: function() {
         this.loadAdList();
+
+        const searchInput = document.querySelector('#tab-content-campaigns input[placeholder*="Search streams"]');
+        if (searchInput) {
+            let timeout;
+            searchInput.oninput = () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    this.loadAdList(searchInput.value);
+                }, 300);
+            };
+        }
 
         const form = document.getElementById('create-ad-form');
         if (form) {
@@ -608,11 +705,11 @@ const AdminApp = {
         }
     },
 
-    loadAdList: function() {
+    loadAdList: function(filter = '') {
         const tbody = document.getElementById('ads-table-body');
         if (!tbody) return;
 
-        ApiClient.get('ads', 'list').then(data => {
+        ApiClient.get('ads', 'list', { filter }).then(data => {
             let html = '';
             data.ads.forEach(ad => {
                 html += `

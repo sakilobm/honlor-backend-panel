@@ -1,88 +1,92 @@
 <?php use Aether\Session; ?>
-<!-- Section: Channels (Network Graph) -->
+<!-- Section: Node Orchestration (Channels) -->
 <div id="section-channels" class="section active space-y-8 animate-in fade-in duration-500">
-    <div class="flex items-end justify-between gap-4">
+    <div class="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
         <div>
-            <h2 class="text-3xl font-bold tracking-tight mb-2">Network Architecture</h2>
-            <p class="font-medium" style="color: var(--text-muted);">Manage channel hierarchies and message propagation nodes.</p>
+            <h2 class="text-4xl font-black tracking-tighter mb-2 uppercase">Node <span class="gradient-text">Registry</span></h2>
+            <p class="font-bold text-sm opacity-60 tracking-tight uppercase" style="color: var(--text-muted);">Manage global node clusters and communication interfaces.</p>
         </div>
-        <div class="flex gap-3">
-            <button class="btn-primary">
-                <i class="ph-bold ph-circles-three-plus"></i>
-                Create Channel
+        <div class="flex gap-3 w-full md:w-auto">
+            <button class="btn-primary !rounded-2xl flex-1 md:flex-none justify-center shadow-xl shadow-primary/20" onclick="openModal('create-channel-modal')">
+                <i class="ph-bold ph-plus text-lg"></i>
+                Register Node
             </button>
         </div>
     </div>
 
-    <!-- Cluster Map Placeholder -->
-    <div class="stat-card !p-0 min-h-[500px] flex items-center justify-center relative overflow-hidden">
-        <div class="absolute inset-0 opacity-30 pointer-events-none">
-            <div class="absolute top-1/4 left-1/4 w-32 h-32 bg-primary/20 blur-3xl animate-pulse rounded-full"></div>
-            <div class="absolute bottom-1/3 right-1/4 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full"></div>
-        </div>
-        <div class="text-center relative z-10 px-8">
-            <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mx-auto mb-6 border border-primary/20 shadow-[0_0_40px_rgba(124,106,255,0.2)] animate-bounce font-bold tracking-widest uppercase">
-                <i class="ph ph-graph text-4xl"></i>
+    <!-- Premium Module Tabs -->
+    <div class="flex gap-8 border-b border-white/5" id="channels-tabs">
+        <button class="tab-btn active" data-tab="list" onclick="AdminApp.switchTab('channels', 'list')">
+            Active Clusters
+            <div class="tab-underline"></div>
+        </button>
+        <button class="tab-btn" data-tab="protocols" onclick="AdminApp.switchTab('channels', 'protocols')">
+            Node Protocols
+            <div class="tab-underline"></div>
+        </button>
+    </div>
+
+    <!-- Tab Content: Active Clusters -->
+    <div id="tab-content-list" class="tab-content space-y-8 animate-in fade-in duration-700">
+        <div class="stat-card !p-0 overflow-hidden">
+            <div class="p-8 border-b border-white/5 bg-white/5">
+                <h3 class="text-xl font-black uppercase tracking-tight">Ecosystem <span class="gradient-text">Nodes</span></h3>
+                <p class="text-[10px] font-black uppercase tracking-widest opacity-60 mt-1">Real-time status across 24 edge clusters</p>
             </div>
-            <h3 class="text-2xl font-bold mb-3 tracking-tight">Interactive Cluster Map</h3>
-            <p class="max-w-md mx-auto leading-relaxed mb-8" style="color: var(--text-muted);">Visualize live message propagation across global nodes. Select a node to adjust shard allocation or view localized logs.</p>
-            <div class="flex justify-center gap-4">
-                <button class="btn-secondary !text-xs !py-1.5 !px-4">Show Heatmap</button>
-                <button class="btn-secondary !text-xs !py-1.5 !px-4">Shard Overlay</button>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] border-b border-white/5" style="background-color: var(--glass-bg);">
+                            <th class="py-6 px-8">Cluster Name</th>
+                            <th class="py-6 px-8">Sync Protocol</th>
+                            <th class="py-6 px-8">Member Load</th>
+                            <th class="py-6 px-8">Deployment</th>
+                            <th class="py-6 px-8 text-right">Synchronization</th>
+                        </tr>
+                    </thead>
+                    <tbody id="channels-table-body" class="divide-y divide-white/5">
+                        <!-- Node Clusters Synced by JS -->
+                        <tr><td colspan="5" class="p-20 text-center"><p class="animate-pulse font-black text-[10px] uppercase tracking-widest opacity-40">Authenticaton Nodes Ingress...</p></td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Active Propagation Table -->
-    <div class="stat-card !p-0 overflow-hidden">
-        <div class="p-6 border-b flex justify-between items-center" style="border-color: var(--border-color);">
-            <h3 class="font-bold flex items-center gap-2">
-                Priority Channels
-                <span class="badge-neutral border-primary/20 text-primary">Live Optimization</span>
-            </h3>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="border-b" style="border-color: var(--border-color); background-color: var(--glass-bg);">
-                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Channel Name</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Type</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Members</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Created</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="channels-table-body" class="divide-y" style="border-color: var(--border-color);">
-                    <!-- Rows injected by JS -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Create Channel Modal -->
-    <div id="create-channel-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div class="flex items-center justify-between p-6 border-b" style="border-color: var(--border-color);">
-                <h3 class="text-xl font-bold tracking-tight">Provision New Node</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-primary transition-colors p-2"><i class="ph ph-x text-2xl"></i></button>
+    <!-- Tab Content: Node Protocols -->
+    <div id="tab-content-protocols" class="tab-content hidden space-y-8 animate-in fade-in duration-700">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="stat-card">
+                 <h3 class="text-[10px] font-black uppercase tracking-[0.2em] mb-8 opacity-60">Global Communication Standards</h3>
+                 <div class="space-y-6">
+                      <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 group">
+                           <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><i class="ph-bold ph-shield-check text-lg"></i></div>
+                                <span class="text-xs font-black uppercase tracking-widest">TLS 1.3 Sync</span>
+                           </div>
+                           <span class="badge-success uppercase tracking-widest text-[9px]">Mandatory</span>
+                      </div>
+                      <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 opacity-40">
+                           <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-400/20"><i class="ph-bold ph-radio-button text-lg"></i></div>
+                                <span class="text-xs font-black uppercase tracking-widest">Legacy Auth (Dep)</span>
+                           </div>
+                           <span class="badge-neutral uppercase tracking-widest text-[9px]">Disabled</span>
+                      </div>
+                 </div>
             </div>
-            <form id="create-channel-form" class="p-8 space-y-6">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Channel Name</label>
-                    <input type="text" name="name" required class="w-full bg-transparent border rounded-2xl p-4 focus:outline-none focus:border-primary transition-all font-medium" style="border-color: var(--border-color); color: var(--text-main);" placeholder="e.g. engineering-alpha">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Propagation Type</label>
-                    <select name="type" required class="w-full border rounded-2xl p-4 focus:outline-none focus:border-primary transition-all font-medium appearance-none" style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">
-                        <option value="public">Global Public</option>
-                        <option value="private">Encrypted Private</option>
-                    </select>
-                </div>
-                <div class="pt-6 flex gap-3">
-                    <button type="button" onclick="closeModal()" class="btn-secondary flex-1 !justify-center py-4">Cancel</button>
-                    <button type="submit" class="btn-primary flex-1 !justify-center py-4 text-lg">Initialize Node</button>
-                </div>
-            </form>
+
+            <div class="stat-card border-primary/20 bg-gradient-to-br from-primary/10 to-transparent">
+                 <h3 class="text-[10px] font-black uppercase tracking-[0.2em] mb-8 opacity-60">Node Integrity Check</h3>
+                 <div class="mt-4 p-8 rounded-3xl bg-white/5 border border-white/5 text-center flex flex-col items-center">
+                      <div class="w-20 h-20 rounded-full border-4 border-dashed border-primary/30 flex items-center justify-center text-primary animate-[spin_10s_linear_infinite]">
+                           <i class="ph ph-lightning text-3xl"></i>
+                      </div>
+                      <p class="text-xl font-black uppercase tracking-tighter mt-8">System <span class="gradient-text">Verified</span></p>
+                      <p class="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-2 leading-relaxed">All node clusters are currently reporting 100% data integrity and synchronization success.</p>
+                      <button class="btn-primary !bg-white !text-primary !shadow-none !justify-center !px-10 !py-3 !rounded-[1.25rem] mt-10 text-[9px] font-black tracking-[0.2em] uppercase border border-primary/10 hover:!bg-primary hover:!text-white transition-all">Deep Scan Cluster</button>
+                 </div>
+            </div>
         </div>
     </div>
 </div>

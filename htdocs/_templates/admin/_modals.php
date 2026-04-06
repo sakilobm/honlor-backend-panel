@@ -127,3 +127,28 @@
         </div>
     </div>
 </div>
+<!-- Global Modal: System Terminal -->
+<div id="system-terminal-modal" class="modal-overlay hidden">
+    <div class="modal-card !max-w-4xl !bg-black shadow-[0_0_50px_rgba(124,106,255,0.15)]">
+        <div class="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+            <div class="flex items-center gap-3">
+                <div class="flex gap-1.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+                </div>
+                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-gray-400 ml-4">Aether Kernel Console</h3>
+            </div>
+            <button onclick="closeModal()" class="text-gray-500 hover:text-white transition-colors p-2"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        <div class="p-10 font-mono text-sm min-h-[400px] bg-slate-950/50 flex flex-col">
+            <div id="terminal-output" class="flex-grow space-y-1">
+                <!-- CLI output injected by JS -->
+            </div>
+            <div class="flex items-center gap-3 mt-6 border-t border-white/5 pt-6">
+                <span class="text-primary font-black">root@aether:~#</span>
+                <input type="text" class="bg-transparent border-none outline-none flex-grow text-white font-medium" placeholder="Enter system command..." autofocus>
+            </div>
+        </div>
+    </div>
+</div>
