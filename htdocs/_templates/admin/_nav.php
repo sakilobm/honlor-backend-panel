@@ -67,7 +67,7 @@
             <h3 class="nav-group-title">System</h3>
             <nav class="space-y-1.5">
                 <a href="javascript:AdminApp.switchSection('settings')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'settings' ? 'active' : '' ?>">
-                    <div class="nav-duotone nav-zinc"><i class="ph-bold ph-sliders text-lg"></i></div>
+                    <div class="nav-duotone nav-primary"><i class="ph-bold ph-sliders text-lg"></i></div>
                     <span>Control Center</span>
                 </a>
                 <a href="javascript:AdminApp.switchSection('logs')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'logs' ? 'active' : '' ?>">

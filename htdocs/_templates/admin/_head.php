@@ -108,6 +108,7 @@
         .nav-link-premium.active .nav-duotone {
             @apply bg-opacity-20 border-opacity-30 opacity-100;
         }
+        .nav-primary { @apply text-primary bg-primary/10 border-primary/20; }
         .nav-blue { @apply text-blue-400 bg-blue-400/5 border-blue-400/10; }
         .nav-purple { @apply text-purple-400 bg-purple-400/5 border-purple-400/10; }
         .nav-green { @apply text-green-400 bg-green-400/5 border-green-400/10; }

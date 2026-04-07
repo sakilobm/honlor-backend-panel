@@ -118,6 +118,36 @@ const AdminApp = {
     },
 
     /**
+     * Tabbed Architecture Engine
+     * Handles switching between sub-modules within a section
+     */
+    switchTab: function(sectionId, tabId) {
+        console.log(`Switching Tab: ${sectionId} -> ${tabId}`);
+        
+        // 1. Update Tab Buttons (Active Styles & Underlines)
+        const tabContainer = document.querySelector(`#section-${sectionId} [id$="-tabs"]`);
+        if (tabContainer) {
+            tabContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = tabContainer.querySelector(`[data-tab="${tabId}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        // 2. Toggle Tab Content Visibility
+        const section = document.getElementById(`section-${sectionId}`);
+        if (section) {
+            section.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+                content.classList.remove('active');
+            });
+            const targetContent = document.getElementById(`tab-content-${tabId}`);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+                targetContent.classList.add('active');
+            }
+        }
+    },
+
+    /**
      * Dashboard Logic
      */
     initDashboard: function(range = 7) {
@@ -661,7 +691,7 @@ const AdminApp = {
             setTimeout(() => {
                 output.innerHTML += '<p class="text-green-400 font-black mb-1">[OK] Global Nodes Authenticated</p>';
                 output.innerHTML += '<p class="text-green-400 font-black mb-1">[OK] Encryption Handshake Verified</p>';
-                output.innerHTML += '<p class="text-white font-black mt-4">> Aether Core v10.4.2 Ready.</p>';
+                output.innerHTML += '<p class="font-black mt-4" style="color: var(--text-main);">> Aether Core v10.4.2 Ready.</p>';
             }, 1200);
         }
     },

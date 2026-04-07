@@ -46,7 +46,8 @@
                     <div class="relative flex-grow md:flex-none group">
                         <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors"></i>
                         <input type="text" id="user-filter" placeholder="Search Identities..." 
-                               class="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-[10px] font-black uppercase tracking-widest focus:border-primary/50 outline-none transition-all placeholder:text-gray-500 text-white">
+                               class="w-full rounded-xl pl-11 pr-4 py-2.5 text-[10px] font-black uppercase tracking-widest focus:border-primary/50 outline-none transition-all placeholder:text-gray-500"
+                               style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">
                     </div>
                 </div>
             </div>

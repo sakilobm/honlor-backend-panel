@@ -79,7 +79,9 @@
                 <div class="flex gap-4 w-full md:w-auto">
                     <div class="relative flex-grow md:flex-none">
                         <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                        <input type="text" placeholder="Search streams..." class="w-full bg-white/5 border border-white/5 rounded-xl pl-10 pr-4 py-2 text-xs font-bold uppercase tracking-widest focus:border-primary/50 outline-none transition-all">
+                        <input type="text" placeholder="Search streams..." 
+                               class="w-full rounded-xl pl-10 pr-4 py-2 text-xs font-bold uppercase tracking-widest focus:border-primary/50 outline-none transition-all"
+                               style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">
                     </div>
                 </div>
             </div>
