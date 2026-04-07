@@ -125,7 +125,7 @@
                      </div>
                      <div class="text-center">
                           <p class="text-xs font-black uppercase tracking-widest opacity-40 mb-1 leading-tight">CPM Mean</p>
-                          <p class="text-2xl font-black text-white tracking-tighter">$4.20</p>
+                          <p class="text-2xl font-black tracking-tighter" style="color: var(--text-main);">$4.20</p>
                      </div>
                      <div class="text-center">
                           <p class="text-xs font-black uppercase tracking-widest opacity-40 mb-1 leading-tight">ROAS Avg</p>

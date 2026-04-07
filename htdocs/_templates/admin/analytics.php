@@ -49,7 +49,7 @@
                     <div class="space-y-2">
                         <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-500">
                             <span>Week 2 (Engagement)</span>
-                            <span class="text-white">78% Optimal</span>
+                            <span class="font-bold" style="color: var(--text-main);">78% Optimal</span>
                         </div>
                         <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
                             <div class="bg-primary/80 h-full w-[78%]"></div>
@@ -59,7 +59,7 @@
                     <div class="space-y-2">
                         <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-500">
                             <span>Week 4 (Maturity)</span>
-                            <span class="text-white">64% Stable</span>
+                            <span class="font-bold" style="color: var(--text-main);">64% Stable</span>
                         </div>
                         <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
                             <div class="bg-primary/60 h-full w-[64%]"></div>

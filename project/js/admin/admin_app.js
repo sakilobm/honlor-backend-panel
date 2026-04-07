@@ -97,7 +97,7 @@ const AdminApp = {
         fetch(`/admin?page=${section}&ajax=1`)
             .then(res => res.text())
             .then(html => {
-                target.innerHTML = html;
+                target.innerHTML = html; 
                 
                 // Reset tabs to default (first tab)
                 const firstTab = target.querySelector('.tab-btn');
