@@ -1,5 +1,10 @@
 <!-- Favicon -->
-<link rel="icon" type="image/png" href="/assets/img/favicon.png">
+<link rel="icon" type="image/png" href="<?= get_config('base_path') ?>assets/img/favicon.png">
+
+<!-- Global Environment Configuration -->
+<script>
+    window.BASE_PATH = '<?= get_config('base_path') ?>';
+</script>
 
 <!-- CDNs -->
 <script src="https://cdn.tailwindcss.com"></script>

@@ -14,7 +14,7 @@
 
 const ApiClient = (() => {
 
-    const BASE = '/api/';
+    const BASE = (window.BASE_PATH || '/') + 'api/';
 
     /**
      * Core fetch wrapper.
@@ -75,7 +75,7 @@ async function apiLogin(user, password) {
     try {
         const data = await ApiClient.post('auth', 'login', { user, password });
         toast.success('Welcome back!', data.message || 'Logged in successfully.');
-        setTimeout(() => { window.location.href = '/admin'; }, 800);
+        setTimeout(() => { window.location.href = (window.BASE_PATH || '/') + 'admin'; }, 800);
     } catch (err) {
         toast.error('Login Failed', err.message || 'Invalid credentials.');
     }
@@ -89,7 +89,7 @@ async function apiSignup(fields) {
     try {
         const data = await ApiClient.post('auth', 'signup', fields);
         toast.success('Account Created!', data.message || 'Please log in.');
-        setTimeout(() => { window.location.href = '/login'; }, 1200);
+        setTimeout(() => { window.location.href = (window.BASE_PATH || '/') + 'login'; }, 1200);
     } catch (err) {
         toast.error('Registration Failed', err.message || 'Try a different username.');
     }

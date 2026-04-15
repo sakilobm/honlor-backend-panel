@@ -49,6 +49,21 @@ class Session
     }
 
     /**
+     * Check if current user has permission for a resource.
+     */
+    public static function hasPermission(string $resource, string $action = 'view'): bool
+    {
+        $user = self::getUser();
+        if (!$user) return false;
+        
+        // Master Admin override
+        if ($user->isMaster()) return true;
+
+        $role = $user->getRole();
+        return $role ? $role->can($resource, $action) : false;
+    }
+
+    /**
      * Advanced View Renderer with Layout Inheritance.
      *
      * @param string $view   The view template inside _templates/

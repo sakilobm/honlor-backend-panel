@@ -74,6 +74,12 @@
                     <div class="nav-duotone nav-emerald"><i class="ph-bold ph-terminal-window text-lg"></i></div>
                     <span>Server Health</span>
                 </a>
+                <?php if (Session::hasPermission('roles', 'manage')) : ?>
+                <a href="javascript:AdminApp.switchSection('roles')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'roles' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-rose"><i class="ph-bold ph-shield-star text-lg"></i></div>
+                    <span>Role Studio</span>
+                </a>
+                <?php endif; ?>
             </nav>
         </div>
     </div>
@@ -88,7 +94,7 @@
                     <p class="text-[9px] font-black text-primary uppercase tracking-widest mt-0.5 opacity-80">Online Agent</p>
                 </div>
             </div>
-            <a href="/admin?logout=1" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-[0_10px_20px_rgba(239,68,68,0.15)] hover:shadow-red-500/40" title="Logout">
+            <a href="<?= get_config('base_path') ?>admin?logout=1" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-[0_10px_20px_rgba(239,68,68,0.15)] hover:shadow-red-500/40" title="Logout">
                 <i class="ph-bold ph-power text-lg"></i>
             </a>
         </div>

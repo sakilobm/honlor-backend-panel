@@ -147,7 +147,7 @@
     <script src="<?= get_config('base_path') ?>assets/js/apis.js"></script>
     
     <!-- Application Logic (Populates chart, metrics, etc) -->
-    <script src="/js/admin.min.js"></script>
+    <script src="/js/admin.js"></script>
 
     <!-- Global Modals System -->
     <div id="global-modal-container" class="modal-overlay hidden z-[100]">

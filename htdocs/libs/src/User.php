@@ -20,6 +20,7 @@ class User
     public string $email;
     public string $table = 'auth';
     public $conn;
+    private ?\App\Role $role = null;
 
     /**
      * Signup a new user.
@@ -99,7 +100,7 @@ class User
         $this->table = 'auth';
         $this->conn  = Database::getConnection();
 
-        $sql = "SELECT `id`, `username`, `email` FROM `auth`
+        $sql = "SELECT `id`, `username`, `email`, `role_id`, `is_master` FROM `auth`
                 WHERE `username` = ? OR `email` = ? OR `id` = ? LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $id = is_numeric($identifier) ? (int)$identifier : -1;
@@ -121,10 +122,11 @@ class User
     public static function listAll(int $limit = 10, int $offset = 0, string $filter = ''): array
     {
         $db = Database::getConnection();
-        $sql = "SELECT a.id, a.username, a.email, a.active, a.blocked, a.created_at, 
-                       p.firstname, p.lastname, p.bio, p.avatar
+        $sql = "SELECT a.id, a.username, a.email, a.active, a.blocked, a.created_at, a.role_id, a.is_master,
+                       p.firstname, p.lastname, p.bio, p.avatar, r.name as role_name
                 FROM `auth` a
-                LEFT JOIN `profiles` p ON a.id = p.id";
+                LEFT JOIN `profiles` p ON a.id = p.id
+                LEFT JOIN `roles` r ON a.role_id = r.id";
         
         if (!empty($filter)) {
             $sql .= " WHERE a.username LIKE ? OR a.email LIKE ? OR p.firstname LIKE ? OR p.lastname LIKE ?";
@@ -223,5 +225,34 @@ class User
             error_log("User::updateProfile() error: " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Check if user is the Master Admin with absolute power.
+     */
+    public function isMaster(): bool
+    {
+        return (int)$this->getIsMaster() === 1;
+    }
+
+    /**
+     * Get the role associated with this user.
+     */
+    public function getRole(): ?\App\Role
+    {
+        if ($this->role) {
+            return $this->role;
+        }
+
+        $roleId = (int)$this->getRoleId();
+        if ($roleId > 0) {
+            try {
+                $this->role = new \App\Role($roleId);
+                return $this->role;
+            } catch (Exception $e) {
+                error_log("User::getRole() error: " . $e->getMessage());
+            }
+        }
+        return null;
     }
 }

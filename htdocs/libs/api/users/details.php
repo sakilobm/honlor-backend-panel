@@ -19,12 +19,17 @@ $details = function()
     try {
         $user = new \Aether\User($id);
         $data = [
-            'id'       => $user->id,
-            'username' => $user->username,
-            'email'    => $user->email,
-            'active'   => $user->getActive(),
-            'blocked'  => $user->getBlocked(),
-            'joined'   => $user->getCreatedAt()
+            'id'        => $user->id,
+            'username'  => $user->username,
+            'email'     => $user->email,
+            'firstname' => $user->getFirstname(),
+            'lastname'  => $user->getLastname(),
+            'bio'       => $user->getBio(),
+            'active'    => $user->getActive(),
+            'blocked'   => $user->getBlocked(),
+            'role_id'   => $user->getRoleId(),
+            'is_master' => $user->getIsMaster(),
+            'joined'    => $user->getCreatedAt()
         ];
         
         $this->response($this->json(['user' => $data]), 200);

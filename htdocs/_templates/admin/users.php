@@ -56,9 +56,9 @@
                     <thead>
                         <tr class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] border-b border-white/5" style="background-color: var(--glass-bg);">
                             <th class="py-6 px-8">Identity Profile</th>
+                            <th class="py-6 px-8">Security Cluster</th>
                             <th class="py-6 px-8">Safety Status</th>
                             <th class="py-6 px-8">Engagement</th>
-                            <th class="py-6 px-8">Auth Date</th>
                             <th class="py-6 px-8 text-right">Synchronization</th>
                         </tr>
                     </thead>
