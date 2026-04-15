@@ -1,4 +1,9 @@
-<aside id="sidebar" class="w-72 shrink-0 border-r transition-all duration-300 md:relative fixed inset-y-0 left-0 z-50 -translate-x-full md:translate-x-0 overflow-hidden flex flex-col backdrop-blur-2xl" style="background-color: var(--surface-glass); border-color: var(--border-color);">
+<aside id="sidebar" class="w-80 shrink-0 border-r transition-transform duration-500 md:relative fixed inset-y-0 left-0 z-[100] -translate-x-full md:translate-x-0 overflow-hidden flex flex-col backdrop-blur-3xl" style="background-color: var(--surface-glass); border-color: var(--border-color);">
+    <!-- Mobile Close Button -->
+    <button class="md:hidden absolute top-6 right-6 p-2 rounded-xl bg-white/5 text-gray-400 hover:text-white transition-colors" onclick="toggleMobileSidebar()">
+        <i class="ph-bold ph-x text-xl"></i>
+    </button>
+
     <div class="p-8 pb-4">
         <!-- Brand -->
         <div class="flex items-center gap-3 mb-10">

@@ -97,7 +97,7 @@ const AdminApp = {
             </div>
         `;
 
-        fetch(`/admin?page=${section}&ajax=1`)
+        fetch(`${window.BASE_PATH || '/'}admin?page=${section}&ajax=1`)
             .then(res => res.text())
             .then(html => {
                 target.innerHTML = html; 
@@ -110,13 +110,13 @@ const AdminApp = {
                 }
 
                 if (pushState) {
-                    window.history.pushState({ page: section }, "", `/admin?page=${section}`);
+                    window.history.pushState({ page: section }, "", `${window.BASE_PATH || '/'}admin?page=${section}`);
                 }
                 this.init(); // Re-run init to bind new page logic
             })
             .catch(err => {
                 console.error("SPA failure:", err);
-                window.location.href = `/admin?page=${section}`; // Fallback
+                window.location.href = `${window.BASE_PATH || '/'}admin?page=${section}`; // Fallback
             });
     },
 

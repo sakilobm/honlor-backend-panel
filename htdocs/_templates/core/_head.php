@@ -5,7 +5,13 @@
 <meta name="author" content="<?= htmlspecialchars(get_config('meta_author', '')) ?>">
 
 <!-- Favicon -->
-<link rel="icon" type="image/png" href="/assets/img/favicon.png">
+<link rel="icon" type="image/png" href="<?= get_config('base_path') ?>assets/img/favicon.png">
+
+<!-- Global Environment Configuration -->
+<script>
+    window.BASE_PATH = '<?= get_config('base_path') ?>';
+</script>
+
 
 <!-- CDNs -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -99,5 +105,6 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
-<!-- Public Assets -->
-<link rel="stylesheet" href="<?= get_config('base_path') ?>assets/css/toastv3.css">
+<!-- Toast Notifications Container -->
+<div class="toast-panel" id="toast-container"></div>
+

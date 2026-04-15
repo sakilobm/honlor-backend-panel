@@ -43,10 +43,23 @@ class Session
     {
         if (!self::isAuthenticated()) {
             self::set('_redirect', $_SERVER['REQUEST_URI']);
-            header('Location: /login');
+            header('Location: ' . self::url('login'));
             exit;
         }
     }
+
+    /**
+     * Generate a full URL using the configured base_path.
+     */
+    public static function url(string $path = ''): string
+    {
+        $base = get_config('base_path', '/');
+        // Ensure $base ends with / if not empty, and $path doesn't start with /
+        $base = rtrim($base, '/') . '/';
+        $path = ltrim($path, '/');
+        return $base . $path;
+    }
+
 
     /**
      * Check if current user has permission for a resource.

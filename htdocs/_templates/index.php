@@ -10,18 +10,18 @@
                 <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
                 Version 12.4 LTS is now Live
             </div>
-            <h1 class="text-5xl md:text-8xl font-black tracking-tight leading-[0.9] lg:max-w-4xl mx-auto">
+            <h1 class="text-4xl md:text-8xl font-black tracking-tight leading-[0.9] lg:max-w-4xl mx-auto">
                 Next-Gen <span class="gradient-text">Performance</span> for the Modern Web
             </h1>
             <p class="text-lg md:text-xl text-gray-500 font-medium max-w-2xl mx-auto leading-relaxed">
                 Aether Catalyst is an ultra-lightweight, high-performance PHP framework built for speed, security, and developer ergonomics.
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                <a href="/login" class="btn-primary">
+                <a href="<?= Session::url('login') ?>" class="btn-primary">
                     Get Started Free
                     <i class="ph-bold ph-arrow-right"></i>
                 </a>
-                <a href="/docs" class="btn-secondary">
+                <a href="<?= Session::url('docs') ?>" class="btn-secondary">
                     Read Documentation
                 </a>
             </div>

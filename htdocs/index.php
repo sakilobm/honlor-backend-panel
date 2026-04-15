@@ -17,7 +17,7 @@ if (isset($_GET['logout']) && Session::isset('session_token')) {
     } catch (Exception $e) {}
     Session::unset();
     Session::destroy();
-    header('Location: /');
+    header('Location: ' . Session::url());
     exit;
 }
 

@@ -64,7 +64,7 @@
 
                 <div class="mt-8 pt-8 border-t text-center space-y-4" style="border-color: var(--border-color);">
                     <p class="text-xs font-bold text-gray-500 uppercase tracking-widest leading-loose">
-                        Non-Agent User? <a href="/signup" class="text-primary hover:underline">Request Access</a>
+                        Non-Agent User? <a href="<?= Session::url('signup') ?>" class="text-primary hover:underline">Request Access</a>
                     </p>
                 </div>
             </div>

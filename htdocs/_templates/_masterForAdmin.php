@@ -4,7 +4,11 @@
 <head>
     <?php Session::loadTemplate('admin/_head'); ?>
 </head>
-<body class="h-screen flex transition-colors duration-500 overflow-hidden">
+<body class="h-screen flex transition-colors duration-500 overflow-hidden relative">
+    
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[95] hidden md:hidden opacity-0 transition-opacity duration-300" onclick="toggleMobileSidebar()"></div>
+
     
     <!-- Sidebar Component (admin/_nav) -->
     <?php Session::loadTemplate('admin/_nav'); ?>
@@ -13,11 +17,12 @@
     <main class="flex-grow flex flex-col relative overflow-hidden h-full min-w-0">
         <!-- Topbar -->
         <header class="h-20 border-b flex items-center justify-between px-8 shrink-0 backdrop-blur-lg sticky top-0 z-40 transition-all duration-300" style="background-color: var(--surface-glass); border-color: var(--border-color);">
-            <div class="flex items-center gap-6 flex-grow max-w-2xl">
-                <button class="md:hidden p-2" style="color: var(--text-muted);" onclick="toggleMobileSidebar()">
+            <div class="flex items-center gap-3 md:gap-6 flex-grow max-w-2xl">
+                <button class="md:hidden p-2 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center" style="color: var(--text-muted);" onclick="toggleMobileSidebar()">
                     <i class="ph-bold ph-list text-2xl"></i>
                 </button>
-                <div class="relative flex-grow group">
+                <div class="relative flex-grow group hidden xs:block">
+
                     <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 transition-colors" style="color: var(--text-muted);"></i>
                     <input type="text" placeholder="Search records, channels, or ads..." 
                         class="w-full border rounded-2xl py-2.5 pl-12 pr-4 outline-none focus:border-primary/50 transition-all text-sm font-medium bg-transparent" style="border-color: var(--border-color); color: var(--text-main);">
@@ -147,7 +152,7 @@
     <script src="<?= get_config('base_path') ?>assets/js/apis.js"></script>
     
     <!-- Application Logic (Populates chart, metrics, etc) -->
-    <script src="/js/admin.js"></script>
+    <script src="<?= get_config('base_path') ?>js/admin.js"></script>
 
     <!-- Global Modals System -->
     <div id="global-modal-container" class="modal-overlay hidden z-[100]">
@@ -198,5 +203,30 @@
         })();
     </script>
 
+    <script>
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isOpen  = sidebar.classList.contains('translate-x-0');
+
+            if (isOpen) {
+                sidebar.classList.replace('translate-x-0', '-translate-x-full');
+                overlay.classList.replace('opacity-100', 'opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            } else {
+                sidebar.classList.replace('-translate-x-full', 'translate-x-0');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.replace('opacity-0', 'opacity-100'), 10);
+            }
+        }
+
+        // Close mobile sidebar on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('translate-x-0')) {
+                toggleMobileSidebar();
+            }
+        });
+    </script>
 </body>
 </html>
+
