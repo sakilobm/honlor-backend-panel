@@ -15,8 +15,9 @@ class Role
 {
     use SQLGetterSetter;
 
-    public int $id;
+    public string $id;
     public string $name;
+    public string $slug;
     public string $table = 'roles';
     public $conn;
     protected array $permissions = [];
@@ -35,6 +36,7 @@ class Role
         }
 
         $this->name = $row['name'];
+        $this->slug = $row['slug'];
         $this->permissions = json_decode($row['permissions'], true) ?? [];
     }
 
@@ -73,7 +75,13 @@ class Role
     public static function getAll(): array
     {
         $db = Database::getConnection();
-        $stmt = $db->query("SELECT * FROM `roles` ORDER BY `name` ASC");
+        $stmt = $db->query("
+            SELECT r.*, COUNT(a.id) as member_count 
+            FROM `roles` r
+            LEFT JOIN `auth` a ON a.role_id = r.id
+            GROUP BY r.id
+            ORDER BY r.name ASC
+        ");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -83,10 +91,26 @@ class Role
     public static function create(string $name, array $permissions): int
     {
         $db = Database::getConnection();
+        $slug = strtolower(str_replace(' ', '-', trim($name)));
         $permsJson = json_encode($permissions);
-        $stmt = $db->prepare("INSERT INTO `roles` (`name`, `permissions`) VALUES (?, ?)");
-        $stmt->execute([$name, $permsJson]);
+        $stmt = $db->prepare("INSERT INTO `roles` (`name`, `slug`, `permissions`) VALUES (?, ?, ?)");
+        $stmt->execute([$name, $slug, $permsJson]);
         return (int)$db->lastInsertId();
+    }
+    
+    /**
+     * Update role name and regenerate slug.
+     */
+    public function setName(string $name): bool
+    {
+        $slug = strtolower(str_replace(' ', '-', trim($name)));
+        $stmt = $this->conn->prepare("UPDATE `roles` SET `name` = ?, `slug` = ? WHERE `id` = ?");
+        $success = $stmt->execute([$name, $slug, $this->id]);
+        if ($success) {
+            $this->name = $name;
+            $this->slug = $slug;
+        }
+        return $success;
     }
 
     /**

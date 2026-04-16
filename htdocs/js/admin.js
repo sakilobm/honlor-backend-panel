@@ -842,52 +842,100 @@ const AdminApp = {
     },
 
     loadRoleList: function() {
-        const tbody = document.getElementById('roles-table-body');
-        if (!tbody) return;
+        const grid = document.getElementById('roles-card-grid');
+        if (!grid) return;
 
         ApiClient.get('roles', 'list').then(data => {
             let html = '';
             data.roles.forEach(role => {
+                const perms = typeof role.permissions === 'string' ? JSON.parse(role.permissions) : role.permissions;
+                const isMaster = perms.all === true;
+                
                 html += `
-                    <tr class="hover:bg-white/5 transition-colors group">
-                        <td class="px-8 py-6">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                                    <i class="ph-bold ${this.getRoleIcon(role.name)} text-lg"></i>
+                    <div class="glass-card group relative p-8 border-white/5 transition-all duration-500 hover:border-primary/40 hover:-translate-y-2 hover:shadow-[0_40px_80px_rgba(0,0,0,0.5)] bg-gradient-to-br from-white/[0.02] to-transparent">
+                        <div class="flex items-start justify-between mb-8">
+                            <div class="flex items-center gap-5">
+                                <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-[0_0_20px_rgba(124,106,255,0.1)] group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                                    <i class="ph-bold ${this.getRoleIcon(role.slug)} text-2xl"></i>
                                 </div>
-
                                 <div>
-                                    <p class="text-sm font-black uppercase tracking-tight">${role.name}</p>
-                                    <p class="text-[10px] font-black opacity-40 tracking-widest mt-0.5">ESTABLISHED ${new Date(role.created_at).toLocaleDateString()}</p>
+                                    <h3 class="text-xl font-black uppercase tracking-tighter">${role.name}</h3>
+                                    <p class="text-[10px] font-black opacity-30 tracking-[0.2em] uppercase mt-1">L${isMaster ? '0' : '1'} Clearance Protocol</p>
                                 </div>
                             </div>
-                        </td>
-                        <td class="px-8 py-6">
-                            <div class="flex flex-wrap gap-2">
-                                ${this.renderPermissionChips(role.permissions)}
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500">
+                                <button onclick="AdminApp.editRole('${role.id}')" class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/10"><i class="ph ph-note-pencil text-lg"></i></button>
+                                <button onclick="AdminApp.deleteRole('${role.id}')" class="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/10"><i class="ph ph-trash text-lg"></i></button>
                             </div>
-                        </td>
-                        <td class="px-8 py-6 text-right">
-                             <div class="flex justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
-                                <button onclick="AdminApp.editRole('${role.id}')" class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all"><i class="ph ph-note-pencil text-lg"></i></button>
-                                <button onclick="AdminApp.deleteRole('${role.id}')" class="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><i class="ph ph-trash text-lg"></i></button>
-                             </div>
-                        </td>
-                    </tr>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mb-3">System Access Matrix</p>
+                                <div class="flex flex-wrap gap-2">
+                                    ${this.renderPermissionChips(role.permissions)}
+                                </div>
+                            </div>
+                            
+                            <div class="pt-6 border-t border-white/5 flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Active Members</span>
+                                <span class="text-sm font-black text-gray-900 dark:text-white">${role.member_count || 0}</span>
+                            </div>
+                        </div>
+                    </div>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="3" class="p-20 text-center"><p class="font-black text-[10px] uppercase tracking-widest opacity-40">No Security Roles defined. Create one to begin orchestration.</p></td></tr>';
+            grid.innerHTML = html || '<div class="col-span-full p-20 text-center text-gray-500 font-bold uppercase tracking-widest opacity-30">Vault Empty. No Identities Found.</div>';
         });
     },
 
     renderPermissionChips: function(permsJson) {
-        if (!permsJson) return '<span class="text-[10px] font-black opacity-20 uppercase tracking-widest">NONE</span>';
+        if (!permsJson) return '<span class="text-[10px] font-black opacity-10 uppercase tracking-widest italic">No Protocols Found</span>';
         const perms = typeof permsJson === 'string' ? JSON.parse(permsJson) : permsJson;
-        if (perms.all) return '<span class="px-3 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest">Absolute Authority</span>';
+        if (perms.all) return '<span class="px-3 py-1.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><i class="ph-fill ph-shield-star"></i> Perfect Authority</span>';
         
-        return Object.keys(perms).map(k => `
-            <span class="px-2 py-1 bg-white/5 text-gray-400 border border-white/5 rounded-lg text-[9px] font-black uppercase tracking-widest">${k}</span>
-        `).join('');
+        let html = '';
+        Object.keys(perms).forEach(resource => {
+            const actions = perms[resource];
+            if (Array.isArray(actions)) {
+                actions.forEach(action => {
+                    let color = 'text-gray-400 bg-white/5 border-white/5';
+                    let label = action;
+                    if (action === 'view') { color = 'text-primary bg-primary/10 border-primary/20'; label = 'Audit'; }
+                    if (action === 'manage') { color = 'text-green-500 bg-green-500/10 border-green-500/20'; label = 'Write'; }
+                    if (action === 'delete') { color = 'text-red-500 bg-red-500/10 border-red-500/20'; label = 'Purge'; }
+                    
+                    html += `
+                        <span class="px-2.5 py-1 ${color} border rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all mb-1">
+                            <i class="ph ph-circle text-[6px]"></i> ${resource}:${label}
+                        </span>
+                    `;
+                });
+            } else if (actions === true) {
+                html += `
+                    <span class="px-2.5 py-1 bg-white/5 text-gray-400 border border-white/5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                        <i class="ph ph-circle text-[6px] text-primary"></i> ${resource}:Full
+                    </span>
+                `;
+            }
+        });
+        return html;
+    },
+
+    newRole: function() {
+        const form = document.getElementById('save-role-form');
+        if (!form) return;
+
+        form.reset();
+        form.role_id.value = '';
+        
+        // Reset state & UI
+        form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        const allCb = form.querySelector('[name="perms[all]"]');
+        if (allCb) this.toggleMasterAccess(allCb);
+        
+        AdminApp.openModal('role-editor-modal');
+        this.updateAuthorityMeter();
     },
 
     editRole: function(id) {
@@ -897,33 +945,78 @@ const AdminApp = {
             if (!form) return;
 
             form.role_id.value = role.id;
+            // Standardize display name (allow user choice but match internally)
             form.role_name.value = role.name;
             
-            // Reset and set checkboxes
+            // Reset all state first
             form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             
-            const perms = JSON.parse(role.permissions);
-            if (perms.all) {
+            try {
+                const perms = typeof role.permissions === 'string' ? JSON.parse(role.permissions) : role.permissions;
+                
+                // Force a clean state sync before applying specific permissions
                 const allCb = form.querySelector('[name="perms[all]"]');
-                if (allCb) allCb.checked = true;
-            } else {
-                Object.keys(perms).forEach(resource => {
-                    const actions = perms[resource];
-                    if (Array.isArray(actions)) {
-                        actions.forEach(action => {
-                            const cb = form.querySelector(`[name="perms[${resource}][${action}]"]`);
-                            if (cb) cb.checked = true;
-                        });
-                    }
-                });
+                if (allCb) {
+                    allCb.checked = perms.all === true;
+                    this.toggleMasterAccess(allCb);
+                }
+
+                if (!perms.all) {
+                    Object.keys(perms).forEach(resource => {
+                        const actions = perms[resource];
+                        if (Array.isArray(actions)) {
+                            actions.forEach(action => {
+                                const cb = form.querySelector(`[name="perms[${resource}][${action}]"]`);
+                                if (cb) cb.checked = true;
+                            });
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Orchestrator sync failure:", e);
+                toast.error("Sync Failure", "Could not restore security protocol state.");
             }
             
-            // Sync Master Access UI state
-            const allCb = form.querySelector('[name="perms[all]"]');
-            if (allCb) this.toggleMasterAccess(allCb);
-            
             AdminApp.openModal('role-editor-modal');
+            this.updateAuthorityMeter();
         });
+    },
+
+    updateAuthorityMeter: function() {
+        const form = document.getElementById('save-role-form');
+        if (!form) return;
+
+        const meter = document.getElementById('authority-meter');
+        const marker = document.getElementById('authority-marker');
+        if (!meter || !marker) return;
+
+        const allChecked = form.querySelector('[name="perms[all]"]').checked;
+        if (allChecked) {
+            meter.style.width = '100%';
+            marker.innerText = 'Perfect Authority';
+            marker.className = 'text-[9px] font-black px-2 py-0.5 bg-amber-500 text-white rounded-lg uppercase tracking-widest leading-none shadow-[0_0_10px_rgba(245,158,11,0.5)]';
+            return;
+        }
+
+        const checkboxes = form.querySelectorAll('input[type="checkbox"]:checked:not([name="perms[all]"])');
+        const total = form.querySelectorAll('input[type="checkbox"]:not([name="perms[all]"])').length;
+        const percentage = total > 0 ? (checkboxes.length / total) * 100 : 0;
+
+        meter.style.width = `${percentage}%`;
+
+        if (percentage > 80) {
+            marker.innerText = 'High Privilege';
+            marker.className = 'text-[9px] font-black px-2 py-0.5 bg-red-500 text-white rounded-lg uppercase tracking-widest leading-none shadow-[0_0_10px_rgba(239,68,68,0.5)]';
+        } else if (percentage > 40) {
+            marker.innerText = 'Elevated';
+            marker.className = 'text-[9px] font-black px-2 py-0.5 bg-primary text-white rounded-lg uppercase tracking-widest leading-none shadow-[0_0_10px_rgba(124,106,255,0.5)]';
+        } else if (percentage > 0) {
+            marker.innerText = 'Standard';
+            marker.className = 'text-[9px] font-black px-2 py-0.5 bg-green-500 text-white rounded-lg uppercase tracking-widest leading-none shadow-[0_0_10px_rgba(34,197,94,0.5)]';
+        } else {
+            marker.innerText = 'Restricted';
+            marker.className = 'text-[9px] font-black px-2 py-0.5 bg-white/10 text-gray-400 rounded-lg uppercase tracking-widest leading-none';
+        }
     },
 
     saveRole: function() {
@@ -960,7 +1053,7 @@ const AdminApp = {
 
             this.loadRoleList();
         }).catch(err => {
-            toast.error('Governance Error', err.error || 'Identity protocol violation.');
+            toast.error('Governance Error', err.message || 'Identity protocol violation.');
         });
     },
 
@@ -1047,7 +1140,7 @@ const AdminApp = {
                                     </div>
                                     <div class="pt-4 border-t border-white/5 flex items-center justify-between">
                                         <div class="space-y-1">
-                                            <p class="text-[10px] font-black uppercase tracking-widest text-white">Level 0 Authorization</p>
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white">Level 0 Authorization</p>
                                             <p class="text-[9px] text-gray-500 font-bold uppercase tracking-tight">Grant Absolute Master Status</p>
                                         </div>
                                         <label class="relative inline-flex items-center cursor-pointer">
@@ -1186,7 +1279,7 @@ const AdminApp = {
                      class="role-selection-card group p-5 rounded-2xl border transition-all cursor-pointer ${isActive ? 'bg-primary/10 border-primary shadow-[0_15px_40px_rgba(124,106,255,0.2)] ring-4 ring-primary/5' : 'bg-white/5 border-white/5 hover:border-primary/40'}">
                     <div class="flex items-center justify-between mb-4">
                         <div class="w-10 h-10 rounded-xl ${isActive ? 'bg-primary text-white' : 'bg-white/10 text-gray-500 group-hover:bg-primary/20 group-hover:text-primary'} flex items-center justify-center transition-all duration-300">
-                            <i class="ph-bold ${this.getRoleIcon(role.name)} text-lg"></i>
+                            <i class="ph-bold ${this.getRoleIcon(role.slug)} text-lg"></i>
                         </div>
                         ${isActive ? '<span class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_10px_#7c6aff] animate-pulse"></span>' : ''}
                     </div>
@@ -1242,19 +1335,21 @@ const AdminApp = {
      * Cache Roles for Selectors
      */
     
-    getRoleIcon: function(name) {
+    getRoleIcon: function(slug) {
         const icons = {
-            'super admin': 'ph-shield-star',
+            'super-admin': 'ph-shield-star',
             'admin': 'ph-user-gear',
             'moderator': 'ph-fingerprint',
             'editor': 'ph-note-pencil',
             'analyst': 'ph-chart-bar',
             'support': 'ph-headset',
             'security': 'ph-lock-key',
-            'developer': 'ph-code'
+            'developer': 'ph-code',
+            'architect': 'ph-lock-key',
+            'curator': 'ph-stack',
+            'content-creator': 'ph-paint-brush'
         };
-        const key = (name || '').toLowerCase();
-        return icons[key] || 'ph-shield';
+        return icons[slug] || 'ph-shield';
     },
 
     refreshRolesCache: function() {
@@ -1360,12 +1455,8 @@ const AdminApp = {
             });
         }
 
-        // Highlight selected chip (UI helper)
-        document.querySelectorAll('.blueprint-chip').forEach(c => c.classList.remove('active', 'border-primary', 'bg-primary/10'));
-        const activeChip = document.querySelector(`[data-blueprint="${key}"]`);
-        if (activeChip) activeChip.classList.add('active', 'border-primary', 'bg-primary/10');
-
         toast.success('Blueprint Applied', `Loaded standard '${blueprint.name}' protocol.`);
+        this.updateAuthorityMeter();
     },
 
 
@@ -1386,6 +1477,8 @@ const AdminApp = {
         } else {
             matrix.classList.remove('opacity-40', 'pointer-events-none');
         }
+
+        this.updateAuthorityMeter();
     },
 
     generateInsights: function() {

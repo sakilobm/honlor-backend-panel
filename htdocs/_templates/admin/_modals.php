@@ -165,103 +165,152 @@
 </div>
 
 <!-- Role Editor Modal (Global Registry) -->
-<div id="role-editor-modal" class="fixed inset-0 z-[1000] hidden items-center justify-center p-4 sm:p-6 backdrop-blur-2xl bg-black/60 overflow-hidden" onclick="if(event.target === this) closeModal()">
-    <div class="glass-card w-full max-w-2xl max-h-[90vh] flex flex-col animate-in zoom-in duration-300 shadow-[0_30px_100px_rgba(0,0,0,0.5)] overflow-hidden !p-0">
+<div id="role-editor-modal" class="fixed inset-0 z-[1000] hidden items-center justify-center p-4 sm:p-6 backdrop-blur-3xl bg-black/60 overflow-hidden" onclick="if(event.target === this) closeModal()">
+    <div class="glass-card w-full max-w-4xl max-h-[95vh] flex flex-col animate-in zoom-in duration-500 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden !p-0 border-white/5 bg-gradient-to-b from-white/5 to-transparent">
 
-        <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
-            <h3 class="text-xl font-black uppercase tracking-tight">Security <span class="gradient-text">Architect</span></h3>
-            <button onclick="closeModal()" class="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"><i class="ph ph-x text-xl"></i></button>
+        <div class="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+            <div class="flex items-center gap-5">
+                <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-2xl shadow-[0_0_20px_rgba(124,106,255,0.1)] border border-primary/20">
+                    <i class="ph-bold ph-shield-chevron"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-black uppercase tracking-tighter">Security <span class="text-primary italic">Orchestrator</span></h3>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Define Identity Protocol & Authority Blueprints</p>
+                </div>
+            </div>
+            <button onclick="closeModal()" class="w-12 h-12 rounded-2xl hover:bg-white/10 flex items-center justify-center transition-all hover:scale-110 active:scale-95"><i class="ph ph-x text-2xl"></i></button>
         </div>
-        <form id="save-role-form" class="flex flex-col h-full overflow-hidden">
-            <div class="p-8 space-y-8 flex-grow overflow-y-auto custom-scrollbar">
+
+        <form id="save-role-form" class="flex flex-col h-full overflow-hidden" onsubmit="event.preventDefault(); AdminApp.saveRole();">
+            <div class="p-8 space-y-10 flex-grow overflow-y-auto custom-scrollbar">
 
                 <input type="hidden" name="role_id" value="">
                 
-                <div class="space-y-4">
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-500">Security Blueprints</label>
-                            <span class="text-[8px] font-black uppercase tracking-[0.2em] opacity-30">Select a base protocol</span>
-                        </div>
-                        <div class="flex flex-wrap gap-2 pb-2">
-                            <button type="button" data-blueprint="moderator" onclick="AdminApp.applyBlueprint('moderator')" class="blueprint-chip px-3 py-2 rounded-xl border border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-tight hover:border-primary/50 transition-all">Moderator</button>
-                            <button type="button" data-blueprint="curator" onclick="AdminApp.applyBlueprint('curator')" class="blueprint-chip px-3 py-2 rounded-xl border border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-tight hover:border-primary/50 transition-all">Curator</button>
-                            <button type="button" data-blueprint="analyst" onclick="AdminApp.applyBlueprint('analyst')" class="blueprint-chip px-3 py-2 rounded-xl border border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-tight hover:border-primary/50 transition-all">Analyst</button>
-                            <button type="button" data-blueprint="security" onclick="AdminApp.applyBlueprint('security')" class="blueprint-chip px-3 py-2 rounded-xl border border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-tight hover:border-primary/50 transition-all">Architect</button>
-                            <button type="button" data-blueprint="support" onclick="AdminApp.applyBlueprint('support')" class="blueprint-chip px-3 py-2 rounded-xl border border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-tight hover:border-primary/50 transition-all">Support</button>
-                            <button type="button" data-blueprint="developer" onclick="AdminApp.applyBlueprint('developer')" class="blueprint-chip px-3 py-2 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-500 text-[10px] font-black uppercase tracking-tight hover:bg-amber-500/10 transition-all">Developer</button>
-                        </div>
+                <!-- Identification & Authority Cluster -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <label class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Access Identity</label>
+                        <input type="text" name="role_name" placeholder="e.g. System Architect" required
+                            class="w-full bg-white/5 border border-white/5 rounded-3xl py-6 px-8 outline-none focus:border-primary/50 transition-all font-black text-xl uppercase tracking-tight placeholder:opacity-20 shadow-inner">
                     </div>
-
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">Cluster Designation</label>
-                        <input type="text" name="role_name" placeholder="E.g. Content Moderator, Analyst" required
-                            class="w-full bg-white/5 border border-white/5 rounded-xl py-4 px-6 outline-none focus:border-primary/50 transition-all font-bold text-sm">
+                    
+                    <div class="space-y-4 pt-1">
+                        <div class="flex justify-between items-center px-1">
+                            <label class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Authority Distribution</label>
+                            <span id="authority-marker" class="text-[9px] font-black px-2 py-0.5 bg-primary/20 text-primary border border-primary/40 rounded-lg uppercase tracking-widest leading-none">Restricted</span>
+                        </div>
+                        <div class="h-3 bg-white/5 rounded-2xl overflow-hidden p-0.5 border border-white/5 shadow-inner">
+                            <div id="authority-meter" class="h-full bg-primary transition-all duration-700 w-0 rounded-full shadow-[0_0_15px_#7c6aff]"></div>
+                        </div>
+                        <div class="flex justify-between items-center opacity-30">
+                            <span class="text-[8px] font-black uppercase tracking-widest italic">L2 Protocol</span>
+                            <span class="text-[8px] font-black uppercase tracking-widest italic">Absolute Root (L0)</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    <div class="flex items-center gap-4">
-                        <button type="button" onclick="AdminApp.toggleAllPermissions('view')" class="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">All Read</button>
-                        <button type="button" onclick="AdminApp.toggleAllPermissions('manage')" class="text-[9px] font-black uppercase tracking-widest text-green-500 hover:underline">All Write</button>
-                        <button type="button" onclick="AdminApp.toggleAllPermissions('delete')" class="text-[9px] font-black uppercase tracking-widest text-red-500 hover:underline">All Purge</button>
-                        <div class="h-4 w-px bg-white/10 mx-2"></div>
-                        <label class="flex items-center gap-2 cursor-pointer group">
-                            <span class="text-[9px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">Absolute Root Access</span>
-                            <input type="checkbox" name="perms[all]" onchange="AdminApp.toggleMasterAccess(this)" class="w-4 h-4 rounded border-white/10 bg-white/5 text-primary focus:ring-primary">
+                <!-- Global Override & Blueprints -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-4">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500">Security Blueprints (Quick Start)</label>
+                        <div class="flex flex-wrap gap-2">
+                            <?php 
+                            $prototypes = ['moderator' => 'Moderator', 'curator' => 'Curator', 'analyst' => 'Analyst', 'security' => 'Architect', 'support' => 'Support', 'developer' => 'Developer'];
+                            foreach($prototypes as $key => $label): ?>
+                                <button type="button" onclick="AdminApp.applyBlueprint('<?= $key ?>')" class="px-5 py-3 rounded-2xl border border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-tight hover:border-primary/50 hover:bg-primary/5 transition-all"><?= $label ?></button>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <div class="glass-card !p-5 border-amber-500/10 bg-amber-500/[0.02] flex items-center justify-between group overflow-hidden relative">
+                        <div class="absolute inset-x-0 bottom-0 h-[2px] bg-amber-500/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 text-lg">
+                                <i class="ph-fill ph-shield-star"></i>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[11px]">Perfect Authority</h4>
+                                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-tight">System-Wide Override</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="perms[all]" onchange="AdminApp.toggleMasterAccess(this)" class="sr-only peer">
+                            <div class="w-12 h-6 bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-gray-400 after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
                         </label>
                     </div>
                 </div>
 
-                <div id="privilege-matrix" class="grid grid-cols-1 gap-3 overflow-y-auto pr-2 custom-scrollbar">
-
+                <!-- Permission Cluster Matrix -->
+                <div id="privilege-matrix" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-500">
                     <?php
-                    $sections = [
-                        'dashboard' => 'Ecosystem Overview',
-                        'users' => 'Identity Vault',
-                        'messages' => 'Moderation Cluster',
-                        'channels' => 'Data Hubs',
-                        'ads' => 'Marketing Streams',
-                        'reports' => 'Governance Alerts',
-                        'deletion' => 'Identity Erasure',
-                        'analytics' => 'Intelligence Data',
-                        'policy' => 'Ecosystem Laws',
-                        'settings' => 'Protocol Control',
-                        'logs' => 'System Telemetry',
-                        'roles' => 'Security Governance'
+                    $clusters = [
+                        'Identity' => [
+                            'icon' => 'ph-identification-badge',
+                            'items' => ['users' => 'Vault', 'roles' => 'Governance']
+                        ],
+                        'Broadcast' => [
+                            'icon' => 'ph-megaphone',
+                            'items' => ['ads' => 'Streams', 'channels' => 'Data Hubs']
+                        ],
+                        'Intelligence' => [
+                            'icon' => 'ph-chart-bar',
+                            'items' => ['analytics' => 'Telemetry', 'logs' => 'Audit Trails']
+                        ],
+                        'Infrastructure' => [
+                            'icon' => 'ph-gear',
+                            'items' => ['settings' => 'Protocols', 'policy' => 'Ecosystem Laws']
+                        ],
+                        'Moderation' => [
+                            'icon' => 'ph-shield-check',
+                            'items' => ['messages' => 'Dialogues', 'reports' => 'Grievances']
+                        ],
+                        'Security' => [
+                            'icon' => 'ph-lock-key',
+                            'items' => ['deletion' => 'Erasure', 'login' => 'Access']
+                        ]
                     ];
 
-                    foreach ($sections as $key => $label):
+                    foreach ($clusters as $name => $data):
                     ?>
-                    <div class="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between group hover:border-primary/20 transition-all">
-                        <div>
-                            <p class="text-xs font-black uppercase tracking-tight"><?= $label ?></p>
-                            <p class="text-[9px] font-bold opacity-40 uppercase tracking-widest mt-0.5"><?= $key ?>.proto</p>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-3 opacity-40">
+                            <i class="ph-bold <?= $data['icon'] ?> text-lg"></i>
+                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em]"><?= $name ?> Systems</h4>
                         </div>
-                        <div class="flex gap-4">
-                            <label class="permission-toggle">
-                                <input type="checkbox" name="perms[<?= $key ?>][view]" class="hidden peer">
-                                <span class="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-white/5 opacity-30 peer-checked:opacity-100 peer-checked:border-primary/40 peer-checked:bg-primary/10 peer-checked:text-primary transition-all cursor-pointer">Read</span>
-                            </label>
-                            <label class="permission-toggle">
-                                <input type="checkbox" name="perms[<?= $key ?>][manage]" class="hidden peer">
-                                <span class="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-white/5 opacity-30 peer-checked:opacity-100 peer-checked:border-green-500/40 peer-checked:bg-green-500/10 peer-checked:text-green-500 transition-all cursor-pointer">Write</span>
-                            </label>
-                            <label class="permission-toggle">
-                                <input type="checkbox" name="perms[<?= $key ?>][delete]" class="hidden peer">
-                                <span class="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-white/5 opacity-30 peer-checked:opacity-100 peer-checked:border-red-500/40 peer-checked:bg-red-500/10 peer-checked:text-red-500 transition-all cursor-pointer">Purge</span>
-                            </label>
+                        <div class="space-y-3">
+                            <?php foreach ($data['items'] as $key => $label): ?>
+                            <div class="p-5 rounded-3xl bg-white/[0.03] border border-white/5 flex flex-col gap-4 group hover:border-primary/40 transition-all">
+                                <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none"><?= $label ?></span>
+                                <div class="flex flex-wrap gap-2">
+                                    <?php 
+                                    $actionMeta = [
+                                        'view' => ['label' => 'Audit', 'color' => 'peer-checked:bg-primary/20 peer-checked:border-primary/40 peer-checked:text-primary'],
+                                        'manage' => ['label' => 'Write', 'color' => 'peer-checked:bg-green-500/20 peer-checked:border-green-500/40 peer-checked:text-green-500'],
+                                        'delete' => ['label' => 'Purge', 'color' => 'peer-checked:bg-red-500/20 peer-checked:border-red-500/40 peer-checked:text-red-500']
+                                    ];
+                                    foreach($actionMeta as $action => $meta): ?>
+                                    <label class="flex-1">
+                                        <input type="checkbox" name="perms[<?= $key ?>][<?= $action ?>]" onchange="AdminApp.updateAuthorityMeter()" class="hidden peer">
+                                        <div class="text-center p-2 rounded-xl border border-white/5 bg-white/5 text-[8px] font-black uppercase tracking-widest cursor-pointer hover:bg-white/10 <?= $meta['color'] ?> transition-all shadow-sm">
+                                            <?= $meta['label'] ?>
+                                        </div>
+                                    </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                     <?php endforeach; ?>
                 </div>
             </div>
 
-            <div class="p-8 border-t border-white/5 bg-white/5 flex gap-4">
-                <button type="button" onclick="closeModal()" class="btn-secondary flex-1 !justify-center">Cancel</button>
-                <button type="submit" class="btn-primary flex-1 !justify-center shadow-xl shadow-primary/20">
-                    <i class="ph-bold ph-shield-check"></i>
-                    Seal Protocol
+            <!-- Modal Footer -->
+            <div class="p-8 border-t border-white/5 bg-white/[0.05] flex gap-5">
+                <button type="button" onclick="closeModal()" class="btn-secondary flex-1 !rounded-3xl !py-5 uppercase font-black tracking-widest text-xs">Abort Protocol</button>
+                <button type="submit" class="btn-primary flex-1 !rounded-3xl !py-5 uppercase font-black tracking-widest text-xs shadow-2xl shadow-primary/30">
+                    <i class="ph-bold ph-shield-check ml-[-4px] mr-1"></i>
+                    Activate Blueprint
                 </button>
             </div>
         </form>
