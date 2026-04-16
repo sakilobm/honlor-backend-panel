@@ -100,7 +100,7 @@ class User
         $this->table = 'auth';
         $this->conn  = Database::getConnection();
 
-        $sql = "SELECT `id`, `username`, `email`, `role_id`, `is_master` FROM `auth`
+        $sql = "SELECT `id`, `username`, `email`, `role_id`, `is_master`, `request_pending` FROM `auth`
                 WHERE `username` = ? OR `email` = ? OR `id` = ? LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $id = is_numeric($identifier) ? (int)$identifier : -1;
@@ -122,7 +122,7 @@ class User
     public static function listAll(int $limit = 10, int $offset = 0, string $filter = ''): array
     {
         $db = Database::getConnection();
-        $sql = "SELECT a.id, a.username, a.email, a.active, a.blocked, a.created_at, a.role_id, a.is_master,
+        $sql = "SELECT a.id, a.username, a.email, a.active, a.blocked, a.created_at, a.role_id, a.is_master, a.request_pending,
                        p.firstname, p.lastname, p.bio, p.avatar, r.name as role_name
                 FROM `auth` a
                 LEFT JOIN `profiles` p ON a.id = p.id
@@ -281,6 +281,35 @@ class User
             }
         }
         return null;
+    }
+
+    /**
+     * Get human-readable role name or status.
+     */
+    public function getRoleName(): string
+    {
+        if ($this->isMaster()) {
+            return "Absolute Master";
+        }
+        
+        $role = $this->getRole();
+        if ($role) {
+            return $role->name;
+        }
+        
+        if ((int)$this->getRequestPending() === 1) {
+            return "Clearance Pending";
+        }
+        
+        return "Unassigned";
+    }
+
+    /**
+     * Set a request for role assignment.
+     */
+    public function requestAccess(): bool
+    {
+        return $this->setRequestPending(1);
     }
 
     /* ─── Profile Getters (Mapping to 'profiles' table) ─── */

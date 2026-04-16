@@ -49,9 +49,10 @@
                 <div class="flex items-center gap-3 pl-2">
                     <div class="text-right hidden sm:block">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5 leading-tight">Admin Level</p>
-                        <p class="text-xs font-semibold" style="color: var(--text-main);">Super Admin</p>
+                        <p class="text-xs font-semibold" style="color: var(--text-main);"><?= Session::getUser()->getRoleName() ?></p>
                     </div>
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus" class="w-10 h-10 rounded-xl bg-primary/20 border border-white/5" alt="Avatar">
+                    <?php $u = Session::getUser(); $profile_avatar = $u->getAvatar(); ?>
+                    <img src="<?= !empty($profile_avatar) ? $profile_avatar : 'https://api.dicebear.com/7.x/avataaars/svg?seed=' . $u->username ?>" class="w-10 h-10 rounded-xl bg-primary/20 border border-white/5" alt="Avatar">
                 </div>
             </div>
         </header>

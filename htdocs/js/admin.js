@@ -373,7 +373,10 @@ const AdminApp = {
                                 ? '<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> <span class="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest">Master Admin</span></div>' 
                                 : (user.role_id > 0 
                                     ? `<span class="px-2 py-1 bg-white/5 text-gray-400 border border-white/5 rounded-lg text-[9px] font-black uppercase tracking-widest">${user.role_name}</span>`
-                                    : '<span class="px-2 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.2)]">Restricted / No Access</span>'
+                                    : (user.request_pending == 1 
+                                        ? '<span class="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.2)]">Handshake Pending</span>'
+                                        : '<span class="px-2 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.2)]">Restricted / No Access</span>'
+                                      )
                                   )
                             }
                         </td>
@@ -1112,10 +1115,19 @@ const AdminApp = {
                         </div>
                         <form id="profile-edit-form" class="space-y-6 flex-grow overflow-y-auto pr-2 custom-scrollbar">
                             <input type="hidden" name="id" value="${user.id}">
-                            <div class="text-center p-6 bg-white/5 rounded-[2.5rem] border border-white/5 mb-6">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}" class="w-24 h-24 rounded-3xl mx-auto mb-4 border-2 border-primary/20">
-                                <h4 class="text-2xl font-bold">${user.username}</h4>
-                            </div>
+                        <div class="text-center p-6 bg-white/5 rounded-[2.5rem] border border-white/5 mb-6 relative overflow-hidden">
+                            ${user.request_pending == 1 && user.role_id == 0 ? `
+                                <div class="absolute inset-x-0 top-0 py-2 bg-amber-500/20 border-b border-amber-500/20">
+                                    <p class="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500 flex items-center justify-center gap-2">
+                                        <i class="ph-bold ph-handshake animate-pulse"></i>
+                                        Identity Handshake Pending
+                                    </p>
+                                </div>
+                                <div class="mt-4"></div>
+                            ` : ''}
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}" class="w-24 h-24 rounded-3xl mx-auto mb-4 border-2 border-primary/20">
+                            <h4 class="text-2xl font-bold">${user.username}</h4>
+                        </div>
                             
                             <div class="space-y-4">
                                 <div class="grid grid-cols-2 gap-4">
@@ -1592,6 +1604,46 @@ const AdminApp = {
             toast.error('Deployment Failed', err.error || 'Failed to update protocol.');
         });
     },
+
+    /**
+     * Identity Handshake Logic
+     */
+    requestRoleHandshake: function() {
+        const btn = document.getElementById('request-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin mr-2"></i> Initializing Handshake...';
+        }
+
+        ApiClient.post('users', 'request_access').then(res => {
+            toast.success('Handshake Initiated', res.message);
+            setTimeout(() => window.location.reload(), 1500);
+        }).catch(err => {
+            toast.error('Handshake Failed', err.error || 'Identity protocol error.');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph-bold ph-handshake mr-2"></i> Request Identity Handshake';
+            }
+        });
+    },
+
+    checkClearance: function() {
+        const icon = document.querySelector('.ph-arrow-clockwise');
+        if (icon) icon.classList.add('animate-spin');
+
+        ApiClient.get('users', 'check_clearance').then(res => {
+            if (res.cleared) {
+                toast.success('Identity Cleared', res.message);
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                toast.info('Status Audit', res.message);
+                if (icon) icon.classList.remove('animate-spin');
+            }
+        }).catch(err => {
+            toast.error('Audit Error', 'Could not verify identity clearance.');
+            if (icon) icon.classList.remove('animate-spin');
+        });
+    }
 };
 
 document.addEventListener('DOMContentLoaded', () => AdminApp.init());

@@ -13,19 +13,24 @@
 
         <div class="space-y-4">
             <h1 class="text-4xl font-black tracking-tight uppercase">Identity Clearance <span class="text-primary italic">Required</span></h1>
-            <p class="text-gray-400 font-medium leading-relaxed max-w-md mx-auto">
+            <p class="text-gray-300 font-medium leading-relaxed max-w-md mx-auto">
                 Your account is currently in a <span class="text-white font-bold italic underline decoration-primary decoration-4">Zero-Trust restricted state</span>. An Identity Administrator must assign you to a Security Cluster before access can be granted.
             </p>
         </div>
 
-        <div class="glass-card !p-8 border-primary/10 bg-primary/[0.02] space-y-6">
+        <div class="glass-card !p-8 border-primary/10 bg-primary/[0.02] space-y-6 relative overflow-hidden">
+            <!-- Refresh Icon in Top Right -->
+            <button onclick="AdminApp.checkClearance()" class="absolute top-6 right-6 p-2 rounded-xl bg-white/5 text-gray-400 hover:text-primary transition-all group" title="Verify Migration Status">
+                <i class="ph-bold ph-arrow-clockwise text-xl group-active:rotate-180 transition-transform duration-500"></i>
+            </button>
+
             <div class="flex items-center gap-4 text-left">
                 <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-xl">
                     <i class="ph-bold ph-fingerprint"></i>
                 </div>
                 <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Protocol Status</p>
-                    <p class="font-bold text-white tracking-tight">Handshake Pending Migration</p>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Protocol Status</p>
+                    <p class="font-bold text-gray-100 tracking-tight">Handshake Pending Migration</p>
                 </div>
             </div>
 
@@ -33,14 +38,23 @@
                 <div class="h-full bg-primary animate-[shimmer_2s_infinite] w-1/3 rounded-full shadow-[0_0_10px_#7c6aff]"></div>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                <?php $u = \Aether\Session::getUser(); ?>
+                <?php if ((int)$u->getRequestPending() === 0) : ?>
+                <button id="request-btn" onclick="AdminApp.requestRoleHandshake()" class="btn-primary !justify-center flex-1 py-4 text-xs font-black uppercase tracking-widest shadow-xl shadow-primary/20">
+                    <i class="ph-bold ph-handshake mr-2"></i>
+                    Request Identity Handshake
+                </button>
+                <?php else : ?>
+                <button disabled class="bg-white/5 border border-white/10 text-gray-500 !justify-center flex-1 py-4 text-xs font-black uppercase tracking-widest rounded-2xl cursor-not-allowed">
+                    <i class="ph-bold ph-clock-counter-clockwise mr-2"></i>
+                    Request Sent: Awaiting Audit
+                </button>
+                <?php endif; ?>
+
                 <a href="/admin?logout" class="btn-secondary !justify-center flex-1 py-4 text-xs font-black uppercase tracking-widest">
                     Terminate Session
                 </a>
-                <button onclick="window.location.reload()" class="btn-primary !justify-center flex-1 py-4 text-xs font-black uppercase tracking-widest shadow-xl shadow-primary/20">
-                    Verify Status
-                    <i class="ph-bold ph-arrow-clockwise ml-2"></i>
-                </button>
             </div>
         </div>
 
