@@ -99,9 +99,6 @@
                     <?php if (empty($roles)): ?>
                         <option value="">No roles available</option>
                     <?php else: ?>
-                        <?php foreach ($roles as $r): ?>
-                            <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['name']) ?></option>
-                        <?php endforeach; ?>
                     <?php endif; ?>
                 </select>
             </div>
@@ -312,6 +309,75 @@
                     <i class="ph-bold ph-shield-check ml-[-4px] mr-1"></i>
                     Activate Blueprint
                 </button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Handshake Authorization Modal (Isolated Registry) -->
+<div id="handshake-authorize-modal" class="modal-overlay hidden">
+    <div class="glass-card !max-w-md !overflow-visible">
+        <div class="flex items-center justify-between p-6 border-b" style="border-color: var(--border-color);">
+            <h3 class="text-xl font-bold tracking-tight">Handshake Authorization</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-primary transition-colors p-2"><i class="ph ph-x text-2xl"></i></button>
+        </div>
+        <form class="p-6 space-y-6 !overflow-visible" onsubmit="event.preventDefault(); AdminApp.confirmHandshakeAuthorization();">
+            <input type="hidden" id="auth-request-user-id">
+            <div class="space-y-4">
+                <label class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Security Cluster Assignment</label>
+                <?php
+                $db = \Aether\Database::getConnection();
+                $roles_list = $db->query("SELECT * FROM roles ORDER BY name ASC")->fetchAll();
+                ?>
+                <div class="relative">
+                    <!-- Hidden State Registry -->
+                    <input type="hidden" id="auth-request-role-id" value="0">
+                    
+                    <!-- Premium Trigger Button -->
+                    <button type="button" onclick="event.stopPropagation(); AdminApp.toggleHandshakeRoleDropdown()" 
+                            class="w-full bg-white/5 border border-white/5 rounded-3xl p-6 pr-12 flex items-center justify-between group focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all shadow-inner relative overflow-hidden">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-bold ph-shield-chevron text-primary text-lg"></i>
+                            <span id="auth-role-display-name" class="font-black text-xs uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">--- Default (Observer Cluster) ---</span>
+                        </div>
+                        <i class="ph-bold ph-caret-down text-slate-400 group-hover:text-primary transition-colors text-lg" id="auth-role-chevron"></i>
+                    </button>
+
+                    <!-- Glassmorphic Options Menu -->
+                    <div id="handshake-role-menu" class="hidden absolute top-full left-0 w-full mt-3 z-[110] glass-card !p-3 shadow-[0_25px_70px_rgba(0,0,0,0.6)] border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <div class="px-5 py-3 mb-2">
+                            <p class="text-[9px] font-black text-gray-500 uppercase tracking-[0.25em]">Identity Prototypes</p>
+                        </div>
+                        <ul class="space-y-1 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
+                            <li>
+                                <button type="button" onclick="AdminApp.selectHandshakeRole(0, 'Default (Observer Cluster)')" 
+                                        class="w-full text-left p-4 rounded-2xl hover:bg-primary/5 flex items-center gap-4 group transition-all">
+                                    <div class="w-2 h-2 rounded-full bg-slate-500 group-hover:bg-primary transition-colors"></div>
+                                    <span class="text-[11px] font-black text-slate-400 group-hover:text-primary uppercase tracking-wider">--- Default (Observer) ---</span>
+                                </button>
+                            </li>
+                            <div class="h-[1px] bg-white/5 mx-4 my-2"></div>
+                            <?php foreach ($roles_list as $rl): ?>
+                            <li>
+                                <button type="button" onclick="AdminApp.selectHandshakeRole(<?= $rl['id'] ?>, '<?= htmlspecialchars($rl['name']) ?>')" 
+                                        class="w-full text-left p-4 rounded-2xl hover:bg-primary/5 flex items-center gap-4 group transition-all">
+                                    <div class="w-2 h-2 rounded-full bg-slate-500 group-hover:bg-primary transition-colors"></div>
+                                    <span class="text-[11px] font-black text-slate-400 group-hover:text-primary uppercase tracking-wider"><?= htmlspecialchars($rl['name']) ?></span>
+                                </button>
+                            </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+
+                    <p class="mt-4 text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1 flex items-center gap-2">
+                        <i class="ph-fill ph-info text-primary"></i>
+                        Baseline read-only access will be granted by default.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex gap-4 pt-4">
+                <button type="button" onclick="closeModal()" class="btn-secondary flex-1 !justify-center py-4 text-[10px] font-black uppercase tracking-widest">Abort</button>
+                <button type="submit" class="btn-primary flex-1 !justify-center py-4 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20">Finalize Identity</button>
             </div>
         </form>
     </div>

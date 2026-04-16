@@ -43,8 +43,13 @@ if (Session::isAuthenticated()) {
     if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
         Session::loadTemplate('admin/' . $page);
     } else {
-        // Render the full admin layout (Template Inheritance)
-        Session::renderPageOfAdmin();
+        if ($page === 'clearance_pending') {
+            // Render the isolated restricted layout (Bulletproof Gate)
+            Session::loadTemplate('admin/_restricted_gate');
+        } else {
+            // Render the full admin layout (Authorized Dashboard)
+            Session::renderPageOfAdmin();
+        }
     }
 
 } else {

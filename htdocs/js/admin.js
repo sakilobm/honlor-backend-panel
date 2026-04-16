@@ -10,6 +10,11 @@ const AdminApp = {
     currentRange: 7,
 
     init: function() {
+        if (window.isRestricted) {
+            console.warn("Security Protocol: Restricted State Detected. Core Application Locked.");
+            return;
+        }
+
         console.log("AdminApp Initializing...");
         const params = new URLSearchParams(window.location.search);
         const page = params.get('page') || 'dashboard';
@@ -30,6 +35,9 @@ const AdminApp = {
                 if (pane) pane.classList.add('hidden');
             }
         };
+
+        // Sync Handshake Hub Badge for Administrators
+        this.syncHandshakeBadge();
     },
 
     route: function(page) {
@@ -152,6 +160,11 @@ const AdminApp = {
             if (targetContent) {
                 targetContent.classList.remove('hidden');
                 targetContent.classList.add('active');
+            }
+
+            // Trigger data loading for specialized tabs
+            if (tabId === 'handshakes') {
+                this.loadHandshakeHub();
             }
         }
     },
@@ -1643,10 +1656,155 @@ const AdminApp = {
             toast.error('Audit Error', 'Could not verify identity clearance.');
             if (icon) icon.classList.remove('animate-spin');
         });
+    },
+
+    /**
+     * Handshake Hub Governance
+     */
+    syncHandshakeBadge: function() {
+        ApiClient.get('users', 'handshakes').then(res => {
+            const badge = document.getElementById('handshake-count-badge');
+            if (badge) {
+                if (res.count > 0) {
+                    badge.innerText = res.count;
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
+                } else {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('flex');
+                }
+            }
+        });
+    },
+
+    loadHandshakeHub: function() {
+        const grid = document.getElementById('handshake-requests-grid');
+        if (!grid) return;
+
+        ApiClient.get('users', 'handshakes').then(res => {
+            let html = '';
+            if (res.requests.length === 0) {
+                html = `
+                    <div class="col-span-full py-20 text-center space-y-4">
+                        <div class="w-20 h-20 bg-primary/5 rounded-[2rem] mx-auto flex items-center justify-center text-primary/20">
+                            <i class="ph-bold ph-shield-check text-4xl"></i>
+                        </div>
+                        <p class="font-black text-[10px] uppercase tracking-[0.3em] opacity-40">Identity Vault Secured: No Pending Handshakes</p>
+                    </div>
+                `;
+            } else {
+                res.requests.forEach(req => {
+                    html += `
+                        <div class="glass-card !p-8 border-primary/10 hover:border-primary/30 transition-all group animate-in zoom-in duration-500">
+                            <div class="flex items-start justify-between mb-6">
+                                <img src="${req.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + req.username}" class="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/5">
+                                <div class="px-3 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest animate-pulse">
+                                    Identity Request
+                                </div>
+                            </div>
+                            <div class="space-y-1 mb-8">
+                                <h4 class="text-lg font-black tracking-tight text-slate-800">${req.firstname || req.username} ${req.lastname || ''}</h4>
+                                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">${req.email}</p>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">Requested: ${new Date(req.created_at).toLocaleString()}</p>
+                            </div>
+                            <div class="flex gap-3 pt-6 border-t border-slate-100">
+                                <button onclick="AdminApp.authorizeHandshake(${req.id}, 'reject')" class="btn-secondary !bg-red-500/5 !border-red-500/10 !text-red-500 hover:!bg-red-500/10 flex-1 !justify-center py-3 text-[10px] font-black uppercase">Termnate</button>
+                                <button onclick="AdminApp.openHandshakeAuthorize(${req.id})" class="btn-primary flex-1 !justify-center py-3 text-[10px] font-black uppercase shadow-lg shadow-primary/20">Authorize</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            grid.innerHTML = html;
+            this.syncHandshakeBadge();
+        });
+    },
+
+    authorizeHandshake: function(id, action, roleId = 0) {
+        if (action === 'reject' && !confirm('Terminate this Identity Handshake? User will remain restricted.')) return;
+        
+        // Finalize Protocol
+        ApiClient.post('users', 'authorize', { id, action, role_id: roleId }).then(res => {
+            toast.success('Security Event', res.message);
+            closeModal();
+            this.loadHandshakeHub();
+            this.loadUserList(); // Sync main list
+        }).catch(err => {
+            toast.error('Protocol Error', err.error || 'Authorization failed.');
+        });
+    },
+
+    openHandshakeAuthorize: function(id) {
+        const input = document.getElementById('auth-request-user-id');
+        const displayName = document.getElementById('auth-role-display-name');
+        const roleIdInput = document.getElementById('auth-request-role-id');
+        
+        if (input) input.value = id;
+        if (roleIdInput) roleIdInput.value = "0"; // Reset to default Observer
+        if (displayName) displayName.innerText = "--- Default (Observer Cluster) ---";
+        
+        // Ensure menu is hidden
+        const menu = document.getElementById('handshake-role-menu');
+        if (menu) menu.classList.add('hidden');
+        
+        this.openModal('handshake-authorize-modal');
+    },
+
+    toggleHandshakeRoleDropdown: function() {
+        const menu = document.getElementById('handshake-role-menu');
+        const chevron = document.getElementById('auth-role-chevron');
+        if (!menu) return;
+
+        const isHidden = menu.classList.contains('hidden');
+        
+        if (isHidden) {
+            menu.classList.remove('hidden');
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
+        } else {
+            menu.classList.add('hidden');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+        }
+    },
+
+    selectHandshakeRole: function(roleId, name) {
+        const input = document.getElementById('auth-request-role-id');
+        const displayName = document.getElementById('auth-role-display-name');
+        const menu = document.getElementById('handshake-role-menu');
+        const chevron = document.getElementById('auth-role-chevron');
+
+        if (input) input.value = roleId;
+        if (displayName) displayName.innerText = name;
+        
+        // Close menu
+        if (menu) menu.classList.add('hidden');
+        if (chevron) chevron.style.transform = 'rotate(0deg)';
+        
+        toast.help('Cluster Staged', `Authorized identity will be migrated to the ${name} cluster.`);
+    },
+
+    confirmHandshakeAuthorization: function() {
+        const id = document.getElementById('auth-request-user-id')?.value;
+        const roleId = document.getElementById('auth-request-role-id')?.value;
+        
+        if (!id) return toast.error('Selection Error', 'User ID missing from protocol.');
+        
+        this.authorizeHandshake(id, 'approve', roleId);
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => AdminApp.init());
+document.addEventListener('DOMContentLoaded', () => {
+    AdminApp.init();
+
+    // Global Dropdown Closer (Click Outside)
+    document.addEventListener('click', (e) => {
+        const handshakeMenu = document.getElementById('handshake-role-menu');
+        const handshakeChevron = document.getElementById('auth-role-chevron');
+        if (handshakeMenu && !handshakeMenu.contains(e.target) && !e.target.closest('button[onclick*="toggleHandshakeRoleDropdown"]')) {
+            handshakeMenu.classList.add('hidden');
+            if (handshakeChevron) handshakeChevron.style.transform = 'rotate(0deg)';
+        }
+    });
+});
 
 /** Global Helpers **/
 window.closeModal = function() {

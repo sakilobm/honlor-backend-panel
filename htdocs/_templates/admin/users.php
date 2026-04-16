@@ -28,8 +28,11 @@
             Security Groups
             <div class="tab-underline"></div>
         </button>
-        <button class="tab-btn" data-tab="access" onclick="AdminApp.switchTab('users', 'access')">
-            Access Governance
+        <button class="tab-btn" data-tab="handshakes" onclick="AdminApp.switchTab('users', 'handshakes')">
+            <span class="flex items-center gap-2">
+                Handshake Hub
+                <div id="handshake-count-badge" class="hidden w-4 h-4 bg-primary text-[8px] font-black items-center justify-center rounded-full text-white">0</div>
+            </span>
             <div class="tab-underline"></div>
         </button>
     </div>
@@ -108,7 +111,15 @@
         </div>
     </div>
 
-    <!-- Tab Content: Access Governance -->
+    <!-- Tab Content: Handshake Hub -->
+    <div id="tab-content-handshakes" class="tab-content hidden space-y-8 animate-in fade-in duration-700">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="handshake-requests-grid">
+            <!-- Handshake Cards Dynamically Injected here -->
+            <div class="col-span-full p-20 text-center">
+                <p class="animate-pulse font-black text-[10px] uppercase tracking-widest opacity-40">Scanning for Pending Handshakes...</p>
+            </div>
+        </div>
+    </div>
     <div id="tab-content-access" class="tab-content hidden space-y-8 animate-in fade-in duration-700">
         <div class="glass-card border-primary/20 bg-gradient-to-br from-primary/10 to-transparent flex flex-col md:flex-row items-center gap-10">
             <div class="w-32 h-32 rounded-full border-4 border-dashed border-primary/30 flex items-center justify-center animate-[spin_10s_linear_infinite]">

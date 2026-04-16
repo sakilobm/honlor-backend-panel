@@ -171,6 +171,7 @@
 
     <!-- UI State Handlers -->
     <script>
+        window.isRestricted = <?= $isRestricted ? 'true' : 'false' ?>;
         window.adminId = '<?php echo Session::getUser()->id; ?>';
         
         function toggleTheme() {
