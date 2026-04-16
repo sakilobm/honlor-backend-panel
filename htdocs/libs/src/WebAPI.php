@@ -41,7 +41,7 @@ class WebAPI
         Database::getConnection();
 
         // --- Secure Session Cookie Configuration ---
-        $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] == 443);
+        $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
         $cookieParams = session_get_cookie_params();
         
         session_set_cookie_params([

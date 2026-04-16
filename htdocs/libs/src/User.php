@@ -194,10 +194,37 @@ class User
                 $conn->beginTransaction();
             }
 
-            // 1. Update auth table (email)
+            // 1. Update auth table (email, role_id, is_master)
+            $authUpdates = [];
+            $authParams = [];
+            
             if (isset($data['email'])) {
-                $stmt = $conn->prepare("UPDATE `auth` SET `email` = ? WHERE `id` = ?");
-                $stmt->execute([$data['email'], $this->id]);
+                $authUpdates[] = "`email` = ?";
+                $authParams[] = $data['email'];
+            }
+            
+            if (isset($data['role_id'])) {
+                $authUpdates[] = "`role_id` = ?";
+                $authParams[] = (int)$data['role_id'];
+            }
+
+            // Security Gate: Only an active Master Admin can grant or revoke Master status
+            // Note: We skip this if the key is missing from POST and we don't want to accidentally revoke.
+            // But for a full profile update, we should handle the checkbox being off.
+            if (\Aether\Session::isMaster()) {
+                $masterStatus = isset($data['is_master']) ? 1 : 0;
+                // Prevent self-demotion to avoid lockout
+                if ($this->id !== \Aether\Session::getUser()->id) {
+                    $authUpdates[] = "`is_master` = ?";
+                    $authParams[] = $masterStatus;
+                }
+            }
+
+            if (!empty($authUpdates)) {
+                $authParams[] = $this->id;
+                $sql = "UPDATE `auth` SET " . implode(', ', $authUpdates) . " WHERE `id` = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute($authParams);
             }
 
             // 2. Update profiles table
@@ -283,7 +310,7 @@ class User
         $stmt = $this->conn->prepare("SELECT `{$var}` FROM `profiles` WHERE `id` = ? LIMIT 1");
         $stmt->execute([$this->id]);
         $row = $stmt->fetch();
-        return $row ? $row[$var] : false;
+        return $row ? ($row[$var] ?? '') : false;
     }
 }
 

@@ -370,8 +370,11 @@ const AdminApp = {
                         </td>
                         <td class="px-6 py-4">
                             ${user.is_master == 1 
-                                ? '<span class="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest">Master Admin</span>' 
-                                : `<span class="px-2 py-1 bg-white/5 text-gray-400 border border-white/5 rounded-lg text-[9px] font-black uppercase tracking-widest">${user.role_name || 'UNASSIGNED'}</span>`
+                                ? '<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> <span class="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest">Master Admin</span></div>' 
+                                : (user.role_id > 0 
+                                    ? `<span class="px-2 py-1 bg-white/5 text-gray-400 border border-white/5 rounded-lg text-[9px] font-black uppercase tracking-widest">${user.role_name}</span>`
+                                    : '<span class="px-2 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.2)]">Restricted / No Access</span>'
+                                  )
                             }
                         </td>
                         <td class="px-6 py-4"><span class="${badge}">${status}</span></td>
@@ -826,6 +829,7 @@ const AdminApp = {
      * Role Studio Logic
      */
     initRoles: function() {
+        this.refreshRolesCache();
         this.loadRoleList();
         
         const form = document.getElementById('save-role-form');
@@ -913,6 +917,10 @@ const AdminApp = {
                     }
                 });
             }
+            
+            // Sync Master Access UI state
+            const allCb = form.querySelector('[name="perms[all]"]');
+            if (allCb) this.toggleMasterAccess(allCb);
             
             AdminApp.openModal('role-editor-modal');
         });
@@ -1031,17 +1039,24 @@ const AdminApp = {
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Private E-mail</label>
                                     <input type="email" name="email" value="${user.email}" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
                                 </div>
-                                <div class="space-y-2">
+                                <div class="space-y-4">
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Security Cluster (Role)</label>
-                                    <div class="flex gap-2">
-                                        <select name="role_id" class="flex-grow bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all">
-                                            <option value="0">Unassigned</option>
-                                            ${AdminApp.rolesList ? AdminApp.rolesList.map(r => `<option value="${r.id}" ${user.role_id == r.id ? 'selected' : ''}>${r.name}</option>`).join('') : ''}
-                                        </select>
-                                        <button type="button" onclick="AdminApp.submitRoleUpdate('${user.id}')" class="px-4 bg-primary/20 text-primary border border-primary/20 rounded-2xl hover:bg-primary hover:text-white transition-all"><i class="ph-bold ph-shield-check"></i></button>
+                                    <input type="hidden" name="role_id" value="${user.role_id || 0}">
+                                    <div id="role-selection-container">
+                                        ${AdminApp.renderRoleSelectionUI(user.role_id)}
                                     </div>
-                                    ${user.is_master == 1 ? '<p class="text-[9px] font-black text-amber-500 uppercase tracking-widest mt-2 leading-relaxed">System Master: Level 0 Override Active</p>' : ''}
+                                    <div class="pt-4 border-t border-white/5 flex items-center justify-between">
+                                        <div class="space-y-1">
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-white">Level 0 Authorization</p>
+                                            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-tight">Grant Absolute Master Status</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" name="is_master" value="1" ${user.is_master == 1 ? 'checked' : ''} class="sr-only peer">
+                                            <div class="w-11 h-6 bg-white/5 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-400 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
                                 </div>
+
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Professional Bio</label>
                                     <textarea name="bio" rows="4" class="w-full bg-white/5 border border-white/5 rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all resize-none">${user.bio || ''}</textarea>
@@ -1149,13 +1164,78 @@ const AdminApp = {
     },
 
     submitRoleUpdate: function(userId) {
-        const roleId = document.querySelector('#profile-edit-form select[name="role_id"]').value;
-        ApiClient.post('users', 'update_role', { id: userId, role_id: roleId }).then(res => {
-            toast.success('Security Protocol', res.message);
-            this.loadUserList();
-        }).catch(err => {
-            toast.error('Violation', err.error || 'Failed to update identity cluster.');
+        // This is now used as a visual indicator, but the profile save handles the actual update
+        toast.info('Security Identity', 'Assigned role selected. Click Save to commit changes.');
+    },
+
+    renderRoleSelectionUI: function(currentRoleId) {
+        if (!this.rolesList || this.rolesList.length === 0) {
+            return `
+                <div class="p-6 border-2 border-dashed border-white/5 rounded-3xl text-center">
+                    <p class="text-[10px] font-black opacity-30 uppercase tracking-[0.2em]">No Identity Clusters Defined</p>
+                </div>
+            `;
+        }
+        
+        let html = '<div class="grid grid-cols-2 gap-3" id="role-selector-grid">';
+        this.rolesList.forEach(role => {
+            const isActive = role.id == currentRoleId;
+            html += `
+                <div onclick="AdminApp.selectRoleCard(this, '${role.id}')" 
+                     data-role-id="${role.id}"
+                     class="role-selection-card group p-5 rounded-2xl border transition-all cursor-pointer ${isActive ? 'bg-primary/10 border-primary shadow-[0_15px_40px_rgba(124,106,255,0.2)] ring-4 ring-primary/5' : 'bg-white/5 border-white/5 hover:border-primary/40'}">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-10 h-10 rounded-xl ${isActive ? 'bg-primary text-white' : 'bg-white/10 text-gray-500 group-hover:bg-primary/20 group-hover:text-primary'} flex items-center justify-center transition-all duration-300">
+                            <i class="ph-bold ${this.getRoleIcon(role.name)} text-lg"></i>
+                        </div>
+                        ${isActive ? '<span class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_10px_#7c6aff] animate-pulse"></span>' : ''}
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-tight ${isActive ? 'text-primary' : 'opacity-60'} transition-colors">${role.name}</p>
+                        <p class="text-[8px] font-bold opacity-30 uppercase tracking-[0.3em] mt-1">L${isActive ? '0' : '1'} Authorized</p>
+                    </div>
+                </div>
+            `;
         });
+        html += '</div>';
+        return html;
+    },
+
+    selectRoleCard: function(el, id) {
+        // Reset all cards in grid
+        const grid = document.getElementById('role-selector-grid');
+        if (!grid) return;
+
+        grid.querySelectorAll('.role-selection-card').forEach(card => {
+            card.classList.remove('bg-primary/10', 'border-primary', 'shadow-[0_15px_40px_rgba(124,106,255,0.2)]', 'ring-4', 'ring-primary/5');
+            card.querySelector('p').classList.replace('text-primary', 'opacity-60');
+            const iconWrap = card.querySelector('div > div');
+            iconWrap.classList.replace('bg-primary', 'bg-white/10');
+            iconWrap.classList.replace('text-white', 'text-gray-500');
+            const pulse = card.querySelector('span.rounded-full');
+            if (pulse) pulse.remove();
+        });
+
+        // Activate selected
+        el.classList.add('bg-primary/10', 'border-primary', 'shadow-[0_15px_40px_rgba(124,106,255,0.2)]', 'ring-4', 'ring-primary/5');
+        el.querySelector('p').classList.replace('opacity-60', 'text-primary');
+        const activeIconWrap = el.querySelector('div > div');
+        activeIconWrap.classList.replace('bg-white/10', 'bg-primary');
+        activeIconWrap.classList.replace('text-gray-500', 'text-white');
+        
+        // Add pulse indicator
+        const head = el.querySelector('div.flex');
+        if (head && !head.querySelector('span.rounded-full')) {
+            head.innerHTML += '<span class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_10px_#7c6aff] animate-pulse"></span>';
+        }
+
+        // Update hidden input in form
+        const form = document.getElementById('profile-edit-form');
+        if (form && form.role_id) {
+            form.role_id.value = id;
+        }
+
+        toast.info('Role Selected', `Prepared for cluster migration.`);
     },
 
     /**
@@ -1196,6 +1276,117 @@ const AdminApp = {
         toast.info('Security Studio', `${allChecked ? 'Revoked' : 'Granted'} all ${capability} capabilities.`);
     },
 
+    securityBlueprints: {
+        moderator: {
+            name: 'Moderator',
+            perms: {
+                users: ['view'],
+                messages: ['view', 'manage', 'delete'],
+                reports: ['view', 'manage'],
+                deletion: ['view']
+            }
+        },
+        curator: {
+            name: 'Content Curator',
+            perms: {
+                channels: ['view', 'manage'],
+                messages: ['view'],
+                ads: ['view', 'manage']
+            }
+        },
+        analyst: {
+            name: 'Data Analyst',
+            perms: {
+                dashboard: ['view'],
+                analytics: ['view'],
+                logs: ['view']
+            }
+        },
+        security: {
+            name: 'Security Architect',
+            perms: {
+                users: ['view', 'manage'],
+                roles: ['view', 'manage'],
+                logs: ['view'],
+                settings: ['view']
+            }
+        },
+        support: {
+            name: 'Support Agent',
+            perms: {
+                users: ['view'],
+                deletion: ['view', 'manage'],
+                channels: ['view']
+            }
+        },
+        developer: {
+            name: 'System Developer',
+            perms: {
+                all: true
+            }
+        }
+    },
+
+    applyBlueprint: function(key) {
+        const blueprint = this.securityBlueprints[key];
+        if (!blueprint) return;
+
+        const form = document.getElementById('save-role-form');
+        if (!form) return;
+
+        // 1. Set Name suggests
+        const nameInput = form.querySelector('[name="role_name"]');
+        if (nameInput) nameInput.value = blueprint.name;
+
+        // 2. Clear all first
+        form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+        // 3. Apply perms
+        if (blueprint.perms.all) {
+            const allCb = form.querySelector('[name="perms[all]"]');
+            if (allCb) allCb.checked = true;
+        } else {
+            Object.keys(blueprint.perms).forEach(resource => {
+                const actions = blueprint.perms[resource];
+                actions.forEach(action => {
+                    const cb = form.querySelector(`[name="perms[${resource}][${action}]"]`);
+                    if (cb) {
+                        cb.checked = true;
+                        // Tiny animation effect
+                        cb.parentElement.classList.add('scale-110');
+                        setTimeout(() => cb.parentElement.classList.remove('scale-110'), 200);
+                    }
+                });
+            });
+        }
+
+        // Highlight selected chip (UI helper)
+        document.querySelectorAll('.blueprint-chip').forEach(c => c.classList.remove('active', 'border-primary', 'bg-primary/10'));
+        const activeChip = document.querySelector(`[data-blueprint="${key}"]`);
+        if (activeChip) activeChip.classList.add('active', 'border-primary', 'bg-primary/10');
+
+        toast.success('Blueprint Applied', `Loaded standard '${blueprint.name}' protocol.`);
+    },
+
+
+    toggleMasterAccess: function(el) {
+        const matrix = document.getElementById('privilege-matrix');
+        if (!matrix) return;
+
+        const isChecked = el.checked;
+        const checkboxes = matrix.querySelectorAll('input[type="checkbox"]');
+        
+        checkboxes.forEach(cb => {
+            cb.checked = isChecked;
+        });
+
+        if (isChecked) {
+            matrix.classList.add('opacity-40', 'pointer-events-none');
+            toast.info('Root Protocol Active', 'Absolute authority override engaged.');
+        } else {
+            matrix.classList.remove('opacity-40', 'pointer-events-none');
+        }
+    },
 
     generateInsights: function() {
         toast.info('Generating Insights', 'Analyzing global data patterns...');

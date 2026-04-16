@@ -40,92 +40,11 @@
     </div>
 </div>
 
-<!-- Role Editor Modal (Hidden by default) -->
-<div id="role-editor-modal" class="fixed inset-0 z-[1000] hidden items-center justify-center p-4 sm:p-6 backdrop-blur-2xl bg-black/60 overflow-hidden" onclick="if(event.target === this) closeModal()">
-    <div class="glass-card w-full max-w-2xl max-h-[90vh] flex flex-col animate-in zoom-in duration-300 shadow-[0_30px_100px_rgba(0,0,0,0.5)] overflow-hidden !p-0">
 
-        <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
-            <h3 class="text-xl font-black uppercase tracking-tight">Security <span class="gradient-text">Architect</span></h3>
-            <button onclick="closeModal()" class="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"><i class="ph ph-x text-xl"></i></button>
-        </div>
-        <form id="save-role-form" class="flex flex-col h-full overflow-hidden">
-            <div class="p-8 space-y-8 flex-grow overflow-y-auto custom-scrollbar">
-
-            <input type="hidden" name="role_id" value="">
-            
-            <div class="space-y-2">
-                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">Cluster Designation</label>
-                <input type="text" name="role_name" placeholder="E.g. Content Moderator, Analyst" required
-                    class="w-full bg-white/5 border border-white/5 rounded-xl py-4 px-6 outline-none focus:border-primary/50 transition-all font-bold text-sm">
-            </div>
-
-            <div class="space-y-4">
-                    <div class="flex items-center gap-4">
-                        <button type="button" onclick="AdminApp.toggleAllPermissions('view')" class="text-[9px] font-black uppercase tracking-widest text-primary hover:underline">All Read</button>
-                        <button type="button" onclick="AdminApp.toggleAllPermissions('manage')" class="text-[9px] font-black uppercase tracking-widest text-green-500 hover:underline">All Write</button>
-                        <button type="button" onclick="AdminApp.toggleAllPermissions('delete')" class="text-[9px] font-black uppercase tracking-widest text-red-500 hover:underline">All Purge</button>
-                        <div class="h-4 w-px bg-white/10 mx-2"></div>
-                        <label class="flex items-center gap-2 cursor-pointer group">
-                            <span class="text-[9px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">Absolute Root Access</span>
-                            <input type="checkbox" name="perms[all]" class="w-4 h-4 rounded border-white/10 bg-white/5 text-primary focus:ring-primary">
-                        </label>
-                    </div>
-                </div>
-
-                <div id="privilege-matrix" class="grid grid-cols-1 gap-3 overflow-y-auto pr-2 custom-scrollbar">
-
-                    <?php
-                    $sections = [
-                        'dashboard' => 'Ecosystem Overview',
-                        'users' => 'Identity Vault',
-                        'messages' => 'Moderation Cluster',
-                        'channels' => 'Data Hubs',
-                        'ads' => 'Marketing Streams',
-                        'reports' => 'Governance Alerts',
-                        'deletion' => 'Identity Erasure',
-                        'analytics' => 'Intelligence Data',
-                        'policy' => 'Ecosystem Laws',
-                        'settings' => 'Protocol Control',
-                        'logs' => 'System Telemetry',
-                        'roles' => 'Security Governance'
-                    ];
-
-                    foreach ($sections as $key => $label):
-                    ?>
-                    <div class="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between group hover:border-primary/20 transition-all">
-                        <div>
-                            <p class="text-xs font-black uppercase tracking-tight"><?= $label ?></p>
-                            <p class="text-[9px] font-bold opacity-40 uppercase tracking-widest mt-0.5"><?= $key ?>.proto</p>
-                        </div>
-                        <div class="flex gap-4">
-                            <label class="permission-toggle">
-                                <input type="checkbox" name="perms[<?= $key ?>][view]" class="hidden peer">
-                                <span class="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-white/5 opacity-30 peer-checked:opacity-100 peer-checked:border-primary/40 peer-checked:bg-primary/10 peer-checked:text-primary transition-all cursor-pointer">Read</span>
-                            </label>
-                            <label class="permission-toggle">
-                                <input type="checkbox" name="perms[<?= $key ?>][manage]" class="hidden peer">
-                                <span class="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-white/5 opacity-30 peer-checked:opacity-100 peer-checked:border-green-500/40 peer-checked:bg-green-500/10 peer-checked:text-green-500 transition-all cursor-pointer">Write</span>
-                            </label>
-                            <label class="permission-toggle">
-                                <input type="checkbox" name="perms[<?= $key ?>][delete]" class="hidden peer">
-                                <span class="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-white/5 opacity-30 peer-checked:opacity-100 peer-checked:border-red-500/40 peer-checked:bg-red-500/10 peer-checked:text-red-500 transition-all cursor-pointer">Purge</span>
-                            </label>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-            <div class="p-8 border-t border-white/5 bg-white/5 flex gap-4">
-                <button type="button" onclick="closeModal()" class="btn-secondary flex-1 !justify-center">Cancel</button>
-                <button type="submit" class="btn-primary flex-1 !justify-center shadow-xl shadow-primary/20">
-                    <i class="ph-bold ph-shield-check"></i>
-                    Seal Protocol
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+<?php
+// Note: Role Editor Modal has been relocated to _templates/admin/_modals.php 
+// for global stacking context and full viewport coverage.
+?>
 
 <style>
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }

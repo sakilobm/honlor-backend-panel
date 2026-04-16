@@ -149,10 +149,10 @@
     <!-- CDNs and Infrastructure Scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="<?= get_config('base_path') ?>assets/js/toastv3.js"></script>
-    <script src="<?= get_config('base_path') ?>assets/js/apis.js"></script>
+    <script src="<?= get_config('base_path') ?>assets/js/apis.js?v=<?= time() ?>"></script>
     
     <!-- Application Logic (Populates chart, metrics, etc) -->
-    <script src="<?= get_config('base_path') ?>js/admin.js"></script>
+    <script src="<?= get_config('base_path') ?>js/admin.js?v=<?= time() ?>"></script>
 
     <!-- Global Modals System -->
     <div id="global-modal-container" class="modal-overlay hidden z-[100]">

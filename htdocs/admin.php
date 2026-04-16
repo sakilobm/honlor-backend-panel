@@ -23,8 +23,17 @@ if (isset($_GET['logout']) && Session::isset('session_token')) {
 
 // Ensure Login gate
 if (Session::isAuthenticated()) {
-    // Access Control: Only Master Admin can access Roles Studio
+    $user = Session::getUser();
     $page = Session::getCurrentPageIdentifier();
+
+    // --- ZERO-TRUST CLEARANCE GUARD ---
+    // Block any user who hasn't been assigned a Security Cluster (role_id = 0)
+    // Master Admins are exempt from this protocol
+    if ($user && (int)$user->getRoleId() === 0 && !$user->isMaster()) {
+        $page = 'clearance_pending';
+    }
+
+    // Access Control: Only Master Admin can access Roles Studio
     if ($page === 'roles' && !Session::isMaster()) {
         header('Location: /admin?page=dashboard');
         exit;
