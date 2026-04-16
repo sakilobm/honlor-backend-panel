@@ -54,12 +54,13 @@ class Session
     public static function url(string $path = ''): string
     {
         $base = get_config('base_path', '/');
-        // Ensure $base ends with / if not empty, and $path doesn't start with /
+        // Ensure $base ends with /
         $base = rtrim($base, '/') . '/';
         $path = ltrim($path, '/');
+        
+        // If the resulting URL is just '/', but we have a path, keep the /
         return $base . $path;
     }
-
 
     /**
      * Check if current user has permission for a resource.

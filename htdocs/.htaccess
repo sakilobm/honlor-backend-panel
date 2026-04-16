@@ -2,11 +2,14 @@
     Header set Cache-Control "max-age=31536000, public"
 </FilesMatch>
 
-ErrorDocument 404 /honlor-admin-panel/htdocs/error.php
-ErrorDocument 500 /honlor-admin-panel/htdocs/error.php
+ErrorDocument 404 /error.php
+ErrorDocument 500 /error.php
+
 
 RewriteEngine On
-RewriteBase /honlor-admin-panel/htdocs/
+Options +FollowSymLinks -MultiViews
+RewriteBase /
+
 
 # --- Static asset pass-through ---
 RewriteCond %{REQUEST_FILENAME} -f [OR]

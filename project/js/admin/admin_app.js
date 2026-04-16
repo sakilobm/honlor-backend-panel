@@ -97,7 +97,9 @@ const AdminApp = {
             </div>
         `;
 
-        fetch(`${window.BASE_PATH || '/'}admin?page=${section}&ajax=1`)
+        const base = (window.BASE_PATH || '/').replace(/\/$/, '');
+        fetch(`${base}/admin?page=${section}&ajax=1`)
+
             .then(res => res.text())
             .then(html => {
                 target.innerHTML = html; 
@@ -110,13 +112,17 @@ const AdminApp = {
                 }
 
                 if (pushState) {
-                    window.history.pushState({ page: section }, "", `${window.BASE_PATH || '/'}admin?page=${section}`);
+                    const base = (window.BASE_PATH || '/').replace(/\/$/, '');
+                    window.history.pushState({ page: section }, "", `${base}/admin?page=${section}`);
+
                 }
                 this.init(); // Re-run init to bind new page logic
             })
             .catch(err => {
                 console.error("SPA failure:", err);
-                window.location.href = `${window.BASE_PATH || '/'}admin?page=${section}`; // Fallback
+                const base = (window.BASE_PATH || '/').replace(/\/$/, '');
+                window.location.href = `${base}/admin?page=${section}`; // Fallback
+
             });
     },
 
