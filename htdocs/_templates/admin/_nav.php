@@ -79,7 +79,7 @@
                     <div class="nav-duotone nav-emerald"><i class="ph-bold ph-terminal-window text-lg"></i></div>
                     <span>Server Health</span>
                 </a>
-                <?php if (Session::hasPermission('roles', 'manage')) : ?>
+                <?php if (Session::isMaster()) : ?>
                 <a href="javascript:AdminApp.switchSection('roles')" class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'roles' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-rose"><i class="ph-bold ph-shield-star text-lg"></i></div>
                     <span>Role Studio</span>

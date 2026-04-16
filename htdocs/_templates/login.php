@@ -81,11 +81,12 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script type="module">
-        import FingerprintJS from 'https://openfpcdn.io/fingerprintjs/v3';
+        import FingerprintJS from '<?= get_config('base_path') ?>assets/js/fingerprintv3.js';
         const fp = await FingerprintJS.load();
         const r  = await fp.get();
         document.cookie = `fingerprint=${r.visitorId}; path=/; SameSite=None; Secure`;
     </script>
+
     <script src="<?= get_config('base_path') ?>assets/js/toastv3.js"></script>
     <script src="<?= get_config('base_path') ?>assets/js/ball.js"></script>
     <script src="<?= get_config('base_path') ?>assets/js/apis.js"></script>

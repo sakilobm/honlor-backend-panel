@@ -39,6 +39,12 @@ class Session
         return ($sess instanceof UserSession) && $sess->isValid();
     }
 
+    public static function isMaster(): bool
+    {
+        $user = self::getUser();
+        return $user ? $user->isMaster() : false;
+    }
+
     public static function ensureLogin(): void
     {
         if (!self::isAuthenticated()) {

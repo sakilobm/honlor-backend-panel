@@ -848,9 +848,10 @@ const AdminApp = {
                     <tr class="hover:bg-white/5 transition-colors group">
                         <td class="px-8 py-6">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 border border-rose-500/20">
-                                    <i class="ph-bold ph-shield-star text-lg"></i>
+                                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                                    <i class="ph-bold ${this.getRoleIcon(role.name)} text-lg"></i>
                                 </div>
+
                                 <div>
                                     <p class="text-sm font-black uppercase tracking-tight">${role.name}</p>
                                     <p class="text-[10px] font-black opacity-40 tracking-widest mt-0.5">ESTABLISHED ${new Date(role.created_at).toLocaleDateString()}</p>
@@ -947,7 +948,8 @@ const AdminApp = {
 
         ApiClient.post('roles', 'save', payload).then(res => {
             toast.success('Security Studio', res.message);
-            closeModal();
+            window.closeModal();
+
             this.loadRoleList();
         }).catch(err => {
             toast.error('Governance Error', err.error || 'Identity protocol violation.');
@@ -967,9 +969,20 @@ const AdminApp = {
      */
     openModal: function(id) {
         const container = document.getElementById(id);
-        if (container) container.classList.remove('hidden');
+        if (container) {
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+            // Animate in if GSAP is available
+            if (window.gsap) {
+                gsap.fromTo(container.querySelector('.glass-card'), 
+                    { scale: 0.9, opacity: 0 }, 
+                    { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" }
+                );
+            }
+        }
         document.body.style.overflow = 'hidden';
     },
+
 
     openDrawer: function(type, id) {
         const drawer = document.getElementById('side-drawer');
@@ -1149,11 +1162,40 @@ const AdminApp = {
      * Cache Roles for Selectors
      */
     
+    getRoleIcon: function(name) {
+        const icons = {
+            'super admin': 'ph-shield-star',
+            'admin': 'ph-user-gear',
+            'moderator': 'ph-fingerprint',
+            'editor': 'ph-note-pencil',
+            'analyst': 'ph-chart-bar',
+            'support': 'ph-headset',
+            'security': 'ph-lock-key',
+            'developer': 'ph-code'
+        };
+        const key = (name || '').toLowerCase();
+        return icons[key] || 'ph-shield';
+    },
+
     refreshRolesCache: function() {
+
         ApiClient.get('roles', 'list').then(data => {
             this.rolesList = data.roles;
         });
     },
+
+    toggleAllPermissions: function(capability) {
+        const matrix = document.getElementById('privilege-matrix');
+        if (!matrix) return;
+        
+        const checkboxes = matrix.querySelectorAll(`input[name*="[${capability}]"]`);
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        
+        checkboxes.forEach(cb => cb.checked = !allChecked);
+        
+        toast.info('Security Studio', `${allChecked ? 'Revoked' : 'Granted'} all ${capability} capabilities.`);
+    },
+
 
     generateInsights: function() {
         toast.info('Generating Insights', 'Analyzing global data patterns...');
@@ -1272,7 +1314,12 @@ document.addEventListener('DOMContentLoaded', () => AdminApp.init());
 
 /** Global Helpers **/
 window.closeModal = function() {
-    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+    document.querySelectorAll('.modal-overlay, [id*="-modal"]').forEach(m => {
+        if (!m.classList.contains('hidden')) {
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+    });
     document.body.style.overflow = 'auto';
 };
 

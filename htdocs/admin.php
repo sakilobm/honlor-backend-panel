@@ -23,13 +23,21 @@ if (isset($_GET['logout']) && Session::isset('session_token')) {
 
 // Ensure Login gate
 if (Session::isAuthenticated()) {
+    // Access Control: Only Master Admin can access Roles Studio
+    $page = Session::getCurrentPageIdentifier();
+    if ($page === 'roles' && !Session::isMaster()) {
+        header('Location: /admin?page=dashboard');
+        exit;
+    }
+
     // If AJAX request, render only the partial template
     if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
-        Session::loadTemplate('admin/' . Session::getCurrentPageIdentifier());
+        Session::loadTemplate('admin/' . $page);
     } else {
         // Render the full admin layout (Template Inheritance)
         Session::renderPageOfAdmin();
     }
+
 } else {
     header('Location: /login');
     exit;

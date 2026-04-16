@@ -255,4 +255,35 @@ class User
         }
         return null;
     }
+
+    /* ─── Profile Getters (Mapping to 'profiles' table) ─── */
+
+    public function getFirstname(): string|false
+    {
+        return $this->_get_profile_data('firstname');
+    }
+
+    public function getLastname(): string|false
+    {
+        return $this->_get_profile_data('lastname');
+    }
+
+    public function getBio(): string|false
+    {
+        return $this->_get_profile_data('bio');
+    }
+
+    public function getAvatar(): string|false
+    {
+        return $this->_get_profile_data('avatar');
+    }
+
+    private function _get_profile_data(string $var)
+    {
+        $stmt = $this->conn->prepare("SELECT `{$var}` FROM `profiles` WHERE `id` = ? LIMIT 1");
+        $stmt->execute([$this->id]);
+        $row = $stmt->fetch();
+        return $row ? $row[$var] : false;
+    }
 }
+
