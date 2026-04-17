@@ -9,7 +9,7 @@ const AdminApp = {
     chart: null,
     currentRange: 7,
 
-    init: function() {
+    init: function () {
         if (window.isRestricted) {
             console.warn("Security Protocol: Restricted State Detected. Core Application Locked.");
             return;
@@ -20,7 +20,7 @@ const AdminApp = {
         const page = params.get('page') || 'dashboard';
 
         this.route(page);
-        
+
         // Handle browser back/forward
         window.onpopstate = (e) => {
             if (e.state && e.state.page) {
@@ -40,8 +40,8 @@ const AdminApp = {
         this.syncHandshakeBadge();
     },
 
-    route: function(page) {
-        switch(page) {
+    route: function (page) {
+        switch (page) {
             case 'dashboard':
                 this.initDashboard();
                 break;
@@ -81,14 +81,14 @@ const AdminApp = {
         }
     },
 
-    toggleNotifications: function() {
+    toggleNotifications: function () {
         const pane = document.getElementById('notification-pane');
         if (pane) {
             pane.classList.toggle('hidden');
         }
     },
 
-    switchSection: function(section, pushState = true) {
+    switchSection: function (section, pushState = true) {
         // 1. Update active state in sidebar immediately for responsiveness
         document.querySelectorAll('.nav-link-premium').forEach(l => l.classList.remove('active'));
         const activeLink = document.querySelector(`a[href*="${section}"]`);
@@ -110,8 +110,8 @@ const AdminApp = {
 
             .then(res => res.text())
             .then(html => {
-                target.innerHTML = html; 
-                
+                target.innerHTML = html;
+
                 // Reset tabs to default (first tab)
                 const firstTab = target.querySelector('.tab-btn');
                 if (firstTab) {
@@ -138,9 +138,9 @@ const AdminApp = {
      * Tabbed Architecture Engine
      * Handles switching between sub-modules within a section
      */
-    switchTab: function(sectionId, tabId) {
+    switchTab: function (sectionId, tabId) {
         console.log(`Switching Tab: ${sectionId} -> ${tabId}`);
-        
+
         // 1. Update Tab Buttons (Active Styles & Underlines)
         const tabContainer = document.querySelector(`#section-${sectionId} [id$="-tabs"]`);
         if (tabContainer) {
@@ -149,7 +149,12 @@ const AdminApp = {
             if (activeBtn) activeBtn.classList.add('active');
         }
 
-        // 2. Toggle Tab Content Visibility
+        // 2. Trigger Specialized Tab Loading
+        if (sectionId === 'dashboard' && tabId === 'agents') {
+            this.loadAgentStatus();
+        }
+
+        // 3. Switch Content visibility
         const section = document.getElementById(`section-${sectionId}`);
         if (section) {
             section.querySelectorAll('.tab-content').forEach(content => {
@@ -172,9 +177,9 @@ const AdminApp = {
     /**
      * Dashboard Logic
      */
-    initDashboard: function(range = 7) {
+    initDashboard: function (range = 7) {
         this.currentRange = range;
-        
+
         ApiClient.get('dashboard', 'metrics', { range: range }).then(data => {
             if (document.getElementById('stat-total-users')) {
                 document.getElementById('stat-total-users').innerText = data.total_users.toLocaleString();
@@ -203,7 +208,7 @@ const AdminApp = {
         });
     },
 
-    loadRecentActivity: function() {
+    loadRecentActivity: function () {
         const target = document.getElementById('recent-activity-list');
         if (!target) return;
 
@@ -226,34 +231,88 @@ const AdminApp = {
         });
     },
 
-    loadRecentMembers: function() {
-        // The recent members grid is the last grid in the overview section
-        const target = document.querySelector('#section-overview .grid-cols-2.md\\:grid-cols-4.lg\\:grid-cols-6');
-        if (!target) return;
+    loadRecentMembers: function () {
+        // This is shared logic for dashboard-agents and section-overview
+        const dashboardTarget = document.getElementById('agent-status-grid');
+        const overviewTarget = document.querySelector('#section-overview .grid-cols-2.md\\:grid-cols-4.lg\\:grid-cols-6');
+
+        if (!dashboardTarget && !overviewTarget) return;
 
         ApiClient.get('users', 'recent').then(data => {
-            let html = '';
-            data.users.forEach(user => {
-                const statusBadge = user.active == 1 ? 'badge-success' : 'badge-neutral';
-                const statusText = user.active == 1 ? 'Online' : 'Offline';
-                const name = user.firstname ? user.firstname : user.username;
-                
-                html += `
-                    <div class="border p-4 rounded-3xl text-center group transition-all hover:bg-glass-white" style="border-color: var(--border-color); background-color: var(--surface);">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}" class="w-16 h-16 mx-auto rounded-2xl mb-3 bg-blue-500/10 p-1 group-hover:scale-105 transition-transform" alt="Avatar">
-                        <p class="font-bold text-sm truncate">${name}</p>
-                        <span class="${statusBadge} mt-2 inline-block">${statusText}</span>
-                    </div>
-                `;
-            });
-            target.innerHTML = html || '<p class="text-center text-gray-500 py-8 col-span-full">No recent members</p>';
+            if (overviewTarget) {
+                let html = '';
+                data.users.slice(0, 6).forEach(user => {
+                    const statusBadge = user.active == 1 ? 'badge-success' : 'badge-neutral';
+                    const statusText = user.active == 1 ? 'Online' : 'Offline';
+                    const name = user.firstname ? user.firstname : user.username;
+
+                    html += `
+                        <div class="border p-4 rounded-3xl text-center group transition-all hover:bg-glass-white" style="border-color: var(--border-color); background-color: var(--surface);">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}" class="w-16 h-16 mx-auto rounded-2xl mb-3 bg-blue-500/10 p-1 group-hover:scale-105 transition-transform" alt="Avatar">
+                            <p class="font-bold text-sm truncate">${name}</p>
+                            <span class="${statusBadge} mt-2 inline-block">${statusText}</span>
+                        </div>
+                    `;
+                });
+                overviewTarget.innerHTML = html || '<p class="text-center text-gray-500 py-8 col-span-full">No recent members</p>';
+            }
+
+            if (dashboardTarget) {
+                this.renderAgentStatusGrid(data.users);
+            }
         });
     },
 
-    renderGrowthChart: function(growthData) {
+    loadAgentStatus: function () {
+        const target = document.getElementById('agent-status-grid');
+        if (!target) return;
+
+        // Show loading state
+        target.innerHTML = `
+            <div class="col-span-full py-20 text-center animate-pulse">
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Synchronizing Agent Clusters...</p>
+            </div>
+        `;
+
+        ApiClient.get('users', 'recent').then(data => {
+            this.renderAgentStatusGrid(data.users);
+        });
+    },
+
+    renderAgentStatusGrid: function (users) {
+        const target = document.getElementById('agent-status-grid');
+        if (!target) return;
+
+        let html = '';
+        users.forEach(user => {
+            const isOnline = user.active == 1;
+            const statusBadge = isOnline ? 'badge-success' : 'badge-neutral';
+            const statusText = isOnline ? 'Online' : 'Resting';
+            const indicator = isOnline ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-gray-500';
+            const role = user.role_name || 'Agent';
+            const name = user.firstname || user.username;
+
+            html += `
+                <div class="stat-card !p-6 text-center group transition-all hover:scale-[1.05] cursor-pointer" onclick="AdminApp.switchSection('users')">
+                    <div class="relative inline-block mb-4">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}" 
+                             class="w-20 h-20 mx-auto rounded-[2rem] bg-primary/10 border border-primary/20 group-hover:bg-primary group-hover:rotate-6 transition-all" alt="Avatar">
+                        <span class="absolute bottom-1 right-1 w-5 h-5 ${indicator} border-4 border-[var(--surface)] rounded-full"></span>
+                    </div>
+                    <p class="font-black text-xs uppercase tracking-tight truncate">${name}</p>
+                    <p class="text-[9px] font-black uppercase tracking-widest text-primary mt-1 leading-none">${role}</p>
+                    <div class="${statusBadge} mt-4 inline-block">${statusText}</div>
+                </div>
+            `;
+        });
+
+        target.innerHTML = html || '<p class="text-center text-gray-500 py-20 col-span-full uppercase font-black text-[10px] tracking-widest">No active agents detected</p>';
+    },
+
+    renderGrowthChart: function (growthData) {
         const canvas = document.getElementById('growthChart');
         if (!canvas) return;
-        
+
         const ctx = canvas.getContext('2d');
         if (this.chart) this.chart.destroy();
 
@@ -309,10 +368,10 @@ const AdminApp = {
     /**
      * Users (Identity Vault) Logic
      */
-    initUsers: function() {
+    initUsers: function () {
         this.userPage = 1;
         this.loadUserList();
-        
+
         const filterInput = document.getElementById('user-filter');
         if (filterInput) {
             let timeout;
@@ -326,20 +385,20 @@ const AdminApp = {
         }
     },
 
-    exportUserCSV: function() {
+    exportUserCSV: function () {
         toast.info('Preparing Export', 'Gathering identity records...');
         ApiClient.get('users', 'list', { page: 1, limit: 1000 }).then(data => {
             const users = data.users;
             const headers = ['ID', 'Username', 'Email', 'Status', 'Joined'];
             const rows = users.map(u => [
-                u.id, 
-                u.username, 
-                u.email, 
-                u.blocked == 1 ? 'Blocked' : 'Active', 
+                u.id,
+                u.username,
+                u.email,
+                u.blocked == 1 ? 'Blocked' : 'Active',
                 u.created_at
             ]);
 
-            const csvContent = "data:text/csv;charset=utf-8," 
+            const csvContent = "data:text/csv;charset=utf-8,"
                 + [headers, ...rows].map(e => e.join(",")).join("\n");
 
             const encodedUri = encodeURI(csvContent);
@@ -352,7 +411,7 @@ const AdminApp = {
         });
     },
 
-    changeUserPage: function(delta) {
+    changeUserPage: function (delta) {
         const newPage = this.userPage + delta;
         if (newPage < 1) return;
         this.userPage = newPage;
@@ -360,7 +419,7 @@ const AdminApp = {
         this.loadUserList(this.userPage, filter);
     },
 
-    loadUserList: function(page = 1, filter = '') {
+    loadUserList: function (page = 1, filter = '') {
         const tbody = document.getElementById('users-table-body');
         if (!tbody) return;
 
@@ -369,7 +428,7 @@ const AdminApp = {
             data.users.forEach(user => {
                 const badge = user.blocked == 1 ? 'badge-danger' : (user.active == 1 ? 'badge-success' : 'badge-neutral');
                 const status = user.blocked == 1 ? 'Blocked' : (user.active == 1 ? 'Active' : 'Inactive');
-                
+
                 html += `
                     <tr class="hover:bg-white/5 transition-colors">
                         <td class="px-6 py-4">
@@ -382,16 +441,7 @@ const AdminApp = {
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            ${user.is_master == 1 
-                                ? '<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> <span class="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest">Master Admin</span></div>' 
-                                : (user.role_id > 0 
-                                    ? `<span class="px-2 py-1 bg-white/5 text-gray-400 border border-white/5 rounded-lg text-[9px] font-black uppercase tracking-widest">${user.role_name}</span>`
-                                    : (user.request_pending == 1 
-                                        ? '<span class="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.2)]">Handshake Pending</span>'
-                                        : '<span class="px-2 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.2)]">Restricted / No Access</span>'
-                                      )
-                                  )
-                            }
+                            ${AdminApp.renderRoleBadge(user)}
                         </td>
                         <td class="px-6 py-4"><span class="${badge}">${status}</span></td>
                         <td class="px-6 py-4">
@@ -413,7 +463,7 @@ const AdminApp = {
                 `;
             });
             tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No users found</td></tr>';
-            
+
             if (document.getElementById('users-total-count')) {
                 document.getElementById('users-total-count').innerText = `${(data.total / 1000).toFixed(1)}k Total`;
             }
@@ -429,9 +479,9 @@ const AdminApp = {
     /**
      * Channels Logic
      */
-    initChannels: function() {
+    initChannels: function () {
         this.loadChannelList();
-        
+
         const form = document.getElementById('create-channel-form');
         if (form) {
             form.onsubmit = (e) => {
@@ -451,7 +501,7 @@ const AdminApp = {
         }
     },
 
-    loadChannelList: function() {
+    loadChannelList: function () {
         const tbody = document.getElementById('channels-table-body');
         if (!tbody) return;
 
@@ -474,7 +524,7 @@ const AdminApp = {
         });
     },
 
-    deleteChannel: function(id) {
+    deleteChannel: function (id) {
         if (!confirm('Permanently decommission this node?')) return;
         ApiClient.post('channels', 'delete', { id }).then(res => {
             toast.success('Confirmed', 'Node removed from network.');
@@ -485,11 +535,11 @@ const AdminApp = {
     /**
      * Messages Logic
      */
-    initMessages: function() {
+    initMessages: function () {
         this.loadMessageList();
     },
 
-    loadMessageList: function() {
+    loadMessageList: function () {
         const tbody = document.getElementById('messages-table-body');
         if (!tbody) return;
 
@@ -497,7 +547,7 @@ const AdminApp = {
             let html = '';
             data.messages.forEach(msg => {
                 const statusBadge = msg.status === 'flagged' ? 'badge-warning' : (msg.status === 'deleted' ? 'badge-danger' : 'badge-success');
-                
+
                 html += `
                     <tr class="hover:bg-white/5 transition-colors">
                         <td class="px-6 py-4 text-[11px] font-bold text-primary"># ${msg.channel_name}</td>
@@ -523,11 +573,11 @@ const AdminApp = {
     /**
      * Safety Center (Reports) Logic
      */
-    initReports: function() {
+    initReports: function () {
         this.loadReportList();
     },
 
-    loadReportList: function() {
+    loadReportList: function () {
         const tbody = document.getElementById('reports-table-body');
         if (!tbody) return;
 
@@ -565,11 +615,11 @@ const AdminApp = {
     /**
      * Deletion Requests Logic
      */
-    initDeletionRequests: function() {
+    initDeletionRequests: function () {
         this.loadDeletionRequests();
     },
 
-    loadDeletionRequests: function() {
+    loadDeletionRequests: function () {
         const tbody = document.getElementById('deletion-requests-table-body');
         if (!tbody) return;
 
@@ -577,7 +627,7 @@ const AdminApp = {
             let html = '';
             data.requests.forEach(req => {
                 const statusBadge = req.status === 'pending' ? 'badge-warning' : (req.status === 'approved' ? 'badge-success' : 'badge-danger');
-                
+
                 html += `
                     <tr class="hover:bg-white/5 transition-colors">
                         <td class="px-6 py-4">
@@ -599,14 +649,14 @@ const AdminApp = {
                 `;
             });
             tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No pending requests</td></tr>';
-            
+
             if (document.getElementById('pending-deletion-count')) {
                 document.getElementById('pending-deletion-count').innerText = data.stats.pending;
             }
         });
     },
 
-    handleDeletion: function(id, status) {
+    handleDeletion: function (id, status) {
         if (!confirm(`Are you sure you want to ${status} this deletion request?`)) return;
 
         ApiClient.post('users', 'process_deletion', { id, status }).then(res => {
@@ -620,12 +670,12 @@ const AdminApp = {
     /**
      * Logs Logic
      */
-    initLogs: function() {
+    initLogs: function () {
         this.loadLogList();
-        
+
         // Polling interval for real-time telemetry (Every 3 seconds)
         if (this.telemetryInterval) clearInterval(this.telemetryInterval);
-        
+
         this.telemetryInterval = setInterval(() => {
             this.updateTelemetry();
             if (this.currentSection === 'logs') {
@@ -636,7 +686,7 @@ const AdminApp = {
         this.updateTelemetry();
     },
 
-    updateTelemetry: function() {
+    updateTelemetry: function () {
         if (this.currentSection !== 'logs') return;
 
         // Simulated high-fidelity telemetry fluctuations
@@ -670,7 +720,7 @@ const AdminApp = {
         up('monitor-egress-text', egress, ' Mbps');
     },
 
-    loadLogList: function() {
+    loadLogList: function () {
         const tbody = document.getElementById('logs-table-body');
         if (!tbody) return;
 
@@ -685,7 +735,7 @@ const AdminApp = {
                 };
 
                 const cfg = colors[log.level] || colors.info;
-                
+
                 html += `
                     <tr class="hover:bg-white/5 transition-all group">
                         <td class="py-6 px-8 text-[10px] font-black text-gray-500 tracking-widest">#${log.id}</td>
@@ -717,7 +767,7 @@ const AdminApp = {
         });
     },
 
-    openTerminal: function() {
+    openTerminal: function () {
         this.openModal('system-terminal-modal');
         const output = document.getElementById('terminal-output');
         if (output) {
@@ -733,7 +783,7 @@ const AdminApp = {
     /**
      * Ads Manager Logic
      */
-    initAdsManager: function() {
+    initAdsManager: function () {
         this.loadAdList();
 
         const searchInput = document.querySelector('#tab-content-campaigns input[placeholder*="Search streams"]');
@@ -769,7 +819,7 @@ const AdminApp = {
         }
     },
 
-    loadAdList: function(filter = '') {
+    loadAdList: function (filter = '') {
         const tbody = document.getElementById('ads-table-body');
         if (!tbody) return;
 
@@ -784,7 +834,7 @@ const AdminApp = {
                         </td>
                         <td class="px-6 py-4"><span class="badge-success">${ad.status}</span></td>
                         <td class="px-6 py-4 text-sm font-bold">$${parseFloat(ad.budget).toLocaleString()}</td>
-                        <td class="px-6 py-4 text-center text-xs font-bold text-gray-400">${((ad.clicks/ad.impressions)*100 || 0).toFixed(2)}%</td>
+                        <td class="px-6 py-4 text-center text-xs font-bold text-gray-400">${((ad.clicks / ad.impressions) * 100 || 0).toFixed(2)}%</td>
                         <td class="px-6 py-4 text-right">
                              <div class="flex justify-end gap-2">
                                 <button onclick="AdminApp.openDrawer('ad', '${ad.id}')" class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500"><i class="ph ph-note-pencil text-lg"></i></button>
@@ -795,14 +845,14 @@ const AdminApp = {
                 `;
             });
             tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No campaigns found</td></tr>';
-            
+
             if (document.getElementById('ads-count-badge')) {
                 document.getElementById('ads-count-badge').innerText = `${data.ads.length} Total`;
             }
         });
     },
 
-    deleteAd: function(id) {
+    deleteAd: function (id) {
         if (!confirm('Permanently delete this campaign?')) return;
         ApiClient.post('ads', 'delete', { id }).then(res => {
             toast.success('Confirmed', 'Campaign removed.');
@@ -813,9 +863,9 @@ const AdminApp = {
     /**
      * Settings Logic
      */
-    toggleSetting: function(key, isChecked) {
+    toggleSetting: function (key, isChecked) {
         const value = isChecked ? 'on' : 'off';
-        
+
         ApiClient.post('settings', 'update', { key: key, value: value }).then(res => {
             toast.success('Updated', `Setting '${key}' is now ${value}.`);
         }).catch(err => {
@@ -823,7 +873,7 @@ const AdminApp = {
         });
     },
 
-    saveSettings: function() {
+    saveSettings: function () {
         const sessionTimeout = document.getElementById('session_timeout').value;
         const authRetryLimit = document.getElementById('auth_retry_limit').value;
         const rateLimit = document.getElementById('rate_limit').value;
@@ -844,10 +894,10 @@ const AdminApp = {
     /**
      * Role Studio Logic
      */
-    initRoles: function() {
+    initRoles: function () {
         this.refreshRolesCache();
         this.loadRoleList();
-        
+
         const form = document.getElementById('save-role-form');
         if (form) {
             form.onsubmit = (e) => {
@@ -857,7 +907,7 @@ const AdminApp = {
         }
     },
 
-    loadRoleList: function() {
+    loadRoleList: function () {
         const grid = document.getElementById('roles-card-grid');
         if (!grid) return;
 
@@ -866,7 +916,7 @@ const AdminApp = {
             data.roles.forEach(role => {
                 const perms = typeof role.permissions === 'string' ? JSON.parse(role.permissions) : role.permissions;
                 const isMaster = perms.all === true;
-                
+
                 html += `
                     <div class="glass-card group relative p-8 border-white/5 transition-all duration-500 hover:border-primary/40 hover:-translate-y-2 hover:shadow-[0_40px_80px_rgba(0,0,0,0.5)] bg-gradient-to-br from-white/[0.02] to-transparent">
                         <div class="flex items-start justify-between mb-8">
@@ -895,7 +945,7 @@ const AdminApp = {
                             
                             <div class="pt-6 border-t border-white/5 flex items-center justify-between">
                                 <span class="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Active Members</span>
-                                <span class="text-sm font-black text-gray-900 dark:text-white">${role.member_count || 0}</span>
+                                <span class="text-sm font-black text-gray-500 dark:text-white">${role.member_count || 0}</span>
                             </div>
                         </div>
                     </div>
@@ -905,11 +955,11 @@ const AdminApp = {
         });
     },
 
-    renderPermissionChips: function(permsJson) {
+    renderPermissionChips: function (permsJson) {
         if (!permsJson) return '<span class="text-[10px] font-black opacity-10 uppercase tracking-widest italic">No Protocols Found</span>';
         const perms = typeof permsJson === 'string' ? JSON.parse(permsJson) : permsJson;
         if (perms.all) return '<span class="px-3 py-1.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><i class="ph-fill ph-shield-star"></i> Perfect Authority</span>';
-        
+
         let html = '';
         Object.keys(perms).forEach(resource => {
             const actions = perms[resource];
@@ -920,7 +970,7 @@ const AdminApp = {
                     if (action === 'view') { color = 'text-primary bg-primary/10 border-primary/20'; label = 'Audit'; }
                     if (action === 'manage') { color = 'text-green-500 bg-green-500/10 border-green-500/20'; label = 'Write'; }
                     if (action === 'delete') { color = 'text-red-500 bg-red-500/10 border-red-500/20'; label = 'Purge'; }
-                    
+
                     html += `
                         <span class="px-2.5 py-1 ${color} border rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all mb-1">
                             <i class="ph ph-circle text-[6px]"></i> ${resource}:${label}
@@ -938,23 +988,23 @@ const AdminApp = {
         return html;
     },
 
-    newRole: function() {
+    newRole: function () {
         const form = document.getElementById('save-role-form');
         if (!form) return;
 
         form.reset();
         form.role_id.value = '';
-        
+
         // Reset state & UI
         form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
         const allCb = form.querySelector('[name="perms[all]"]');
         if (allCb) this.toggleMasterAccess(allCb);
-        
+
         AdminApp.openModal('role-editor-modal');
         this.updateAuthorityMeter();
     },
 
-    editRole: function(id) {
+    editRole: function (id) {
         ApiClient.get('roles', 'get', { id }).then(data => {
             const role = data.role;
             const form = document.getElementById('save-role-form');
@@ -963,13 +1013,13 @@ const AdminApp = {
             form.role_id.value = role.id;
             // Standardize display name (allow user choice but match internally)
             form.role_name.value = role.name;
-            
+
             // Reset all state first
             form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-            
+
             try {
                 const perms = typeof role.permissions === 'string' ? JSON.parse(role.permissions) : role.permissions;
-                
+
                 // Force a clean state sync before applying specific permissions
                 const allCb = form.querySelector('[name="perms[all]"]');
                 if (allCb) {
@@ -992,13 +1042,13 @@ const AdminApp = {
                 console.error("Orchestrator sync failure:", e);
                 toast.error("Sync Failure", "Could not restore security protocol state.");
             }
-            
+
             AdminApp.openModal('role-editor-modal');
             this.updateAuthorityMeter();
         });
     },
 
-    updateAuthorityMeter: function() {
+    updateAuthorityMeter: function () {
         const form = document.getElementById('save-role-form');
         if (!form) return;
 
@@ -1035,16 +1085,16 @@ const AdminApp = {
         }
     },
 
-    saveRole: function() {
+    saveRole: function () {
         const form = document.getElementById('save-role-form');
         const formData = new FormData(form);
         const id = formData.get('role_id');
         const name = formData.get('role_name');
-        
+
         // Construct permissions object
         const perms = {};
         const allChecked = form.querySelector('[name="perms[all]"]').checked;
-        
+
         if (allChecked) {
             perms.all = true;
         } else {
@@ -1073,7 +1123,7 @@ const AdminApp = {
         });
     },
 
-    deleteRole: function(id) {
+    deleteRole: function (id) {
         if (!confirm('Permanently deconstruct this security role? This may impact mapped identities.')) return;
         ApiClient.post('roles', 'delete', { id }).then(res => {
             toast.success('Deconstructed', 'Security role purged from vault.');
@@ -1084,15 +1134,15 @@ const AdminApp = {
     /**
      * Global Modals & Drawers
      */
-    openModal: function(id) {
+    openModal: function (id) {
         const container = document.getElementById(id);
         if (container) {
             container.classList.remove('hidden');
             container.classList.add('flex');
             // Animate in if GSAP is available
             if (window.gsap) {
-                gsap.fromTo(container.querySelector('.glass-card'), 
-                    { scale: 0.9, opacity: 0 }, 
+                gsap.fromTo(container.querySelector('.glass-card'),
+                    { scale: 0.9, opacity: 0 },
                     { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" }
                 );
             }
@@ -1101,7 +1151,7 @@ const AdminApp = {
     },
 
 
-    openDrawer: function(type, id) {
+    openDrawer: function (type, id) {
         const drawer = document.getElementById('side-drawer');
         const target = document.getElementById('drawer-content-target');
         if (!drawer || !target) return;
@@ -1165,7 +1215,7 @@ const AdminApp = {
                                     </div>
                                     <div class="pt-4 border-t border-white/5 flex items-center justify-between">
                                         <div class="space-y-1">
-                                            <p class="text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white">Level 0 Authorization</p>
+                                            <p class="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-white">Level 0 Authorization</p>
                                             <p class="text-[9px] text-gray-500 font-bold uppercase tracking-tight">Grant Absolute Master Status</p>
                                         </div>
                                         <label class="relative inline-flex items-center cursor-pointer">
@@ -1234,7 +1284,7 @@ const AdminApp = {
         }
     },
 
-    submitProfileEdit: function() {
+    submitProfileEdit: function () {
         const form = document.getElementById('profile-edit-form');
         const formData = new FormData(form);
         const payload = Object.fromEntries(formData.entries());
@@ -1248,7 +1298,7 @@ const AdminApp = {
         });
     },
 
-    submitAdEdit: function() {
+    submitAdEdit: function () {
         const form = document.getElementById('ad-edit-form');
         const formData = new FormData(form);
         const payload = Object.fromEntries(formData.entries());
@@ -1262,11 +1312,11 @@ const AdminApp = {
         });
     },
 
-    executeAction: function(action, id) {
+    executeAction: function (action, id) {
         toast.info('Processing', `Executing ${action}...`);
-        
+
         let ns = 'users', method = 'status', payload = { id: id, action: action };
-        
+
         if (action === 'flag_message' || action === 'delete_message' || action === 'resolve_flag') {
             ns = 'messages';
             method = 'flag';
@@ -1281,12 +1331,12 @@ const AdminApp = {
         });
     },
 
-    submitRoleUpdate: function(userId) {
+    submitRoleUpdate: function (userId) {
         // This is now used as a visual indicator, but the profile save handles the actual update
         toast.info('Security Identity', 'Assigned role selected. Click Save to commit changes.');
     },
 
-    renderRoleSelectionUI: function(currentRoleId) {
+    renderRoleSelectionUI: function (currentRoleId) {
         if (!this.rolesList || this.rolesList.length === 0) {
             return `
                 <div class="p-6 border-2 border-dashed border-white/5 rounded-3xl text-center">
@@ -1294,7 +1344,7 @@ const AdminApp = {
                 </div>
             `;
         }
-        
+
         let html = '<div class="grid grid-cols-2 gap-3" id="role-selector-grid">';
         this.rolesList.forEach(role => {
             const isActive = role.id == currentRoleId;
@@ -1319,7 +1369,7 @@ const AdminApp = {
         return html;
     },
 
-    selectRoleCard: function(el, id) {
+    selectRoleCard: function (el, id) {
         // Reset all cards in grid
         const grid = document.getElementById('role-selector-grid');
         if (!grid) return;
@@ -1340,7 +1390,7 @@ const AdminApp = {
         const activeIconWrap = el.querySelector('div > div');
         activeIconWrap.classList.replace('bg-white/10', 'bg-primary');
         activeIconWrap.classList.replace('text-gray-500', 'text-white');
-        
+
         // Add pulse indicator
         const head = el.querySelector('div.flex');
         if (head && !head.querySelector('span.rounded-full')) {
@@ -1359,8 +1409,8 @@ const AdminApp = {
     /**
      * Cache Roles for Selectors
      */
-    
-    getRoleIcon: function(slug) {
+
+    getRoleIcon: function (slug) {
         const icons = {
             'super-admin': 'ph-shield-star',
             'admin': 'ph-user-gear',
@@ -1377,22 +1427,22 @@ const AdminApp = {
         return icons[slug] || 'ph-shield';
     },
 
-    refreshRolesCache: function() {
+    refreshRolesCache: function () {
 
         ApiClient.get('roles', 'list').then(data => {
             this.rolesList = data.roles;
         });
     },
 
-    toggleAllPermissions: function(capability) {
+    toggleAllPermissions: function (capability) {
         const matrix = document.getElementById('privilege-matrix');
         if (!matrix) return;
-        
+
         const checkboxes = matrix.querySelectorAll(`input[name*="[${capability}]"]`);
         const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-        
+
         checkboxes.forEach(cb => cb.checked = !allChecked);
-        
+
         toast.info('Security Studio', `${allChecked ? 'Revoked' : 'Granted'} all ${capability} capabilities.`);
     },
 
@@ -1447,7 +1497,7 @@ const AdminApp = {
         }
     },
 
-    applyBlueprint: function(key) {
+    applyBlueprint: function (key) {
         const blueprint = this.securityBlueprints[key];
         if (!blueprint) return;
 
@@ -1485,13 +1535,13 @@ const AdminApp = {
     },
 
 
-    toggleMasterAccess: function(el) {
+    toggleMasterAccess: function (el) {
         const matrix = document.getElementById('privilege-matrix');
         if (!matrix) return;
 
         const isChecked = el.checked;
         const checkboxes = matrix.querySelectorAll('input[type="checkbox"]');
-        
+
         checkboxes.forEach(cb => {
             cb.checked = isChecked;
         });
@@ -1506,7 +1556,7 @@ const AdminApp = {
         this.updateAuthorityMeter();
     },
 
-    generateInsights: function() {
+    generateInsights: function () {
         toast.info('Generating Insights', 'Analyzing global data patterns...');
         setTimeout(() => {
             const insights = [
@@ -1520,12 +1570,12 @@ const AdminApp = {
         }, 2000);
     },
 
-    initAnalytics: function() {
+    initAnalytics: function () {
         console.log("Analytics Initialized");
     },
 
     /** Governance (Policy Editor) Logic **/
-    initPolicyEditor: function() {
+    initPolicyEditor: function () {
         this.currentPolicy = 'privacy';
         this.policies = {
             privacy: '',
@@ -1540,7 +1590,7 @@ const AdminApp = {
                 this.policies.privacy = data.settings.policy_privacy || this.getDefaultPolicy('privacy');
                 this.policies.terms = data.settings.policy_terms || this.getDefaultPolicy('terms');
                 this.policies.community = data.settings.policy_community || this.getDefaultPolicy('community');
-                
+
                 // Update editor with default/saved content
                 const editor = document.getElementById('policy-editor');
                 if (editor) editor.value = this.policies[this.currentPolicy];
@@ -1548,7 +1598,7 @@ const AdminApp = {
         });
     },
 
-    getDefaultPolicy: function(type) {
+    getDefaultPolicy: function (type) {
         const defaults = {
             privacy: `## Privacy & Data Protection Framework\n\n### 1. Data Collection Protocols\nThe Aether ecosystem operates on a principle of radical transparency. We collect telemetry data only to ensure node stability and cross-chain verification.\n\n### 2. Encryption Standards\nAll identity records in the Vault are encrypted using AES-256-GCM. Private keys are never stored on centralized edge clusters.\n\n### 3. User Sovereignty\nUsers maintain 100% ownership of their data packets. Deletion requests are processed within a 24-hour governance window.\n\n[--- Draft Content Below ---]`,
             terms: `## Terms of Universal Service\n\n### 1. Access Authorization\nBy accessing the Aether network, you agree to abide by the decentralized consensus protocols. Unauthorized node manipulation is strictly prohibited.\n\n### 2. Liability Limitation\nThe infrastructure leads are not liable for packet loss during cross-node transmissions or atmospheric interference.\n\n### 3. Smart Contract Integrity\nAll governance actions are final and recorded on the immutable ledger.\n\n[--- Ready for Deployment ---]`,
@@ -1557,7 +1607,7 @@ const AdminApp = {
         return defaults[type] || '';
     },
 
-    switchPolicy: function(type) {
+    switchPolicy: function (type) {
         // Save current draft to memory first
         const editor = document.getElementById('policy-editor');
         if (editor) this.policies[this.currentPolicy] = editor.value;
@@ -1580,7 +1630,7 @@ const AdminApp = {
         toast.info('Governance Switching', `Drafting ${type.charAt(0).toUpperCase() + type.slice(1)} guidelines...`);
     },
 
-    previewPolicy: function() {
+    previewPolicy: function () {
         const editor = document.getElementById('policy-editor');
         if (!editor) return;
 
@@ -1593,12 +1643,12 @@ const AdminApp = {
                 .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mb-3 mt-6">$1</h3>')
                 .replace(/^\n/gim, '<br>')
                 .replace(/\n(.*)/gim, '<p class="mb-4 opacity-80">$1</p>');
-            
+
             this.openModal('policy-preview-modal');
         }
     },
 
-    submitPolicy: function() {
+    submitPolicy: function () {
         const editor = document.getElementById('policy-editor');
         if (!editor) return;
 
@@ -1607,9 +1657,9 @@ const AdminApp = {
 
         toast.info('Deploying Policy', `Propagating ${type} updates to global nodes...`);
 
-        ApiClient.post('settings', 'update', { 
-            key: `policy_${type}`, 
-            value: content 
+        ApiClient.post('settings', 'update', {
+            key: `policy_${type}`,
+            value: content
         }).then(res => {
             toast.success('Confirmed', `Governance framework for ${type} is now active.`);
             this.policies[type] = content; // Update saved state
@@ -1621,7 +1671,7 @@ const AdminApp = {
     /**
      * Identity Handshake Logic
      */
-    requestRoleHandshake: function() {
+    requestRoleHandshake: function () {
         const btn = document.getElementById('request-btn');
         if (btn) {
             btn.disabled = true;
@@ -1640,7 +1690,7 @@ const AdminApp = {
         });
     },
 
-    checkClearance: function() {
+    checkClearance: function () {
         const icon = document.querySelector('.ph-arrow-clockwise');
         if (icon) icon.classList.add('animate-spin');
 
@@ -1661,7 +1711,7 @@ const AdminApp = {
     /**
      * Handshake Hub Governance
      */
-    syncHandshakeBadge: function() {
+    syncHandshakeBadge: function () {
         ApiClient.get('users', 'handshakes').then(res => {
             const badge = document.getElementById('handshake-count-badge');
             if (badge) {
@@ -1677,7 +1727,7 @@ const AdminApp = {
         });
     },
 
-    loadHandshakeHub: function() {
+    loadHandshakeHub: function () {
         const grid = document.getElementById('handshake-requests-grid');
         if (!grid) return;
 
@@ -1720,9 +1770,9 @@ const AdminApp = {
         });
     },
 
-    authorizeHandshake: function(id, action, roleId = 0) {
+    authorizeHandshake: function (id, action, roleId = 0) {
         if (action === 'reject' && !confirm('Terminate this Identity Handshake? User will remain restricted.')) return;
-        
+
         // Finalize Protocol
         ApiClient.post('users', 'authorize', { id, action, role_id: roleId }).then(res => {
             toast.success('Security Event', res.message);
@@ -1734,29 +1784,29 @@ const AdminApp = {
         });
     },
 
-    openHandshakeAuthorize: function(id) {
+    openHandshakeAuthorize: function (id) {
         const input = document.getElementById('auth-request-user-id');
         const displayName = document.getElementById('auth-role-display-name');
         const roleIdInput = document.getElementById('auth-request-role-id');
-        
+
         if (input) input.value = id;
         if (roleIdInput) roleIdInput.value = "0"; // Reset to default Observer
         if (displayName) displayName.innerText = "--- Default (Observer Cluster) ---";
-        
+
         // Ensure menu is hidden
         const menu = document.getElementById('handshake-role-menu');
         if (menu) menu.classList.add('hidden');
-        
+
         this.openModal('handshake-authorize-modal');
     },
 
-    toggleHandshakeRoleDropdown: function() {
+    toggleHandshakeRoleDropdown: function () {
         const menu = document.getElementById('handshake-role-menu');
         const chevron = document.getElementById('auth-role-chevron');
         if (!menu) return;
 
         const isHidden = menu.classList.contains('hidden');
-        
+
         if (isHidden) {
             menu.classList.remove('hidden');
             if (chevron) chevron.style.transform = 'rotate(180deg)';
@@ -1766,7 +1816,7 @@ const AdminApp = {
         }
     },
 
-    selectHandshakeRole: function(roleId, name) {
+    selectHandshakeRole: function (roleId, name) {
         const input = document.getElementById('auth-request-role-id');
         const displayName = document.getElementById('auth-role-display-name');
         const menu = document.getElementById('handshake-role-menu');
@@ -1774,21 +1824,67 @@ const AdminApp = {
 
         if (input) input.value = roleId;
         if (displayName) displayName.innerText = name;
-        
+
         // Close menu
         if (menu) menu.classList.add('hidden');
         if (chevron) chevron.style.transform = 'rotate(0deg)';
-        
+
         toast.help('Cluster Staged', `Authorized identity will be migrated to the ${name} cluster.`);
     },
 
-    confirmHandshakeAuthorization: function() {
+    toggleInviteRoleDropdown: function () {
+        const menu = document.getElementById('invite-role-menu');
+        const chevron = document.getElementById('invite-role-chevron');
+        if (!menu) return;
+        const isHidden = menu.classList.contains('hidden');
+        if (isHidden) {
+            menu.classList.remove('hidden');
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
+        } else {
+            menu.classList.add('hidden');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+        }
+    },
+
+    selectInviteRole: function (roleId, name) {
+        const input = document.getElementById('invite-role-id');
+        const displayName = document.getElementById('invite-role-display-name');
+        const menu = document.getElementById('invite-role-menu');
+        const chevron = document.getElementById('invite-role-chevron');
+        if (input) input.value = roleId;
+        if (displayName) displayName.innerText = name;
+        if (menu) menu.classList.add('hidden');
+        if (chevron) chevron.style.transform = 'rotate(0deg)';
+    },
+
+    confirmHandshakeAuthorization: function () {
         const id = document.getElementById('auth-request-user-id')?.value;
         const roleId = document.getElementById('auth-request-role-id')?.value;
-        
+
         if (!id) return toast.error('Selection Error', 'User ID missing from protocol.');
-        
+
         this.authorizeHandshake(id, 'approve', roleId);
+    },
+
+    renderRoleBadge: function (user) {
+        if (user.is_master == 1) {
+            return `<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> <span class="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest">Master Admin</span></div>`;
+        }
+        if (user.role_id > 0) {
+            const name = (user.role_name || '').toLowerCase();
+            let color = 'bg-white/5 text-gray-400 border-white/5'; // Default
+
+            if (name.includes('admin')) color = 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]';
+            else if (name.includes('moderator')) color = 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]';
+            else if (name.includes('agent')) color = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]';
+            else if (name.includes('auditor')) color = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]';
+
+            return `<span class="px-2 py-1 ${color} border rounded-lg text-[9px] font-black uppercase tracking-widest">${user.role_name}</span>`;
+        }
+        if (user.request_pending == 1) {
+            return '<span class="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.2)]">Handshake Pending</span>';
+        }
+        return '<span class="px-2 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.2)]">Restricted</span>';
     }
 };
 
@@ -1803,11 +1899,18 @@ document.addEventListener('DOMContentLoaded', () => {
             handshakeMenu.classList.add('hidden');
             if (handshakeChevron) handshakeChevron.style.transform = 'rotate(0deg)';
         }
+
+        const inviteMenu = document.getElementById('invite-role-menu');
+        const inviteChevron = document.getElementById('invite-role-chevron');
+        if (inviteMenu && !inviteMenu.contains(e.target) && !e.target.closest('button[onclick*="toggleInviteRoleDropdown"]')) {
+            inviteMenu.classList.add('hidden');
+            if (inviteChevron) inviteChevron.style.transform = 'rotate(0deg)';
+        }
     });
 });
 
 /** Global Helpers **/
-window.closeModal = function() {
+window.closeModal = function () {
     document.querySelectorAll('.modal-overlay, [id*="-modal"]').forEach(m => {
         if (!m.classList.contains('hidden')) {
             m.classList.add('hidden');
@@ -1817,11 +1920,11 @@ window.closeModal = function() {
     document.body.style.overflow = 'auto';
 };
 
-window.closeDrawer = function() {
+window.closeDrawer = function () {
     const drawer = document.getElementById('side-drawer');
     if (drawer) drawer.classList.add('translate-x-full');
 };
 
-window.openModal = function(id) {
+window.openModal = function (id) {
     AdminApp.openModal(id);
 };

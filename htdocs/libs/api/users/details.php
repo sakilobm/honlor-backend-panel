@@ -6,8 +6,8 @@
  */
 $details = function() 
 {
-    if (!$this->isAuthenticated()) {
-        $this->response($this->json(['error' => 'Unauthorized']), 401);
+    if (!\Session::isAuthenticated()) {
+        $this->response($this->json(['error' => 'Authentication required']), 401);
     }
 
     if (!$this->paramsExists(['id'])) {

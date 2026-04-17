@@ -113,7 +113,7 @@
                 <p class="text-[10px] font-black uppercase tracking-widest opacity-60 mt-1">Live platform events and synchronization logs</p>
             </div>
             <div id="recent-activity-list" class="p-8 space-y-6 max-h-[600px] overflow-y-auto custom-scrollbar">
-                <p class="text-center text-gray-500 py-20 animate-pulse font-black text-[10px] uppercase tracking-widest">Synchronizing Feed Packets...</p>
+                <p class="text-center text-gray-500 py-20 animate-pulse font-black text-[10px] uppercase tracking-widest">Synchronizing Intelligence Stream...</p>
             </div>
         </div>
     </div>
@@ -121,26 +121,10 @@
     <!-- Tab Content: Agents -->
     <div id="tab-content-agents" class="tab-content hidden space-y-8 animate-in fade-in duration-700">
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6" id="agent-status-grid">
-            <!-- Example Agent 1 -->
-            <div class="stat-card !p-6 text-center group transition-all hover:scale-[1.05] cursor-pointer">
-                <div class="relative inline-block mb-4">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" class="w-20 h-20 mx-auto rounded-[2rem] bg-primary/10 border border-primary/20 group-hover:bg-primary group-hover:rotate-6 transition-all" alt="Avatar">
-                    <span class="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-4 border-[var(--surface)] rounded-full shadow-[0_0_10px_#22c55e]"></span>
-                </div>
-                <p class="font-black text-xs uppercase tracking-tight">Alex Rivera</p>
-                <p class="text-[9px] font-black uppercase tracking-widest text-primary mt-1 leading-none shadow-primary/20">Super Admin</p>
-                <div class="badge-success mt-4 inline-block">Online</div>
-            </div>
-            
-            <!-- JavaScript will inject dynamic agents if logic exists, otherwise these are placeholders -->
-            <div class="stat-card !p-6 text-center group transition-all hover:scale-[1.05] cursor-pointer opacity-40 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                <div class="relative inline-block mb-4">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" class="w-20 h-20 mx-auto rounded-[2rem] bg-white/10 border border-white/20 transition-all" alt="Avatar">
-                    <span class="absolute bottom-1 right-1 w-5 h-5 bg-gray-500 border-4 border-[var(--surface)] rounded-full"></span>
-                </div>
-                <p class="font-black text-xs uppercase tracking-tight">Sarah Jenks</p>
-                <p class="text-[9px] font-bold uppercase tracking-widest opacity-60 mt-1 leading-none">Moderator</p>
-                <div class="badge-neutral mt-4 inline-block uppercase text-[9px]">2h ago</div>
+            <!-- Dynamic cluster monitoring grid -->
+            <div class="col-span-full py-32 text-center opacity-40">
+                <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p class="text-[10px] font-black uppercase tracking-[0.3em]">Establishing Connection to Agent Clusters...</p>
             </div>
         </div>
     </div>

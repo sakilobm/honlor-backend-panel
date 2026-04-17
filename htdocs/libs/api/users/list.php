@@ -6,8 +6,8 @@
  */
 $list = function() 
 {
-    if (!$this->isAuthenticated()) {
-        $this->response($this->json(['error' => 'Unauthorized']), 401);
+    if (!\Session::isAuthenticated() || !\Session::isMaster()) {
+        $this->response($this->json(['error' => 'Unauthorized Access']), 401);
     }
 
     $limit  = (int)($_GET['limit'] ?? 10);

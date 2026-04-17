@@ -14,7 +14,7 @@
 
 <script>
     // Blocking theme script to prevent FOUC (Flash of Dark Mode)
-    (function() {
+    (function () {
         const theme = localStorage.getItem('admin-theme');
         if (theme === 'light') {
             document.documentElement.classList.add('light');
@@ -189,9 +189,16 @@
             animation: zoomIn 0.3s cubic-bezier(0, 0, 0.2, 1) forwards;
         }
 
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { 
+            background: var(--border-color); 
+            border-radius: 10px; 
+            transition: all 0.3s ease;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
 
         /* Toast Notifications */
         .toast-panel {

@@ -79,28 +79,51 @@
 
 <!-- Global Modal: Invite User -->
 <div id="invite-user-modal" class="modal-overlay hidden">
-    <div class="modal-card !max-w-md">
+    <div class="modal-card !max-w-md !overflow-visible">
         <div class="flex items-center justify-between p-6 border-b" style="border-color: var(--border-color);">
             <h3 class="text-xl font-bold tracking-tight">Identity Invitation</h3>
             <button onclick="closeModal()" class="text-gray-400 hover:text-primary transition-colors p-2"><i class="ph ph-x text-2xl"></i></button>
         </div>
-        <form class="p-6 space-y-6">
+        <form class="p-6 space-y-6 !overflow-visible">
             <div class="space-y-2">
                 <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">E-mail Address</label>
                 <input type="email" name="email" required placeholder="agent@aether.net" class="w-full bg-transparent border rounded-2xl p-4 font-medium focus:outline-none focus:border-primary transition-all" style="border-color: var(--border-color); color: var(--text-main);">
             </div>
-            <div class="space-y-2">
-                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Access Authorization</label>
+            <div class="space-y-4">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Access Authorization</label>
                 <?php
                 $db = \Aether\Database::getConnection();
-                $roles = $db->query("SELECT * FROM roles ORDER BY name ASC")->fetchAll();
+                $roles_inv = $db->query("SELECT * FROM roles ORDER BY name ASC")->fetchAll();
                 ?>
-                <select name="role" required class="w-full bg-transparent border rounded-2xl p-4 font-bold focus:outline-none focus:border-primary transition-all text-xs uppercase tracking-widest" style="border-color: var(--border-color); color: var(--text-main);">
-                    <?php if (empty($roles)): ?>
-                        <option value="">No roles available</option>
-                    <?php else: ?>
-                    <?php endif; ?>
-                </select>
+                <div class="relative">
+                    <!-- Hidden State Registry -->
+                    <input type="hidden" id="invite-role-id" name="role_id" value="0">
+                    
+                    <!-- Premium Trigger Button -->
+                    <button type="button" id="invite-role-trigger" onclick="event.stopPropagation(); AdminApp.toggleInviteRoleDropdown()" 
+                            class="w-full bg-white/5 border border-white/5 rounded-3xl p-5 pr-12 flex items-center justify-between group focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all shadow-inner relative overflow-hidden">
+                        <div class="flex items-center gap-3">
+                            <i class="ph-bold ph-shield-check text-primary text-lg"></i>
+                            <span id="invite-role-display-name" class="font-black text-[10px] uppercase tracking-[0.1em] text-slate-700 dark:text-slate-200">Select Security Cluster</span>
+                        </div>
+                        <i class="ph-bold ph-caret-down text-slate-400 group-hover:text-primary transition-colors text-lg" id="invite-role-chevron"></i>
+                    </button>
+
+                    <!-- Glassmorphic Options Menu -->
+                    <div id="invite-role-menu" class="hidden absolute top-full left-0 w-full mt-3 z-[110] glass-card !p-3 shadow-[0_25px_70px_rgba(0,0,0,0.6)] border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <ul class="space-y-1 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
+                            <?php foreach ($roles_inv as $ri): ?>
+                            <li>
+                                <button type="button" onclick="AdminApp.selectInviteRole(<?= $ri['id'] ?>, '<?= htmlspecialchars($ri['name']) ?>')" 
+                                        class="w-full text-left p-4 rounded-2xl hover:bg-primary/5 flex items-center gap-4 group transition-all">
+                                    <div class="w-2 h-2 rounded-full bg-slate-500 group-hover:bg-primary transition-colors"></div>
+                                    <span class="text-[10px] font-black text-slate-400 group-hover:text-primary uppercase tracking-wider"><?= htmlspecialchars($ri['name']) ?></span>
+                                </button>
+                            </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
             </div>
             <button type="button" onclick="toast.success('Invitation Sent', 'Security link delivered to recipient.'); closeModal();" class="w-full btn-primary !justify-center py-4 text-xs font-black uppercase tracking-widest">Authorize & Deliver</button>
         </form>
@@ -226,7 +249,7 @@
                                 <i class="ph-fill ph-shield-star"></i>
                             </div>
                             <div class="text-left">
-                                <h4 class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[11px]">Perfect Authority</h4>
+                                <h4 class="font-black text-gray-500 dark:text-white uppercase tracking-tight text-[11px]">Perfect Authority</h4>
                                 <p class="text-[8px] text-gray-500 font-bold uppercase tracking-tight">System-Wide Override</p>
                             </div>
                         </div>
