@@ -1870,21 +1870,69 @@ const AdminApp = {
     },
 
     generateInsights: function () {
-        toast.info('Generating Insights', 'Analyzing global data patterns...');
+        const container = document.getElementById('insights-container');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-500">
+                <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p class="font-black text-[10px] uppercase tracking-[0.3em] opacity-40">Analyzing Neural Data Stream...</p>
+            </div>
+        `;
+
         setTimeout(() => {
             const insights = [
-                "User retention increased by 14% over the last 7 days.",
-                "Primary traffic surge detected in the APAC region node.",
-                "Ad efficiency is peaking between 18:00 and 22:00 UTC.",
-                "Network latency remains stable at < 45ms across all channels."
+                { title: "Retention Surge", desc: "User retention increased by 14.2% over the last 72 hours due to node optimization.", color: "text-emerald-400" },
+                { title: "Node Congestion", desc: "Primary traffic bottleneck detected in the APAC-01 node. Scaling advised.", color: "text-orange-400" },
+                { title: "Ad Saturation", desc: "Ad efficiency is peaking at 92.4% during peak signal hours (18:00 - 22:00 UTC).", color: "text-primary" },
+                { title: "Latency Protocol", desc: "Signal latency remains stable at < 12ms across all decentralized vault shards.", color: "text-indigo-400" }
             ];
             const random = insights[Math.floor(Math.random() * insights.length)];
-            toast.success('Analysis Complete', random);
-        }, 2000);
+            
+            container.innerHTML = `
+                <div class="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-lg">
+                    <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 mb-8 mx-auto shadow-2xl">
+                        <i class="ph-bold ph-lightning-wedge text-3xl"></i>
+                    </div>
+                    <h4 class="text-xl font-black uppercase tracking-tight mb-4 ${random.color}">${random.title}</h4>
+                    <p class="text-[12px] font-medium opacity-70 leading-relaxed px-10" style="color: var(--text-main);">${random.desc}</p>
+                    <div class="mt-10 flex gap-3 justify-center">
+                         <span class="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest opacity-40">Insight v4.2</span>
+                         <span class="px-3 py-1 bg-primary/10 border border-primary/20 rounded-lg text-[9px] font-black uppercase tracking-widest text-primary">Verified</span>
+                    </div>
+                </div>
+            `;
+            toast.success('Cognitive Analysis complete', random.title);
+        }, 2500);
+    },
+
+    initIntelligenceHub: function () {
+        console.log("Cognitive Intelligence Hub Synchronized.");
+        const container = document.getElementById('insights-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center gap-6 opacity-40 transition-all duration-1000">
+                    <i class="ph-bold ph-brain text-5xl mb-4"></i>
+                    <p class="font-black text-[10px] uppercase tracking-[0.3em]">Standby for Neural handshake</p>
+                    <button class="btn-primary !p-3 !px-8 !rounded-2xl mt-4" onclick="AdminApp.generateInsights()">Begin Handshake</button>
+                </div>
+            `;
+        }
+
+        // Hydrate Metrics
+        if (document.getElementById('metric-signal-strength')) {
+            document.getElementById('metric-signal-strength').innerText = '94.2%';
+        }
+        if (document.getElementById('metric-cognitive-retention')) {
+            document.getElementById('metric-cognitive-retention').innerText = '72.8%';
+        }
+        if (document.getElementById('metric-intelligence-velocity')) {
+            document.getElementById('metric-intelligence-velocity').innerText = (Math.random() * 5 + 95).toFixed(1);
+        }
     },
 
     initAnalytics: function () {
-        console.log("Analytics Initialized");
+        this.initIntelligenceHub();
     },
 
     /** Governance (Policy Editor) Logic **/
