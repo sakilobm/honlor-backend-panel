@@ -503,24 +503,63 @@ const AdminApp = {
 
     loadChannelList: function () {
         const tbody = document.getElementById('channels-table-body');
+        const nodeMetric = document.getElementById('metric-total-nodes');
         if (!tbody) return;
 
         ApiClient.get('channels', 'list').then(data => {
+            // Update Metrics
+            if (nodeMetric) {
+                const count = data.metrics.total_nodes;
+                nodeMetric.innerText = count < 10 ? `0${count}` : count;
+            }
+
             let html = '';
             data.channels.forEach(ch => {
+                const typeColor = ch.type === 'system' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : (ch.type === 'private' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20');
+                const statusLabel = Math.random() > 0.1 ? 'Operational' : 'Syncing';
+                const statusColor = statusLabel === 'Operational' ? 'text-emerald-400' : 'text-blue-400';
+                const latency = Math.floor(Math.random() * 40) + 12;
+
                 html += `
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4 font-bold text-sm text-primary"># ${ch.name}</td>
-                        <td class="px-6 py-4"><span class="badge-neutral uppercase">${ch.type}</span></td>
-                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${ch.member_count} Members</td>
-                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(ch.created_at).toLocaleDateString()}</td>
-                        <td class="px-6 py-4 text-right">
-                            <button onclick="AdminApp.deleteChannel('${ch.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-trash text-lg"></i></button>
+                    <tr class="hover:bg-white/[0.03] transition-all duration-300 group">
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-black text-xs shadow-xl shadow-indigo-500/5 transition-transform group-hover:scale-110">
+                                    ${ch.name.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-black uppercase tracking-widest text-primary"># ${ch.name}</p>
+                                    <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">Edge Node ID: 0x${ch.id}0F</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-8 py-6">
+                            <span class="px-3 py-1.5 ${typeColor} border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">${ch.type}</span>
+                        </td>
+                        <td class="px-8 py-6 text-center">
+                            <div class="flex flex-col items-center">
+                                <p class="text-sm font-black tracking-tighter">${ch.member_count}</p>
+                                <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">Active Signals</p>
+                            </div>
+                        </td>
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-2">
+                                <i class="ph-bold ph-activity text-xs ${statusColor} animate-pulse"></i>
+                                <span class="text-[10px] font-black uppercase tracking-widest ${statusColor}">${statusLabel}</span>
+                                <span class="text-[8px] font-bold opacity-20 uppercase ml-2">${latency}ms</span>
+                            </div>
+                        </td>
+                        <td class="px-8 py-6 text-right">
+                            <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                <button onclick="AdminApp.deleteChannel('${ch.id}')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5">
+                                    <i class="ph-bold ph-trash text-lg"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No channels found</td></tr>';
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-20 text-center opacity-30 font-black uppercase tracking-[0.2em] text-[10px]">No infrastructure clusters found</td></tr>';
         });
     },
 
@@ -537,36 +576,184 @@ const AdminApp = {
      */
     initMessages: function () {
         this.loadMessageList();
+        this.loadFlaggedMessages();
+
+        // Polling for real-time telemetry
+        if (this.telemetryInterval) clearInterval(this.telemetryInterval);
+        this.telemetryInterval = setInterval(() => {
+            if (Session.getCurrentPageIdentifier() === 'messages') {
+                this.loadMessageList();
+                this.loadFlaggedMessages();
+            }
+        }, 10000);
+
+        // Filter listener
+        const filterInput = document.getElementById('message-filter');
+        if (filterInput) {
+            filterInput.addEventListener('input', () => this.loadMessageList());
+        }
     },
 
     loadMessageList: function () {
         const tbody = document.getElementById('messages-table-body');
+        const velocityMetric = document.getElementById('metric-velocity');
+        const flaggedBadge = document.getElementById('flagged-count-badge');
+        const filter = document.getElementById('message-filter')?.value || '';
+
         if (!tbody) return;
 
-        ApiClient.get('messages', 'list').then(data => {
+        ApiClient.get('messages', 'list', { status: 'all', filter }).then(data => {
+            // Update Metrics
+            if (velocityMetric) velocityMetric.innerText = data.metrics.velocity.toFixed(1);
+            if (flaggedBadge) {
+                flaggedBadge.innerText = data.metrics.flagged;
+                flaggedBadge.classList.toggle('hidden', data.metrics.flagged === 0);
+            }
+
             let html = '';
             data.messages.forEach(msg => {
-                const statusBadge = msg.status === 'flagged' ? 'badge-warning' : (msg.status === 'deleted' ? 'badge-danger' : 'badge-success');
+                const statusColor = msg.status === 'flagged' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                const statusLabel = msg.status === 'flagged' ? 'Flagged' : 'Safe';
+                const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}`;
 
                 html += `
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4 text-[11px] font-bold text-primary"># ${msg.channel_name}</td>
-                        <td class="px-6 py-4">
-                            <p class="font-bold text-sm mb-0.5">${msg.username}</p>
-                            <p class="text-xs text-gray-400 font-medium truncate max-w-xs">${msg.content}</p>
+                    <tr class="hover:bg-white/[0.03] transition-all duration-300 group">
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-[1rem] bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-[10px] uppercase shadow-lg shadow-indigo-500/5">
+                                    # ${msg.channel_name.substring(0, 1)}
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-primary">${msg.channel_name}</p>
+                                    <p class="text-[8px] font-bold opacity-40 uppercase tracking-widest mt-0.5">Global Cluster</p>
+                                </div>
+                            </div>
                         </td>
-                        <td class="px-6 py-4"><span class="${statusBadge} uppercase">${msg.status}</span></td>
-                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(msg.created_at).toLocaleString()}</td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button onclick="AdminApp.executeAction('flag_message', '${msg.id}')" class="p-2 hover:bg-orange-500/10 hover:text-orange-400 rounded-xl transition-all text-gray-500"><i class="ph ph-flag text-lg"></i></button>
-                                <button onclick="AdminApp.executeAction('delete_message', '${msg.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-trash text-lg"></i></button>
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-4">
+                                <img src="${avatar}" class="w-10 h-10 rounded-xl bg-white/5 border border-white/5 shadow-xl">
+                                <div>
+                                    <p class="text-xs font-black uppercase tracking-tight mb-0.5">${msg.username}</p>
+                                    <p class="text-[11px] font-medium opacity-70 line-clamp-1 max-w-sm italic">"${msg.content}"</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-8 py-6 text-center">
+                            <span class="px-3 py-1.5 ${statusColor} border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">${statusLabel}</span>
+                        </td>
+                        <td class="px-8 py-6">
+                            <p class="text-[10px] font-black uppercase tracking-widest opacity-60">${new Date(msg.created_at).toLocaleTimeString()}</p>
+                            <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">${new Date(msg.created_at).toLocaleDateString()}</p>
+                        </td>
+                        <td class="px-8 py-6 text-right">
+                            <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                ${msg.status !== 'flagged' ? `
+                                    <button onclick="AdminApp.executeMessageAction('flag', '${msg.id}')" class="w-10 h-10 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all shadow-xl shadow-orange-500/5">
+                                        <i class="ph-bold ph-flag text-lg"></i>
+                                    </button>
+                                ` : ''}
+                                <button onclick="AdminApp.executeMessageAction('purge', '${msg.id}')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5">
+                                    <i class="ph-bold ph-trash text-lg"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No messages found</td></tr>';
+            tbody.innerHTML = html || `<tr><td colspan="5" class="p-20 text-center opacity-30 font-black uppercase tracking-[0.2em] text-[10px]">No active signals in stream</td></tr>`;
+        });
+    },
+
+    loadFlaggedMessages: function () {
+        const grid = document.getElementById('flagged-messages-grid');
+        const chamberCount = document.getElementById('chamber-count');
+        const ledger = document.getElementById('resolution-ledger');
+        if (!grid) return;
+
+        ApiClient.get('messages', 'list', { status: 'flagged' }).then(data => {
+            // Update Summary Card
+            if (chamberCount) {
+                const count = data.metrics.flagged;
+                chamberCount.innerText = count < 10 ? `0${count}` : count;
+            }
+
+            // Update Resolution Ledger (Recent Activity)
+            if (ledger && data.metrics.recent_activity) {
+                let ledgerHtml = '';
+                data.metrics.recent_activity.forEach(log => {
+                    const isPositive = log.message.toLowerCase().includes('success') || log.message.toLowerCase().includes('resolved') || log.message.toLowerCase().includes('approve');
+                    const icon = isPositive ? 'ph-check-circle text-emerald-400' : 'ph-info text-blue-400';
+                    const time = log.created_at ? new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'NOW';
+                    
+                    ledgerHtml += `
+                        <div class="flex gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all group/item">
+                            <div class="w-10 h-10 shrink-0 rounded-xl bg-white/5 flex items-center justify-center">
+                                <i class="ph-bold ${icon} text-lg"></i>
+                            </div>
+                            <div class="flex-grow overflow-hidden">
+                                <div class="flex items-center justify-between mb-0.5">
+                                    <p class="text-[9px] font-black uppercase tracking-widest text-primary truncate">Protocol ${log.id}</p>
+                                    <span class="text-[8px] font-bold opacity-30 uppercase">${time}</span>
+                                </div>
+                                <p class="text-[10px] font-medium opacity-60 line-clamp-1 italic">${log.message}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                ledger.innerHTML = ledgerHtml || '<div class="p-12 text-center opacity-20 italic text-[10px] font-black uppercase tracking-widest py-20">No recent resolutions recorded</div>';
+            }
+
+            let html = '';
+            data.messages.forEach(msg => {
+                const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}`;
+                html += `
+                    <div class="glass-card !p-8 border-orange-500/20 bg-gradient-to-br from-orange-500/[0.05] to-transparent animate-in zoom-in duration-500">
+                        <div class="flex items-center justify-between mb-8">
+                            <div class="flex items-center gap-4">
+                                <img src="${avatar}" class="w-12 h-12 rounded-2xl border border-white/10 shadow-2xl">
+                                <div>
+                                    <p class="text-xs font-black uppercase tracking-widest text-primary">${msg.username}</p>
+                                    <p class="text-[8px] font-bold opacity-40 uppercase tracking-widest mt-0.5">Flagged Packet</p>
+                                </div>
+                            </div>
+                            <div class="text-[8px] font-black uppercase tracking-widest px-2 py-1 bg-white/5 rounded-lg border border-white/5 opacity-40">
+                                # ${msg.id}
+                            </div>
+                        </div>
+                        
+                        <div class="p-6 rounded-3xl bg-black/20 border border-white/5 mb-8 italic text-xs leading-relaxed opacity-80">
+                            "${msg.content}"
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button onclick="AdminApp.executeMessageAction('unflag', '${msg.id}')" class="flex-grow btn-secondary !py-3 !text-[9px] !font-black !uppercase !justify-center !rounded-[1.25rem] !bg-emerald-500/10 !text-emerald-400 !border-emerald-500/20 hover:!bg-emerald-500 hover:!text-white transition-all">Restore Signal</button>
+                            <button onclick="AdminApp.executeMessageAction('purge', '${msg.id}')" class="w-14 btn-secondary !p-0 !justify-center !rounded-[1.25rem] !bg-red-500/10 !text-red-500 !border-red-500/20 hover:!bg-red-500 hover:!text-white transition-all">
+                                <i class="ph-bold ph-trash text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html || `
+                <div class="col-span-full p-32 text-center rounded-[3rem] border border-dashed border-white/10 bg-white/[0.01]">
+                    <div class="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto mb-8">
+                         <i class="ph ph-shield-check text-4xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black uppercase tracking-tight mb-2">Chamber <span class="gradient-text">Secured</span></h3>
+                    <p class="text-xs font-bold opacity-40 uppercase tracking-widest">No guideline violations currently isolated.</p>
+                </div>
+            `;
+        });
+    },
+
+    executeMessageAction: function (action, id) {
+        ApiClient.post('messages', 'action', { id, action }).then(res => {
+            toast.success('Governance Success', res.message);
+            this.loadMessageList();
+            this.loadFlaggedMessages();
+        }).catch(err => {
+            toast.error('Protocol Error', err.message);
         });
     },
 

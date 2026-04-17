@@ -13,6 +13,7 @@ $list = function()
     $channels = \App\Channel::listAll();
     
     $this->response($this->json([
-        'channels' => $channels
+        'channels' => $channels,
+        'metrics'  => \App\Channel::getEcosystemStats()
     ]), 200);
 };

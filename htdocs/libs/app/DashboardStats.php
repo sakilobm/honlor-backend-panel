@@ -97,7 +97,7 @@ class DashboardStats
     public static function getRecentActivity(int $limit = 5): array
     {
         $db = Database::getConnection();
-        $sql = "SELECT l.*, a.username 
+        $sql = "SELECT l.*, l.action as message, a.username 
                 FROM `logs` l 
                 LEFT JOIN `auth` a ON l.user_id = a.id 
                 ORDER BY l.created_at DESC LIMIT ?";
