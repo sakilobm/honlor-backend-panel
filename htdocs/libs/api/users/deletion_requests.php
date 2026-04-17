@@ -26,13 +26,21 @@ ${basename(__FILE__, '.php')} = function()
 
         // Stats
         $pending = 0;
-        foreach ($requests as $req) if ($req['status'] === 'pending') $pending++;
+        $approved = 0;
+        foreach ($requests as $req) {
+            if ($req['status'] === 'pending') $pending++;
+            if ($req['status'] === 'approved') $approved++;
+        }
+
+        $velocity = count($requests) > 0 ? ($approved / count($requests)) * 100 : 0;
 
         $this->response($this->json([
             'requests' => $requests,
             'stats' => [
                 'total' => count($requests),
-                'pending' => $pending
+                'pending' => $pending,
+                'approved' => $approved,
+                'velocity' => round($velocity, 1)
             ]
         ]), 200);
     } catch (\Exception $e) {

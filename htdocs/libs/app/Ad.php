@@ -132,6 +132,34 @@ class Ad
     }
 
     /**
+     * Get ecosystem-wide marketing metrics for the Ads Pipeline.
+     */
+    public static function getMarketingMetrics(): array
+    {
+        $db = Database::getConnection();
+        
+        // Active Nodes
+        $activeCount = (int)$db->query("SELECT COUNT(*) FROM `ads` WHERE `status` = 'Active'")->fetchColumn();
+        
+        // Financial Expenditure (Daily)
+        $totalBudget = (float)$db->query("SELECT SUM(`budget`) FROM `ads` WHERE `status` = 'Active'")->fetchColumn();
+        
+        // Performance (CTR Density)
+        $stats = $db->query("SELECT SUM(`clicks`) as total_clicks, SUM(`impressions`) as total_impressions FROM `ads`")->fetch(PDO::FETCH_ASSOC);
+        $totalClicks = (int)($stats['total_clicks'] ?? 0);
+        $totalImpressions = (int)($stats['total_impressions'] ?? 0);
+        $avgCTR = $totalImpressions > 0 ? ($totalClicks / $totalImpressions) * 100 : 0;
+
+        return [
+            'active_nodes'   => $activeCount,
+            'daily_spend'    => $totalBudget,
+            'avg_ctr'        => round($avgCTR, 2),
+            'impressions'    => $totalImpressions,
+            'total_campaigns' => (int)$db->query("SELECT COUNT(*) FROM `ads`")->fetchColumn(),
+        ];
+    }
+
+    /**
      * Delete an ad campaign.
      */
     public static function delete(int $id): bool

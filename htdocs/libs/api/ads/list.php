@@ -17,7 +17,10 @@ ${basename(__FILE__, '.php')} = function () {
 
     try {
         $ads = Ad::getAllAds();
-        $this->response($this->json(['ads' => $ads]), 200);
+        $this->response($this->json([
+            'ads' => $ads,
+            'metrics' => Ad::getMarketingMetrics()
+        ]), 200);
     } catch (Exception $e) {
         error_log("API Error /ads/list: " . $e->getMessage());
         $this->response($this->json(['error' => 'Internal Server Error']), 500);

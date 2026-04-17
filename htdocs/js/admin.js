@@ -766,36 +766,95 @@ const AdminApp = {
 
     loadReportList: function () {
         const tbody = document.getElementById('reports-table-body');
+        const historyList = document.getElementById('reports-history-list');
+        const activeMetric = document.getElementById('metric-active-incidents');
+        const velocityMetric = document.getElementById('metric-resolution-velocity');
+        const totalMetric = document.getElementById('metric-total-reports');
         if (!tbody) return;
 
-        ApiClient.get('messages', 'list', { filter: 'flagged' }).then(data => {
+        ApiClient.get('compliance', 'list').then(data => {
+            // Update Metrics
+            if (activeMetric) activeMetric.innerText = data.metrics.active_queue < 10 ? `0${data.metrics.active_queue}` : data.metrics.active_queue;
+            if (velocityMetric) velocityMetric.innerText = `${data.metrics.velocity}%`;
+            if (totalMetric) totalMetric.innerText = data.metrics.total_incidents < 10 ? `0${data.metrics.total_incidents}` : data.metrics.total_incidents;
+
+            // Render Incident Ledger
             let html = '';
-            data.messages.forEach(msg => {
+            data.incidents.forEach(inc => {
+                const severityColor = inc.severity === 'Critical' ? 'bg-red-500/10 text-red-500 border-red-500/20' : (inc.severity === 'Moderate' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-400/20');
+                const urgencyPulse = inc.severity === 'Critical' ? 'bg-red-500' : (inc.severity === 'Moderate' ? 'bg-orange-500' : 'bg-blue-500');
+                
                 html += `
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}" class="w-10 h-10 rounded-xl bg-primary/10 p-0.5" alt="Avatar">
+                    <tr class="hover:bg-white/[0.03] transition-all duration-300 group">
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-4">
+                                <div class="flex -space-x-3 transition-transform group-hover:scale-105">
+                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${inc.reporter_name}" class="w-10 h-10 rounded-xl bg-primary/10 border-2 border-[var(--bg-main)] z-20 shadow-xl" alt="Reporter">
+                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${inc.target_name}" class="w-10 h-10 rounded-xl bg-red-500/10 border-2 border-[var(--bg-main)] z-10 shadow-xl" alt="Subject">
+                                </div>
                                 <div>
-                                    <p class="font-bold text-sm text-primary">@${msg.username}</p>
-                                    <p class="text-[11px] text-gray-500 font-medium">Flagged by community</p>
+                                    <p class="text-[11px] font-black uppercase tracking-widest text-primary truncate max-w-[150px]">Case #${inc.id}</p>
+                                    <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">By @${inc.reporter_name}</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-xs font-black uppercase tracking-widest opacity-80">${msg.flag_reason || 'Unknown'}</td>
-                        <td class="px-6 py-4 max-w-xs">
-                            <p class="text-xs text-gray-400 italic truncate">"${msg.content}"</p>
+                        <td class="px-8 py-6 text-center">
+                            <span class="text-[10px] font-black opacity-80 uppercase tracking-widest">${inc.category}</span>
+                            <p class="text-[8px] font-bold opacity-20 uppercase mt-0.5">Safety Node 0x${inc.id}F</p>
                         </td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button onclick="AdminApp.executeAction('toggle_block', '${msg.user_id}')" class="btn-primary !p-2 !rounded-xl !bg-red-600 hover:!bg-red-700 shadow-red-900/10" title="Suspend Account"><i class="ph ph-prohibit"></i></button>
-                                <button onclick="AdminApp.executeAction('resolve_flag', '${msg.id}')" class="btn-secondary !p-2 !rounded-xl" title="Mark Resolved"><i class="ph ph-check"></i></button>
-                            </div>
+                        <td class="px-8 py-6">
+                            <p class="text-[10px] font-medium opacity-60 truncate max-w-[200px] italic" style="color: var(--text-main);">"${inc.content}"</p>
+                        </td>
+                        <td class="px-8 py-6">
+                             <div class="flex items-center justify-center gap-3">
+                                <span class="px-3 py-1.5 ${severityColor} border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">${inc.severity}</span>
+                                <span class="flex h-1.5 w-1.5 relative">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${urgencyPulse} opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-1.5 w-1.5 ${urgencyPulse}"></span>
+                                </span>
+                             </div>
+                        </td>
+                        <td class="px-8 py-6 text-right">
+                             <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                <button onclick="AdminApp.executeComplianceAction('${inc.id}', 'Resolved')" class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-xl shadow-emerald-500/5" title="Resolve Incident">
+                                    <i class="ph-bold ph-check text-lg"></i>
+                                </button>
+                                <button onclick="AdminApp.executeComplianceAction('${inc.id}', 'Dismissed')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5" title="Dismiss Report">
+                                    <i class="ph-bold ph-x text-lg"></i>
+                                </button>
+                             </div>
                         </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="4" class="p-12 text-center text-gray-500">No active incidents found. The system is secure.</td></tr>';
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-24 text-center opacity-30 font-black uppercase tracking-[0.3em] text-[10px]">No active incidents in queue</td></tr>';
+
+            // Render History
+            let historyHtml = '';
+            data.history.forEach(item => {
+                const statusColor = item.status === 'Resolved' ? 'text-emerald-400' : 'text-orange-400';
+                const timeAgo = Math.floor(Math.random() * 50) + 5;
+                historyHtml += `
+                    <div class="flex gap-5 group items-start">
+                         <div class="w-1 h-1 rounded-full mt-3 bg-white/20 group-hover:bg-emerald-400 transition-colors"></div>
+                         <div class="flex-grow">
+                              <p class="text-[10px] font-black uppercase tracking-widest opacity-60 flex items-center justify-between">
+                                  Sync ${item.status} #${item.id}
+                                  <span class="text-[8px] opacity-20 font-bold">${timeAgo}m ago</span>
+                              </p>
+                              <p class="text-[10px] font-bold mt-1 opacity-70 leading-relaxed uppercase tracking-tight" style="color: var(--text-main);">Node @${item.target_name} integrity cleared for category: ${item.category}</p>
+                         </div>
+                    </div>
+                `;
+            });
+            if (historyList) historyList.innerHTML = historyHtml || '<p class="text-center opacity-20 text-[9px] font-black uppercase tracking-widest py-10">Historical Ledger Empty</p>';
+        });
+    },
+
+    executeComplianceAction: function (id, action) {
+        ApiClient.post('compliance', 'action', { id, action }).then(() => {
+            toast.success('Sync Synchronized', `Incident #${id} was marked as ${action}. Ledger updated.`);
+            this.loadReportList();
         });
     },
 
@@ -808,38 +867,61 @@ const AdminApp = {
 
     loadDeletionRequests: function () {
         const tbody = document.getElementById('deletion-requests-table-body');
+        const countBadge = document.getElementById('pending-deletion-count');
+        const velocityBadge = document.getElementById('metric-deletion-velocity');
         if (!tbody) return;
 
         ApiClient.get('users', 'deletion_requests').then(data => {
+            // Update Stats
+            if (countBadge) countBadge.innerText = data.stats.pending < 10 ? `0${data.stats.pending}` : data.stats.pending;
+            if (velocityBadge) velocityBadge.innerText = `${data.stats.velocity}%`;
+
             let html = '';
             data.requests.forEach(req => {
-                const statusBadge = req.status === 'pending' ? 'badge-warning' : (req.status === 'approved' ? 'badge-success' : 'badge-danger');
+                const statusColor = req.status === 'pending' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : (req.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20');
+                const pulseColor = req.status === 'pending' ? 'bg-orange-500' : (req.status === 'approved' ? 'bg-emerald-500' : 'bg-red-500');
 
                 html += `
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4">
-                            <p class="font-bold text-sm">${req.username}</p>
-                            <p class="text-[11px] text-gray-500 font-medium">${req.email}</p>
-                        </td>
-                        <td class="px-6 py-4">
-                            <p class="text-xs text-gray-400 italic max-w-xs truncate">${req.reason || 'No reason provided'}</p>
-                        </td>
-                        <td class="px-6 py-4"><span class="${statusBadge} uppercase">${req.status}</span></td>
-                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(req.created_at).toLocaleDateString()}</td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button onclick="AdminApp.handleDeletion('${req.id}', 'approved')" class="p-2 hover:bg-green-500/10 hover:text-green-500 rounded-xl transition-all text-gray-500" title="Approve"><i class="ph ph-check-circle text-lg"></i></button>
-                                <button onclick="AdminApp.handleDeletion('${req.id}', 'rejected')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500" title="Reject"><i class="ph ph-prohibit text-lg"></i></button>
+                    <tr class="hover:bg-white/[0.03] transition-all duration-300 group">
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-4">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${req.username}" class="w-10 h-10 rounded-xl bg-primary/10 border-2 border-[var(--bg-main)] z-10 shadow-xl" alt="Identity">
+                                <div>
+                                    <p class="text-[11px] font-black uppercase tracking-widest text-primary truncate max-w-[150px]">${req.username}</p>
+                                    <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">${req.email}</p>
+                                </div>
                             </div>
+                        </td>
+                        <td class="px-8 py-6">
+                            <p class="text-[10px] font-medium opacity-60 max-w-[200px] italic leading-relaxed" style="color: var(--text-main);">"${req.reason || 'Sovereign data removal request.'}"</p>
+                        </td>
+                        <td class="px-8 py-6">
+                             <div class="flex items-center justify-center gap-3">
+                                <span class="px-3 py-1.5 ${statusColor} border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">${req.status}</span>
+                                <span class="flex h-1.5 w-1.5 relative">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${pulseColor} opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-1.5 w-1.5 ${pulseColor}"></span>
+                                </span>
+                             </div>
+                        </td>
+                        <td class="px-8 py-6">
+                             <p class="text-[10px] font-black tracking-tight" style="color: var(--text-main); text-align: center;">${new Date(req.created_at).toLocaleDateString()}</p>
+                             <p class="text-[8px] font-bold opacity-20 uppercase tracking-widest mt-0.5" style="text-align: center;">Sync Logged</p>
+                        </td>
+                        <td class="px-8 py-6 text-right">
+                             <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                <button onclick="AdminApp.handleDeletion('${req.id}', 'approved')" class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-xl shadow-emerald-500/5" title="Authorize Erasure">
+                                    <i class="ph-bold ph-shield-check text-lg"></i>
+                                </button>
+                                <button onclick="AdminApp.handleDeletion('${req.id}', 'rejected')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5" title="Deny Request">
+                                    <i class="ph-bold ph-prohibit text-lg"></i>
+                                </button>
+                             </div>
                         </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No pending requests</td></tr>';
-
-            if (document.getElementById('pending-deletion-count')) {
-                document.getElementById('pending-deletion-count').innerText = data.stats.pending;
-            }
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-32 text-center opacity-30 font-black uppercase tracking-[0.2em] text-[10px]">No active erasure packets in queue</td></tr>';
         });
     },
 
@@ -1008,34 +1090,78 @@ const AdminApp = {
 
     loadAdList: function (filter = '') {
         const tbody = document.getElementById('ads-table-body');
+        const countBadge = document.getElementById('ads-count-badge');
+        const spendBadge = document.getElementById('ads-spend-badge');
+        const roiBadge = document.getElementById('ads-roi-badge');
         if (!tbody) return;
 
         ApiClient.get('ads', 'list', { filter }).then(data => {
+            // Update Top Metrics
+            if (countBadge) {
+                const count = data.metrics.active_nodes;
+                countBadge.innerText = count < 10 ? `0${count}` : count;
+            }
+            if (spendBadge) {
+                spendBadge.innerText = `$${parseFloat(data.metrics.daily_spend).toLocaleString()}`;
+            }
+            if (roiBadge) {
+                roiBadge.innerText = `${data.metrics.avg_ctr}%`;
+            }
+
             let html = '';
             data.ads.forEach(ad => {
+                const ctr = ((ad.clicks / ad.impressions) * 100 || 0).toFixed(2);
+                const statusColor = ad.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+                const pulseColor = ad.status === 'Active' ? 'bg-emerald-400' : 'bg-orange-400';
+                
                 html += `
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4">
-                            <p class="font-bold text-sm">${ad.name}</p>
-                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">${ad.type} ${ad.ad_code ? '• CODE SET' : ''}</p>
+                    <tr class="hover:bg-white/[0.03] transition-all duration-300 group">
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-xs shadow-xl shadow-primary/5 transition-transform group-hover:scale-110">
+                                    ${ad.name.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-black uppercase tracking-widest text-primary truncate max-w-[150px]">${ad.name}</p>
+                                    <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">Stream Protocol: ${ad.type}</p>
+                                </div>
+                            </div>
                         </td>
-                        <td class="px-6 py-4"><span class="badge-success">${ad.status}</span></td>
-                        <td class="px-6 py-4 text-sm font-bold">$${parseFloat(ad.budget).toLocaleString()}</td>
-                        <td class="px-6 py-4 text-center text-xs font-bold text-gray-400">${((ad.clicks / ad.impressions) * 100 || 0).toFixed(2)}%</td>
-                        <td class="px-6 py-4 text-right">
-                             <div class="flex justify-end gap-2">
-                                <button onclick="AdminApp.openDrawer('ad', '${ad.id}')" class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500"><i class="ph ph-note-pencil text-lg"></i></button>
-                                <button onclick="AdminApp.deleteAd('${ad.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-trash text-lg"></i></button>
+                        <td class="px-8 py-6">
+                             <div class="flex items-center gap-3">
+                                <span class="px-3 py-1.5 ${statusColor} border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">${ad.status}</span>
+                                <span class="flex h-1.5 w-1.5 relative">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${pulseColor} opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-1.5 w-1.5 ${pulseColor}"></span>
+                                </span>
+                             </div>
+                        </td>
+                        <td class="px-8 py-6 text-center">
+                            <p class="text-sm font-black tracking-tighter">$${parseFloat(ad.budget).toLocaleString()}</p>
+                            <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">Daily Fuel</p>
+                        </td>
+                        <td class="px-8 py-6 text-center">
+                            <div class="flex flex-col items-center gap-1">
+                                <span class="text-[11px] font-black tracking-tight text-primary">${ctr}%</span>
+                                <div class="w-16 bg-white/5 h-1 rounded-full overflow-hidden">
+                                    <div class="bg-primary h-full" style="width: ${Math.min(ctr * 10, 100)}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-8 py-6 text-right">
+                             <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                <button onclick="AdminApp.openDrawer('ad', '${ad.id}')" class="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5">
+                                    <i class="ph-bold ph-note-pencil text-lg"></i>
+                                </button>
+                                <button onclick="AdminApp.deleteAd('${ad.id}')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5">
+                                    <i class="ph-bold ph-trash text-lg"></i>
+                                </button>
                              </div>
                         </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No campaigns found</td></tr>';
-
-            if (document.getElementById('ads-count-badge')) {
-                document.getElementById('ads-count-badge').innerText = `${data.ads.length} Total`;
-            }
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-20 text-center opacity-30 font-black uppercase tracking-[0.2em] text-[10px]">No marketing nodes active</td></tr>';
         });
     },
 

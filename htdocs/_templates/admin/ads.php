@@ -3,101 +3,114 @@
 <div id="section-ads" class="section active space-y-8 animate-in fade-in duration-500">
     <div class="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
         <div>
-            <h2 class="text-4xl font-black tracking-tighter mb-2 uppercase">Ads <span class="gradient-text">Pipeline</span></h2>
-            <p class="font-bold text-sm opacity-60 tracking-tight uppercase" style="color: var(--text-muted);">Coordinate global marketing streams and maximize user acquisition.</p>
+            <h2 class="text-4xl font-black tracking-tighter mb-2 uppercase">Ads <span class="gradient-text">Orchestrator</span></h2>
+            <p class="font-bold text-sm opacity-60 tracking-tight uppercase" style="color: var(--text-muted);">Synchronize global marketing nodes and optimize ROI through predictive telemetry.</p>
         </div>
-        <div class="flex gap-3 w-full md:w-auto">
-            <button class="btn-primary !rounded-2xl flex-1 md:flex-none justify-center shadow-xl shadow-primary/20" onclick="openModal('create-ad-modal')">
-                <i class="ph-bold ph-plus text-lg"></i>
-                Create Stream
+        <div class="flex gap-4 w-full md:w-auto">
+            <button class="btn-primary !rounded-2xl !px-10 flex-grow md:flex-none justify-center shadow-2xl shadow-primary/20 hover:scale-[1.05] transition-all" onclick="AdminApp.openModal('create-ad-modal')">
+                <i class="ph-bold ph-plus-square text-xl"></i>
+                Deploy Stream
             </button>
         </div>
     </div>
 
     <!-- Premium Module Tabs -->
     <div class="flex gap-8 border-b border-white/5" id="ads-tabs">
-        <button class="tab-btn active" data-tab="campaigns" onclick="AdminApp.switchTab('ads', 'campaigns')">
-            Active Stream
+        <button class="tab-btn active uppercase tracking-widest text-[10px] font-black" data-tab="campaigns" onclick="AdminApp.switchTab('ads', 'campaigns')">
+            Active Streams
             <div class="tab-underline"></div>
         </button>
-        <button class="tab-btn" data-tab="performance" onclick="AdminApp.switchTab('ads', 'performance')">
+        <button class="tab-btn uppercase tracking-widest text-[10px] font-black relative group" data-tab="performance" onclick="AdminApp.switchTab('ads', 'performance')">
             Deep ROI Analytics
+            <span class="absolute -top-1 -right-2 px-1.5 py-0.5 bg-indigo-500 text-[7px] text-white rounded-md group-hover:animate-bounce">VIP</span>
             <div class="tab-underline"></div>
         </button>
     </div>
 
     <!-- Tab Content: Campaigns -->
-    <div id="tab-content-campaigns" class="tab-content space-y-8 animate-in fade-in duration-700">
+    <div id="tab-content-campaigns" class="tab-content space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <!-- Dashboard Summary Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="stat-card group hover:scale-[1.02] transition-all relative overflow-hidden">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary border border-primary/20">
-                        <i class="ph-bold ph-megaphone text-xl"></i>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="stat-card border-primary/20 bg-gradient-to-br from-primary/[0.05] to-transparent relative overflow-hidden group hover:scale-[1.02] transition-transform">
+                <div class="flex items-center gap-6 relative z-10">
+                    <div class="w-16 h-16 rounded-[2rem] bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-2xl shadow-primary/10 group-hover:rotate-12 transition-transform duration-500">
+                        <i class="ph-bold ph-megaphone text-3xl"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] font-black uppercase tracking-widest opacity-60">Active Nodes</p>
-                        <p class="text-3xl font-black tracking-tighter" id="ads-count-badge">...</p>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Active Nodes</p>
+                        <p class="text-3xl font-black tracking-tighter mt-1" id="ads-count-badge">00</p>
                     </div>
                 </div>
-                <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors"></div>
             </div>
             
-            <div class="stat-card group hover:scale-[1.02] transition-all relative overflow-hidden">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 border border-blue-400/20">
-                        <i class="ph-bold ph-currency-dollar text-xl"></i>
+            <div class="stat-card border-blue-500/20 bg-gradient-to-br from-blue-500/[0.05] to-transparent relative overflow-hidden group hover:scale-[1.02] transition-transform">
+                <div class="flex items-center gap-6 relative z-10">
+                    <div class="w-16 h-16 rounded-[2rem] bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 shadow-2xl shadow-blue-500/10 group-hover:-rotate-12 transition-transform duration-500">
+                        <i class="ph-bold ph-currency-circle-dollar text-3xl"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] font-black uppercase tracking-widest opacity-60">Daily Expenditure</p>
-                        <p class="text-3xl font-black tracking-tighter">$14,248</p>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Financial Flux</p>
+                        <p class="text-3xl font-black tracking-tighter mt-1" id="ads-spend-badge">$0,000</p>
                     </div>
                 </div>
-                <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-400/30 to-transparent"></div>
+                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-colors"></div>
             </div>
 
-            <div class="stat-card group hover:scale-[1.02] transition-all relative overflow-hidden">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-orange-500/20 flex items-center justify-center text-orange-400 border border-orange-500/20">
-                        <i class="ph-bold ph-chart-line-up text-xl"></i>
+            <div class="stat-card border-orange-500/20 bg-gradient-to-br from-orange-500/[0.05] to-transparent relative overflow-hidden group hover:scale-[1.02] transition-transform">
+                <div class="flex items-center gap-6 relative z-10">
+                    <div class="w-16 h-16 rounded-[2rem] bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-500/20 shadow-2xl shadow-orange-500/10 group-hover:scale-110 transition-transform duration-500">
+                        <i class="ph-bold ph-chart-line-up text-3xl"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] font-black uppercase tracking-widest opacity-60">Avg Persistence</p>
-                        <p class="text-3xl font-black tracking-tighter">4.82%</p>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Avg CTR Density</p>
+                        <p class="text-3xl font-black tracking-tighter mt-1" id="ads-roi-badge">0.00%</p>
                     </div>
                 </div>
-                <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-400/30 to-transparent"></div>
+                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl group-hover:bg-orange-500/10 transition-colors"></div>
             </div>
         </div>
 
-        <div class="stat-card !p-0 overflow-hidden">
+        <div class="stat-card !p-0 overflow-hidden bg-white/[0.02] border-white/5 shadow-2xl">
             <div class="p-8 border-b border-white/5 bg-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
                 <div>
-                    <h3 class="text-xl font-black uppercase tracking-tight">Campaign <span class="gradient-text">Orchestration</span></h3>
-                    <p class="text-[10px] font-black uppercase tracking-widest opacity-60 mt-1">Real-time status across 24 node clusters</p>
+                    <h3 class="text-xl font-black uppercase tracking-tight">Stream <span class="gradient-text">Orchestration</span></h3>
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mt-1 flex items-center gap-3">
+                        <span class="flex h-2 w-2 relative">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                        </span>
+                        Managed Global Marketing Ingress
+                    </p>
                 </div>
                 <div class="flex gap-4 w-full md:w-auto">
                     <div class="relative flex-grow md:flex-none">
-                        <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                        <input type="text" placeholder="Search streams..." 
-                               class="w-full rounded-xl pl-10 pr-4 py-2 text-xs font-bold uppercase tracking-widest focus:border-primary/50 outline-none transition-all"
-                               style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">
+                        <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-primary opacity-60"></i>
+                        <input type="text" placeholder="Filter Marketing Nodes..." 
+                               class="w-full md:w-64 rounded-xl pl-12 pr-4 py-3 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                               style="background-color: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-main);">
                     </div>
                 </div>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left">
+                <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] border-b border-white/5" style="background-color: var(--glass-bg);">
-                            <th class="py-6 px-8">Audit ID / Name</th>
+                            <th class="py-6 px-8">Identity / Protocol</th>
                             <th class="py-6 px-8">Deployment State</th>
-                            <th class="py-6 px-8">Daily Budget</th>
+                            <th class="py-6 px-8 text-center">Fuel (Budget)</th>
                             <th class="py-6 px-8 text-center">CTR Density</th>
                             <th class="py-6 px-8 text-right">Synchronization</th>
                         </tr>
                     </thead>
-                    <tbody id="ads-table-body" class="divide-y divide-white/5">
-                        <!-- Campaigns Dynamically Synced by JS -->
+                    <tbody id="ads-table-body" class="divide-y divide-white/[0.03]">
+                        <!-- Campaigns Synchronized by JS -->
+                        <tr><td colspan="5" class="p-32 text-center">
+                            <div class="flex flex-col items-center gap-4">
+                                <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                <p class="font-black text-[10px] uppercase tracking-[0.3em] opacity-40">Authenticating Stream Ledger...</p>
+                            </div>
+                        </td></tr>
                     </tbody>
                 </table>
             </div>
@@ -105,65 +118,80 @@
     </div>
 
     <!-- Tab Content: Performance -->
-    <div id="tab-content-performance" class="tab-content hidden space-y-8 animate-in fade-in duration-700">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="stat-card">
-                <h3 class="text-[10px] font-black uppercase tracking-[0.2em] mb-8 opacity-60 text-primary">ROI Probability Map</h3>
-                <div class="aspect-[21/9] flex items-center justify-center p-10 bg-primary/5 border border-primary/10 rounded-3xl relative overflow-hidden group/chart">
-                     <span class="relative z-10 text-[10px] font-black uppercase tracking-widest opacity-60 animate-pulse">Awaiting ROI Packets...</span>
-                     <!-- Background dynamic bars -->
-                     <div class="absolute bottom-0 left-0 w-full flex items-end justify-between px-10 gap-2 h-1/2 opacity-20">
-                          <?php for($i=0; $i<20; $i++): ?>
-                          <div class="w-full bg-primary rounded-t-lg transition-all group-hover/chart:h-full" style="height: <?= rand(10, 100) ?>%"></div>
-                          <?php endfor; ?>
+    <div id="tab-content-performance" class="tab-content hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="stat-card border-indigo-500/20 bg-white/[0.02]">
+                <h3 class="text-[10px] font-black uppercase tracking-[0.2em] mb-10 opacity-60 flex items-center justify-between text-indigo-400">
+                    ROI Probability Map
+                    <span class="px-2 py-1 rounded bg-indigo-500/10 border border-indigo-500/20 text-[8px]">Live Telementry</span>
+                </h3>
+                <div class="aspect-[21/9] flex items-end justify-between px-10 pb-10 bg-indigo-500/[0.03] border border-indigo-500/10 rounded-[2.5rem] relative overflow-hidden group/chart group">
+                     <div class="absolute inset-0 bg-gradient-to-t from-indigo-500/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                     <?php for($i=0; $i<18; $i++): ?>
+                     <div class="w-3 md:w-5 bg-gradient-to-t from-indigo-500 to-indigo-300 rounded-t-lg transition-all duration-1000 origin-bottom group-hover:scale-y-[1.1] relative z-10" 
+                          style="height: <?= rand(20, 90) ?>%; box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);">
+                          <div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] font-bold opacity-0 group-hover/chart:opacity-60 transition-opacity"><?= rand(40, 99) ?>%</div>
                      </div>
+                     <?php endfor; ?>
                 </div>
-                <div class="grid grid-cols-3 gap-6 mt-10">
+                <div class="grid grid-cols-3 gap-8 mt-12 bg-white/[0.03] p-8 rounded-[2rem] border border-white/5">
                      <div class="text-center">
-                          <p class="text-xs font-black uppercase tracking-widest opacity-40 mb-1 leading-tight">Return Rank</p>
-                          <p class="text-2xl font-black text-primary tracking-tighter">A+</p>
+                          <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2 leading-tight">Performance Rank</p>
+                          <p class="text-3xl font-black text-indigo-400 tracking-tighter">S-Tier</p>
+                     </div>
+                     <div class="text-center border-x border-white/10">
+                          <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2 leading-tight">Daily Mean CPM</p>
+                          <p class="text-3xl font-black tracking-tighter" style="color: var(--text-main);">$4.85</p>
                      </div>
                      <div class="text-center">
-                          <p class="text-xs font-black uppercase tracking-widest opacity-40 mb-1 leading-tight">CPM Mean</p>
-                          <p class="text-2xl font-black tracking-tighter" style="color: var(--text-main);">$4.20</p>
-                     </div>
-                     <div class="text-center">
-                          <p class="text-xs font-black uppercase tracking-widest opacity-40 mb-1 leading-tight">ROAS Avg</p>
-                          <p class="text-2xl font-black text-green-400 tracking-tighter">12.4x</p>
+                          <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2 leading-tight">ROAS Coefficient</p>
+                          <p class="text-3xl font-black text-emerald-400 tracking-tighter">14.2x</p>
                      </div>
                 </div>
             </div>
 
-            <div class="stat-card">
-                 <h3 class="text-[10px] font-black uppercase tracking-[0.2em] mb-8 opacity-60">Asset Performance Distribution</h3>
-                 <div class="space-y-8 mt-5">
-                      <div class="space-y-2">
-                           <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-widest opacity-60">
-                                <span>Visual Display (Static)</span>
-                                <span class="text-primary font-bold">82% Perf</span>
+            <div class="stat-card border-white/5 bg-white/[0.02] flex flex-col pt-10">
+                 <h3 class="text-[10px] font-black uppercase tracking-[0.2em] mb-12 opacity-60">Asset Distribution Efficiency</h3>
+                 <div class="space-y-10 px-4">
+                      <div class="space-y-4">
+                           <div class="flex justify-between items-center px-1">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><i class="ph-bold ph-image text-sm"></i></div>
+                                    <span class="text-[11px] font-black uppercase tracking-widest opacity-60">Static Visual Node</span>
+                                </div>
+                                <span class="text-primary font-black text-xs tracking-tighter">88.4%</span>
                            </div>
-                           <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                                <div class="bg-primary h-full w-[82%] shadow-[0_0_8px_#7c6aff]"></div>
-                           </div>
-                      </div>
-                      <div class="space-y-2">
-                           <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-widest opacity-60">
-                                <span>Interactive Modules (Rich)</span>
-                                <span class="text-purple-400 font-bold">64% Perf</span>
-                           </div>
-                           <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                                <div class="bg-purple-500 h-full w-[64%] shadow-[0_0_8px_#a855f7]"></div>
+                           <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden p-[1px]">
+                                <div class="bg-primary h-full w-[88.4%] rounded-full shadow-[0_0_15px_rgba(124,106,255,0.5)]"></div>
                            </div>
                       </div>
-                      <div class="space-y-2">
-                           <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-widest opacity-60">
-                                <span>External Lead Funnels</span>
-                                <span class="text-orange-400 font-bold">48% Perf</span>
+                      <div class="space-y-4">
+                           <div class="flex justify-between items-center px-1">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20"><i class="ph-bold ph-video-camera text-sm"></i></div>
+                                    <span class="text-[11px] font-black uppercase tracking-widest opacity-60">Dynamic Rich Media</span>
+                                </div>
+                                <span class="text-purple-400 font-black text-xs tracking-tighter">62.1%</span>
                            </div>
-                           <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                                <div class="bg-orange-500 h-full w-[48%] shadow-[0_0_8px_#f97316]"></div>
+                           <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden p-[1px]">
+                                <div class="bg-purple-500 h-full w-[62.1%] rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)]"></div>
                            </div>
                       </div>
+                      <div class="space-y-4">
+                           <div class="flex justify-between items-center px-1">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-500/20"><i class="ph-bold ph-funnel text-sm"></i></div>
+                                    <span class="text-[11px] font-black uppercase tracking-widest opacity-60">Lead Conversion Funnels</span>
+                                </div>
+                                <span class="text-orange-400 font-black text-xs tracking-tighter">44.8%</span>
+                           </div>
+                           <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden p-[1px]">
+                                <div class="bg-orange-500 h-full w-[44.8%] rounded-full shadow-[0_0_15px_rgba(249,115,22,0.5)]"></div>
+                           </div>
+                      </div>
+                 </div>
+                 <div class="mt-12 p-6 bg-white/[0.03] rounded-3xl border border-dashed border-white/10 text-center">
+                    <p class="text-[9px] font-bold opacity-30 uppercase tracking-[0.2em]">Telemetry calibrated with global marketing nodes</p>
                  </div>
             </div>
         </div>

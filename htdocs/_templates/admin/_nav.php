@@ -1,6 +1,6 @@
 <aside id="sidebar" class="w-80 shrink-0 border-r transition-transform duration-500 md:relative fixed inset-y-0 left-0 z-[100] -translate-x-full md:translate-x-0 overflow-hidden flex flex-col backdrop-blur-3xl" style="background-color: var(--surface-glass); border-color: var(--border-color);">
     <!-- Mobile Close Button -->
-    <button class="md:hidden absolute top-6 right-6 p-2 rounded-xl bg-white/5 text-gray-400 hover:text-white transition-colors" onclick="toggleMobileSidebar()">
+    <button class="md:hidden absolute top-6 right-6 p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all border border-primary/20" onclick="toggleMobileSidebar()">
         <i class="ph-bold ph-x text-xl"></i>
     </button>
 
@@ -99,9 +99,9 @@
                     <p class="text-[9px] font-black text-primary uppercase tracking-widest mt-0.5 opacity-80">Online Agent</p>
                 </div>
             </div>
-            <a href="<?= get_config('base_path') ?>admin?logout=1" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-[0_10px_20px_rgba(239,68,68,0.15)] hover:shadow-red-500/40" title="Logout">
+            <button class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all border border-red-500/20" title="Logout" onclick="window.location.href='<?= get_config('base_path') ?>admin?logout=1'">
                 <i class="ph-bold ph-power text-lg"></i>
-            </a>
+            </button>
         </div>
     </div>
 </aside>
