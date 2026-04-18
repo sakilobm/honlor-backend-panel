@@ -405,3 +405,193 @@
         </form>
     </div>
 </div>
+
+<!-- Global Modal: Create Channel Wizard -->
+<div id="create-channel-modal" class="modal-overlay hidden">
+    <div class="modal-card !max-w-4xl !p-0 overflow-hidden flex flex-col md:flex-row bg-[var(--surface)] border-[var(--border-color)] backdrop-blur-3xl shadow-[var(--card-shadow)]">
+        
+        <!-- Sidebar Navigation -->
+        <div class="w-full md:w-80 bg-[var(--glass-bg)] border-r border-[var(--border-color)] p-10 flex flex-col justify-between">
+            <div>
+                <h3 class="text-2xl font-black tracking-tighter uppercase mb-12" style="color: var(--text-main);">Create <span class="gradient-text">Node</span></h3>
+                
+                <div class="space-y-8 relative">
+                    <!-- Progress Line -->
+                    <div class="absolute left-6 top-4 bottom-4 w-0.5 bg-[var(--border-color)] z-0"></div>
+                    <div id="wizard-progress-bar" class="absolute left-6 top-4 w-0.5 bg-primary z-0 transition-all duration-500" style="height: 0%"></div>
+
+                    <div class="wizard-step flex items-center gap-6 group z-10 relative" data-step="1">
+                        <div class="step-num w-12 h-12 rounded-full border-2 border-[var(--border-color)] bg-[var(--surface)] flex items-center justify-center font-black text-sm transition-all duration-300 group-[.active]:border-primary group-[.active]:bg-primary group-[.active]:text-white group-[.active]:shadow-[0_0_20px_rgba(124,106,255,0.4)] group-[.completed]:bg-emerald-500 group-[.completed]:border-emerald-500 group-[.completed]:text-white group-[.completed]:shadow-[0_0_20px_rgba(16,185,129,0.3)] text-gray-400 group-[.active]:!text-white group-[.completed]:!text-white">1</div>
+                        <div>
+                            <p class="text-[9px] font-black uppercase tracking-[0.2em] mb-0.5" style="color: var(--text-muted); opacity: 0.6;">Step 01</p>
+                            <p class="font-black text-[11px] uppercase tracking-tight" style="color: var(--text-main);">Channel Type</p>
+                        </div>
+                    </div>
+
+                    <div class="wizard-step flex items-center gap-6 group z-10 relative" data-step="2">
+                        <div class="step-num w-12 h-12 rounded-full border-2 border-[var(--border-color)] bg-[var(--surface)] flex items-center justify-center font-black text-sm transition-all duration-300 group-[.active]:border-primary group-[.active]:bg-primary group-[.active]:text-white group-[.completed]:bg-emerald-500 group-[.completed]:border-emerald-500 group-[.completed]:text-white text-gray-400 group-[.active]:!text-white group-[.completed]:!text-white">2</div>
+                        <div>
+                            <p class="text-[9px] font-black uppercase tracking-[0.2em] mb-0.5" style="color: var(--text-muted); opacity: 0.6;">Step 02</p>
+                            <p class="font-black text-[11px] uppercase tracking-tight" style="color: var(--text-main);">Basic Info</p>
+                        </div>
+                    </div>
+
+                    <div class="wizard-step flex items-center gap-6 group z-10 relative" data-step="3">
+                        <div class="step-num w-12 h-12 rounded-full border-2 border-[var(--border-color)] bg-[var(--surface)] flex items-center justify-center font-black text-sm transition-all duration-300 group-[.active]:border-primary group-[.active]:bg-primary group-[.active]:text-white group-[.completed]:bg-emerald-500 group-[.completed]:border-emerald-500 group-[.completed]:text-white text-gray-400 group-[.active]:!text-white group-[.completed]:!text-white">3</div>
+                        <div>
+                            <p class="text-[9px] font-black uppercase tracking-[0.2em] mb-0.5" style="color: var(--text-muted); opacity: 0.6;">Step 03</p>
+                            <p class="font-black text-[11px] uppercase tracking-tight" style="color: var(--text-main);">Add Members</p>
+                        </div>
+                    </div>
+
+                    <div class="wizard-step flex items-center gap-6 group z-10 relative" data-step="4">
+                        <div class="step-num w-12 h-12 rounded-full border-2 border-[var(--border-color)] bg-[var(--surface)] flex items-center justify-center font-black text-sm transition-all duration-300 group-[.active]:border-primary group-[.active]:bg-primary group-[.active]:text-white group-[.completed]:bg-emerald-500 group-[.completed]:border-emerald-500 group-[.completed]:text-white text-gray-400 group-[.active]:!text-white group-[.completed]:!text-white">4</div>
+                        <div>
+                            <p class="text-[9px] font-black uppercase tracking-[0.2em] mb-0.5" style="color: var(--text-muted); opacity: 0.6;">Step 04</p>
+                            <p class="font-black text-[11px] uppercase tracking-tight" style="color: var(--text-main);">Permissions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 rounded-3xl bg-primary/5 border border-primary/10">
+                <p class="text-[9px] font-black uppercase tracking-[0.1em] text-primary mb-2">Quick Tip:</p>
+                <p class="text-[10px] font-bold text-gray-500 leading-relaxed uppercase tracking-tight" style="color: var(--text-muted);">Public channels are searchable by everyone in your organization cluster.</p>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-grow flex flex-col min-h-[650px] bg-[var(--surface)]" style="background-color: var(--surface);">
+            <div class="flex-grow p-12 overflow-y-auto custom-scrollbar" id="wizard-content">
+                
+                <!-- Step 1: Type selection -->
+                <div class="wizard-pane active animate-in fade-in slide-in-from-right-8 duration-500" data-step="1">
+                    <h2 class="text-3xl font-black tracking-tight mb-2 uppercase" style="color: var(--text-main);">Select <span class="gradient-text">Channel Type</span></h2>
+                    <p class="font-bold text-sm uppercase tracking-tight mb-12" style="color: var(--text-muted);">Choose how you want your team to interact and discover this space.</p>
+                    
+                    <div class="space-y-4">
+                        <label class="block cursor-pointer">
+                            <input type="radio" name="channel_type" value="public" checked class="hidden peer">
+                            <div class="p-8 rounded-[2.5rem] border-2 border-[var(--border-color)] bg-[var(--glass-bg)] peer-checked:border-primary peer-checked:bg-primary/5 transition-all flex items-center gap-6 group">
+                                <div class="w-16 h-16 rounded-2xl bg-[var(--glass-bg)] flex items-center justify-center group-hover:text-primary peer-checked:text-primary transition-colors" style="color: var(--text-muted);">
+                                    <i class="ph-bold ph-globe text-3xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-black uppercase tracking-tight mb-1" style="color: var(--text-main);">Public Channel</h4>
+                                    <p class="text-[10px] font-bold uppercase tracking-widest" style="color: var(--text-muted);">Open for anyone in the organization to join and search. Best for general updates.</p>
+                                </div>
+                            </div>
+                        </label>
+
+                        <label class="block cursor-pointer">
+                            <input type="radio" name="channel_type" value="private" class="hidden peer">
+                            <div class="p-8 rounded-[2.5rem] border-2 border-[var(--border-color)] bg-[var(--glass-bg)] peer-checked:border-primary peer-checked:bg-primary/5 transition-all flex items-center gap-6 group">
+                                <div class="w-16 h-16 rounded-2xl bg-[var(--glass-bg)] flex items-center justify-center group-hover:text-primary transition-colors" style="color: var(--text-muted);">
+                                    <i class="ph-bold ph-lock-key text-3xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-black uppercase tracking-tight mb-1" style="color: var(--text-main);">Private Channel</h4>
+                                    <p class="text-[10px] font-bold uppercase tracking-widest" style="color: var(--text-muted);">By invitation only. Conversations are confidential and hidden from search results.</p>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Step 2: Info -->
+                <div class="wizard-pane hidden" data-step="2">
+                    <h2 class="text-3xl font-black tracking-tight mb-2 uppercase" style="color: var(--text-main);">Channel <span class="gradient-text">Identity</span></h2>
+                    <p class="font-bold text-sm uppercase tracking-tight mb-12" style="color: var(--text-muted);">Define the name and purpose of this communication node.</p>
+
+                    <div class="space-y-8">
+                        <div class="space-y-3">
+                            <label class="text-[10px] font-black uppercase tracking-[0.2em] ml-1" style="color: var(--text-muted);">Registry Name</label>
+                            <input type="text" id="wizard-name" class="w-full bg-[var(--glass-bg)] border border-[var(--border-color)] rounded-3xl p-6 px-8 outline-none focus:border-primary/50 transition-all font-black text-xl uppercase tracking-tight" style="color: var(--text-main);" placeholder="e.g. CORE-OPERATIONS">
+                        </div>
+                        <div class="space-y-3">
+                            <label class="text-[10px] font-black uppercase tracking-[0.2em] ml-1" style="color: var(--text-muted);">Namespace Slug</label>
+                            <div class="flex items-center bg-[var(--glass-bg)] border border-[var(--border-color)] rounded-3xl p-6 px-8 transition-all">
+                                <span class="font-bold text-xs uppercase mr-2 tracking-widest" style="color: var(--text-muted);">#</span>
+                                <input type="text" id="wizard-slug" class="bg-transparent border-none outline-none flex-grow font-black text-xl uppercase tracking-tight" style="color: var(--text-main);" placeholder="core-ops">
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <label class="text-[10px] font-black uppercase tracking-[0.2em] ml-1" style="color: var(--text-muted);">Manifesto (Description)</label>
+                            <textarea id="wizard-description" class="w-full bg-[var(--glass-bg)] border border-[var(--border-color)] rounded-3xl p-6 px-8 outline-none focus:border-primary/50 transition-all font-bold text-sm uppercase tracking-tight resize-none" style="color: var(--text-main);" rows="4" placeholder="BRIEF DESCRIPTION OF THIS CLUSTER'S MISSION..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Members -->
+                <div class="wizard-pane hidden" data-step="3">
+                    <h2 class="text-3xl font-black tracking-tight mb-2 uppercase" style="color: var(--text-main);">Identity <span class="gradient-text">Linkage</span></h2>
+                    <p class="font-bold text-sm uppercase tracking-tight mb-12" style="color: var(--text-muted);">Authorize agents and assign authority protocols to this cluster.</p>
+
+                    <div class="space-y-8">
+                        <div class="relative">
+                            <i class="ph-bold ph-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-xl" style="color: var(--text-muted);"></i>
+                            <input type="text" id="wizard-user-search" onkeyup="AdminApp.searchWizardUsers(this.value)" class="w-full bg-[var(--glass-bg)] border border-[var(--border-color)] rounded-3xl p-6 pl-16 outline-none focus:border-primary/50 transition-all font-bold text-xs uppercase tracking-widest" style="color: var(--text-main);" placeholder="SEARCH AGENT DATABASE...">
+                            <div id="wizard-search-results" class="absolute top-full left-0 w-full mt-2 z-50 glass-card hidden max-h-60 overflow-y-auto custom-scrollbar"></div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <label class="text-[10px] font-black uppercase tracking-[0.2em] ml-1" style="color: var(--text-muted);">Authorized Cluster</label>
+                            <div id="wizard-selected-members" class="space-y-2">
+                                <!-- Members injected by JS -->
+                                <div class="p-6 rounded-[1.5rem] border border-dashed border-[var(--border-color)] text-center opacity-40">
+                                    <p class="font-black text-[10px] uppercase tracking-widest" style="color: var(--text-muted);">No agents authorized yet.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Permissions -->
+                <div class="wizard-pane hidden" data-step="4">
+                    <h2 class="text-3xl font-black tracking-tight mb-2 uppercase" style="color: var(--text-main);">Protocol <span class="gradient-text">Governors</span></h2>
+                    <p class="font-bold text-sm uppercase tracking-tight mb-12" style="color: var(--text-muted);">Calibrate security levels and finalize integration blueprints.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-card !p-8 border-indigo-500/10 bg-indigo-500/5 group hover:bg-indigo-500/10 transition-all">
+                             <div class="flex items-center justify-between mb-6">
+                                <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                    <i class="ph-bold ph-shield-check text-2xl"></i>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="wizard-privacy-toggle" class="sr-only peer">
+                                    <div class="w-14 h-7 bg-[var(--toggle-off)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-gray-400 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500 shadow-inner"></div>
+                                </label>
+                             </div>
+                             <h4 class="font-black text-lg uppercase tracking-tight mb-2" style="color: var(--text-main);">Registry Privacy</h4>
+                             <p class="text-[10px] font-bold text-gray-500 leading-relaxed uppercase tracking-widest">Toggle absolute invisibility across the global node index.</p>
+                        </div>
+
+                        <div class="glass-card !p-8 border-emerald-500/10 bg-emerald-500/5 group hover:bg-emerald-500/10 transition-all">
+                             <div class="flex items-center justify-between mb-6">
+                                <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                    <i class="ph-bold ph-paper-plane-tilt text-2xl"></i>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="wizard-allow-invites" checked class="sr-only peer">
+                                    <div class="w-14 h-7 bg-[var(--toggle-off)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-gray-400 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+                                </label>
+                             </div>
+                             <h4 class="font-black text-lg uppercase tracking-tight mb-2" style="color: var(--text-main);">Guest Handshakes</h4>
+                             <p class="text-[10px] font-bold text-gray-500 leading-relaxed uppercase tracking-widest">Allow authorized agents to distribute invitation protocols.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="p-10 border-t border-[var(--border-color)] flex items-center justify-between">
+                <button type="button" onclick="AdminApp.closeWizard()" class="font-black text-[10px] uppercase tracking-[0.2em] transition-colors hover:text-primary" style="color: var(--text-muted);">Cancel</button>
+                <div class="flex gap-4">
+                    <button type="button" id="wizard-prev" onclick="AdminApp.navWizard(-1)" class="btn-secondary !rounded-[1.25rem] !px-8 hidden uppercase text-[10px] font-black tracking-widest">Back</button>
+                    <button type="button" id="wizard-next" onclick="AdminApp.navWizard(1)" class="btn-primary !rounded-[1.25rem] !px-8 !py-5 uppercase text-[10px] font-black tracking-widest shadow-2xl shadow-primary/30">Next Step <i class="ph-bold ph-arrow-right ml-2 opacity-60"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

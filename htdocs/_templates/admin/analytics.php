@@ -19,7 +19,7 @@
     </div>
 
     <!-- Premium Module Tabs -->
-    <div class="flex gap-10 border-b border-white/5" id="analytics-tabs">
+    <div class="flex gap-10 border-b border-[var(--border-color)]" id="analytics-tabs">
         <button class="tab-btn active uppercase tracking-[0.2em] text-[10px] font-black" data-tab="neural" onclick="AdminApp.switchTab('analytics', 'neural')">
             Neural Dynamics
             <div class="tab-underline"></div>
@@ -74,7 +74,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Dynamic Insights Module -->
             <div class="stat-card !p-0 overflow-hidden flex flex-col shadow-2xl" style="background-color: var(--glass-bg); border: 1px solid var(--border-color);">
-                <div class="p-8 border-b border-white/5 bg-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="p-8 border-b border-[var(--border-color)] bg-[var(--surface-2)] flex flex-col md:flex-row justify-between items-center gap-6">
                     <div>
                         <h3 class="text-xl font-black uppercase tracking-tight">Ecosystem <span class="gradient-text">Insights</span></h3>
                         <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mt-1 flex items-center gap-3">
@@ -97,7 +97,7 @@
             </div>
 
             <!-- Signal Integrity Chart -->
-            <div class="stat-card border-white/5 bg-white/[0.02]">
+            <div class="stat-card border-[var(--border-color)] bg-[var(--surface-2)]">
                 <h3 class="text-[10px] font-black uppercase tracking-[0.2em] mb-10 opacity-60 flex items-center justify-between text-primary">
                     Signal Integrity Map
                     <span class="px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[8px] tracking-widest">REAL-TIME</span>
@@ -110,11 +110,11 @@
                      <?php endfor; ?>
                 </div>
                 <div class="grid grid-cols-2 gap-8 mt-10">
-                    <div class="p-6 rounded-[2rem] bg-white/[0.03] border border-white/5">
+                    <div class="p-6 rounded-[2rem] bg-[var(--surface-2)] border border-[var(--border-color)]">
                         <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">Protocol Health</p>
                         <p class="text-2xl font-black tracking-tighter" style="color: var(--text-main);">SHA-512 SECURE</p>
                     </div>
-                    <div class="p-6 rounded-[2rem] bg-white/[0.03] border border-white/5 text-right">
+                    <div class="p-6 rounded-[2rem] bg-[var(--surface-2)] border border-[var(--border-color)] text-right">
                         <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">Node Latency</p>
                         <p class="text-2xl font-black text-indigo-400 tracking-tighter">14ms</p>
                     </div>
@@ -126,14 +126,14 @@
     <!-- Tab Content: Geography -->
     <div id="tab-content-geography" class="tab-content hidden space-y-8 animate-in fade-in duration-700">
         <div class="stat-card !p-0 overflow-hidden shadow-2xl" style="background-color: var(--glass-bg); border: 1px solid var(--border-color);">
-             <div class="p-8 border-b border-white/5 bg-white/5">
+             <div class="p-8 border-b border-[var(--border-color)] bg-[var(--surface-2)]">
                  <h3 class="text-xl font-black uppercase tracking-tight">Regional <span class="gradient-text">Density Matrix</span></h3>
                  <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mt-1">Real-time interaction density packets across 24 timezone clusters</p>
              </div>
              <div class="p-10">
                  <div class="grid grid-cols-6 md:grid-cols-12 gap-3 aspect-video md:aspect-[21/8]">
                     <?php for($i=0; $i<12*6; $i++): ?>
-                        <div class="rounded-xl border border-white/10 transition-all hover:bg-primary/20 hover:scale-[1.15] hover:shadow-[0_0_20px_rgba(124,106,255,0.4)] group/box cursor-help relative" 
+                        <div class="rounded-xl border border-[var(--border-color)] transition-all hover:bg-primary/20 hover:scale-[1.15] hover:shadow-[0_0_20px_rgba(124,106,255,0.4)] group/box cursor-help relative" 
                              style="background-color: rgba(124, 106, 255, <?= rand(5, 50) / 100 ?>);">
                              <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-surface p-3 rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest opacity-0 group-hover/box:opacity-100 whitespace-nowrap pointer-events-none transition-all z-20 shadow-2xl">
                                 Node Cluster 0<?= rand(1,9) ?>: <?= rand(10, 99) ?>% LOAD
@@ -141,7 +141,7 @@
                         </div>
                     <?php endfor; ?>
                 </div>
-                <div class="flex flex-wrap justify-center gap-10 mt-12 pt-8 border-t border-white/5">
+                <div class="flex flex-wrap justify-center gap-10 mt-12 pt-8 border-t border-[var(--border-color)]">
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-full bg-blue-400"></div>
                         <span class="text-[9px] font-black uppercase tracking-widest opacity-60">North America</span>

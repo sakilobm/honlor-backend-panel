@@ -3,23 +3,37 @@
 /**
  * API: channels/create
  * ====================
+ * Creates a new channel with members and settings.
  */
-$create = function() 
+
+use App\Channel;
+
+${basename(__FILE__, '.php')} = function() 
 {
-    if (!$this->isAuthenticated()) {
+    if (!\Session::isAuthenticated()) {
         $this->response($this->json(['error' => 'Unauthorized']), 401);
     }
 
     if (!$this->paramsExists(['name', 'type'])) {
-        $this->response($this->json(['error' => 'Missing name or type']), 400);
+        $this->response($this->json(['error' => 'Missing required fields (name, type)']), 400);
     }
 
-    $name = $this->_request['name'];
-    $type = $this->_request['type'];
+    try {
+        $data = $this->_request;
+        $data['owner_id'] = \Session::getUser()->id;
+        
+        $channelId = Channel::createWithDetails($data);
+        
+        if ($channelId) {
+            $this->response($this->json([
+                'message' => 'Channel registry successful.',
+                'channel_id' => $channelId
+            ]), 200);
+        } else {
+            throw new Exception("Database record creation failed.");
+        }
 
-    if (\App\Channel::create($name, $type)) {
-        $this->response($this->json(['message' => 'Channel created successfully']), 200);
-    } else {
-        $this->response($this->json(['error' => 'Failed to create channel']), 500);
+    } catch (Exception $e) {
+        $this->response($this->json(['error' => $e->getMessage()]), 500);
     }
 };

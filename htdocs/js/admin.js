@@ -1174,34 +1174,73 @@ const AdminApp = {
     },
 
     /**
-     * Settings Logic
+     * Command Orchestration (Control Center) Logic
      */
     toggleSetting: function (key, isChecked) {
         const value = isChecked ? 'on' : 'off';
 
         ApiClient.post('settings', 'update', { key: key, value: value }).then(res => {
-            toast.success('Updated', `Setting '${key}' is now ${value}.`);
+            toast.success('Protocol Update', `Global setting '${key}' synchronized to ${value}.`);
         }).catch(err => {
-            toast.error('System Error', err.error || 'Could not update setting.');
+            toast.error('Sync failure', err.error || 'Identity gatekeeping error.');
         });
     },
 
     saveSettings: function () {
-        const sessionTimeout = document.getElementById('session_timeout').value;
-        const authRetryLimit = document.getElementById('auth_retry_limit').value;
-        const rateLimit = document.getElementById('rate_limit').value;
-        const ipBlocklist = document.getElementById('ip_blocklist').value;
+        const btn = document.getElementById('save-settings-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph-bold ph-gear-six animate-spin mr-2"></i> Synchronizing...';
+        }
 
-        const p1 = ApiClient.post('settings', 'update', { key: 'session_timeout', value: sessionTimeout });
-        const p2 = ApiClient.post('settings', 'update', { key: 'auth_retry_limit', value: authRetryLimit });
-        const p3 = ApiClient.post('settings', 'update', { key: 'rate_limit', value: rateLimit });
-        const p4 = ApiClient.post('settings', 'update', { key: 'ip_blocklist', value: ipBlocklist });
+        const data = {
+            session_timeout: document.getElementById('session_timeout').value,
+            auth_retry_limit: document.getElementById('auth_retry_limit').value,
+            rate_limit: document.getElementById('rate_limit').value,
+            ip_blocklist: document.getElementById('ip_blocklist').value
+        };
 
-        Promise.all([p1, p2, p3, p4]).then(() => {
-            toast.success('System Security', 'Protocol updates synchronized.');
+        const promises = Object.keys(data).map(key => 
+            ApiClient.post('settings', 'update', { key: key, value: data[key] })
+        );
+
+        toast.info('Orchestration Pulse', 'Broadcasting protocol updates to node clusters.');
+
+        Promise.all(promises).then(() => {
+            setTimeout(() => {
+                toast.success('Synchronization Complete', 'Global platform parameters updated.');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ph-bold ph-floppy-disk text-lg mr-2"></i> Synchronize Protocols';
+                }
+                // Refresh audit trail after sync
+                this.initControlCenterTelemetry();
+            }, 1200);
         }).catch(err => {
-            toast.error('Sync failure', 'Some settings could not be updated.');
+            toast.error('Sync Critical Error', 'Gateway timeout or integrity failure.');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph-bold ph-floppy-disk text-lg mr-2"></i> Synchronize Protocols';
+            }
         });
+    },
+
+    initControlCenterTelemetry: function () {
+        const auditTrail = document.querySelector('.custom-scrollbar');
+        if (auditTrail) {
+            auditTrail.style.opacity = '0.5';
+            setTimeout(() => { auditTrail.style.opacity = '1'; }, 500);
+        }
+        
+        toast.info('Diagnostic Boot', 'Initializing performance audit sequence...');
+        console.log("Control Center Telemetry: Synchronized Node Cluster v4.2");
+        
+        // Simulation of node efficiency pulse
+        const efficiency = document.querySelector('.ph-gear-six.animate-spin-slow');
+        if (efficiency) {
+            efficiency.classList.add('scale-110');
+            setTimeout(() => efficiency.classList.remove('scale-110'), 2000);
+        }
     },
 
     /**
@@ -1448,6 +1487,10 @@ const AdminApp = {
      * Global Modals & Drawers
      */
     openModal: function (id) {
+        if (id === 'create-channel-modal') {
+            this.initChannelWizard();
+        }
+
         const container = document.getElementById(id);
         if (container) {
             container.classList.remove('hidden');
@@ -2246,6 +2289,181 @@ const AdminApp = {
             return '<span class="px-2 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.2)]">Handshake Pending</span>';
         }
         return '<span class="px-2 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.2)]">Restricted</span>';
+    },
+
+    /**
+     * Create Channel Wizard Logic
+     */
+    wizard: {
+        currentStep: 1,
+        totalSteps: 4,
+        selectedMembers: []
+    },
+
+    initChannelWizard: function() {
+        this.wizard.currentStep = 1;
+        this.wizard.selectedMembers = [];
+        this.updateWizardUI();
+        document.getElementById('wizard-name').value = '';
+        document.getElementById('wizard-slug').value = '';
+        document.getElementById('wizard-description').value = '';
+        document.getElementById('wizard-selected-members').innerHTML = `
+            <div class="p-6 rounded-[1.5rem] border border-dashed border-white/10 text-center opacity-40">
+                <p class="font-black text-[10px] uppercase tracking-widest">No agents authorized yet.</p>
+            </div>
+        `;
+    },
+
+    navWizard: function(delta) {
+        const nextStep = this.wizard.currentStep + delta;
+        if (nextStep < 1 || nextStep > this.wizard.totalSteps) return;
+
+        // Simple validation
+        if (delta > 0 && this.wizard.currentStep === 2) {
+            const name = document.getElementById('wizard-name').value;
+            if (name.length < 3) return toast.error('Security Check', 'Channel name must be at least 3 characters.');
+        }
+
+        this.wizard.currentStep = nextStep;
+        this.updateWizardUI();
+
+        if (this.wizard.currentStep === this.wizard.totalSteps) {
+            document.getElementById('wizard-next').innerHTML = 'Finalize Node <i class="ph-bold ph-check-circle ml-2"></i>';
+        } else {
+            document.getElementById('wizard-next').innerHTML = 'Next Step <i class="ph-bold ph-arrow-right ml-2 opacity-60"></i>';
+        }
+    },
+
+    updateWizardUI: function() {
+        document.querySelectorAll('.wizard-pane').forEach(p => p.classList.add('hidden'));
+        document.querySelector(`.wizard-pane[data-step="${this.wizard.currentStep}"]`).classList.remove('hidden');
+
+        document.querySelectorAll('.wizard-step').forEach(s => {
+            const sNum = parseInt(s.getAttribute('data-step'));
+            s.classList.remove('active', 'completed');
+            if (sNum === this.wizard.currentStep) s.classList.add('active');
+            if (sNum < this.wizard.currentStep) s.classList.add('completed');
+        });
+
+        const progress = ((this.wizard.currentStep - 1) / (this.wizard.totalSteps - 1)) * 100;
+        document.getElementById('wizard-progress-bar').style.height = `${progress}%`;
+
+        document.getElementById('wizard-prev').classList.toggle('hidden', this.wizard.currentStep === 1);
+        
+        const nextBtn = document.getElementById('wizard-next');
+        if (this.wizard.currentStep === this.wizard.totalSteps) {
+            nextBtn.onclick = () => this.submitWizard();
+        } else {
+            nextBtn.onclick = () => this.navWizard(1);
+        }
+    },
+
+    searchWizardUsers: function(q) {
+        const results = document.getElementById('wizard-search-results');
+        if (q.length < 2) {
+            results.classList.add('hidden');
+            return;
+        }
+
+        ApiClient.get('users', 'search', { q }).then(data => {
+            if (data.users.length > 0) {
+                let html = '<ul class="p-2 space-y-1">';
+                data.users.forEach(u => {
+                    html += `
+                        <li>
+                            <button onclick="AdminApp.selectWizardUser(${u.id}, '${u.first_name || ''} ${u.last_name || ''}', '${u.username}')" 
+                                    class="w-full text-left p-4 rounded-2xl hover:bg-primary/10 flex items-center gap-4 group transition-all">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}" class="w-8 h-8 rounded-lg bg-[var(--glass-bg)]">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-tight" style="color: var(--text-main);">${u.first_name || u.username}</p>
+                                    <p class="text-[8px] font-bold opacity-40 uppercase tracking-widest" style="color: var(--text-muted);">@${u.username}</p>
+                                </div>
+                            </button>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                results.innerHTML = html;
+                results.classList.remove('hidden');
+            } else {
+                results.classList.add('hidden');
+            }
+        });
+    },
+
+    selectWizardUser: function(uid, name, username) {
+        if (this.wizard.selectedMembers.some(m => m.uid === uid)) return;
+        this.wizard.selectedMembers.push({ uid, name, username, role: 'member' });
+        document.getElementById('wizard-user-search').value = '';
+        document.getElementById('wizard-search-results').classList.add('hidden');
+        this.renderSelectedMembers();
+    },
+
+    renderSelectedMembers: function() {
+        const target = document.getElementById('wizard-selected-members');
+        if (this.wizard.selectedMembers.length === 0) {
+            target.innerHTML = `<div class="p-6 rounded-[1.5rem] border border-dashed border-[var(--border-color)] text-center opacity-40"><p class="font-black text-[10px] uppercase tracking-widest" style="color: var(--text-muted);">No agents authorized yet.</p></div>`;
+            return;
+        }
+
+        let html = '';
+        this.wizard.selectedMembers.forEach((m, idx) => {
+            html += `
+                <div class="p-5 rounded-3xl bg-[var(--glass-bg)] border border-[var(--border-color)] flex items-center justify-between group">
+                    <div class="flex items-center gap-4">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${m.username}" class="w-10 h-10 rounded-xl">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-tight" style="color: var(--text-main);">${m.name || m.username}</p>
+                            <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest" style="color: var(--text-muted);">Agent ID: 0x${m.uid}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select onchange="AdminApp.wizard.selectedMembers[${idx}].role = this.value" class="bg-[var(--glass-bg)] border border-[var(--border-color)] rounded-xl px-4 py-2 text-[9px] font-black uppercase tracking-widest outline-none" style="color: var(--text-main);">
+                            <option value="member" ${m.role === 'member'?'selected':''}>Member</option>
+                            <option value="moderator" ${m.role === 'moderator'?'selected':''}>Moderator</option>
+                            <option value="curator" ${m.role === 'curator'?'selected':''}>Curator</option>
+                        </select>
+                        <button onclick="AdminApp.removeWizardUser(${m.uid})" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                            <i class="ph-bold ph-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        target.innerHTML = html;
+    },
+
+    removeWizardUser: function(uid) {
+        this.wizard.selectedMembers = this.wizard.selectedMembers.filter(m => m.uid !== uid);
+        this.renderSelectedMembers();
+    },
+
+    submitWizard: function() {
+        const payload = {
+            name: document.getElementById('wizard-name').value,
+            slug: document.getElementById('wizard-slug').value,
+            description: document.getElementById('wizard-description').value,
+            type: document.querySelector('input[name="channel_type"]:checked').value,
+            members: this.wizard.selectedMembers,
+            settings: {
+                private_registry: document.getElementById('wizard-privacy-toggle').checked,
+                allow_invites: document.getElementById('wizard-allow-invites').checked
+            }
+        };
+
+        toast.info('Protocol Initiated', 'Synchronizing new node cluster...');
+
+        ApiClient.post('channels', 'create', payload).then(res => {
+            toast.success('Registry Success', 'New communication node is now online.');
+            this.closeWizard();
+            this.loadChannelList();
+        }).catch(err => {
+            toast.error('Registry Failure', err.error || 'Connection to global server failed.');
+        });
+    },
+
+    closeWizard: function() {
+        closeModal();
     }
 };
 

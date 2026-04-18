@@ -17,6 +17,10 @@ class Channel
 
     public int $id;
     public string $name;
+    public ?string $description;
+    public ?string $slug;
+    public ?string $type;
+    public array $settings = [];
     public string $table = 'channels';
     public $conn;
 
@@ -26,12 +30,16 @@ class Channel
         $this->table = 'channels';
         $this->conn = Database::getConnection();
 
-        $stmt = $this->conn->prepare("SELECT `name` FROM `channels` WHERE `id` = ? LIMIT 1");
+        $stmt = $this->conn->prepare("SELECT * FROM `channels` WHERE `id` = ? LIMIT 1");
         $stmt->execute([$this->id]);
-        $row = $stmt->fetch();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($row) {
             $this->name = $row['name'];
+            $this->description = $row['description'];
+            $this->slug = $row['slug'];
+            $this->type = $row['type'];
+            $this->settings = $row['settings'] ? json_decode($row['settings'], true) : [];
         } else {
             throw new \Exception("Channel ID {$id} not found.");
         }
@@ -43,17 +51,69 @@ class Channel
     public static function listAll(): array
     {
         $db = Database::getConnection();
-        return $db->query("SELECT * FROM `channels` ORDER BY `name` ASC")->fetchAll(PDO::FETCH_ASSOC);
+        return $db->query("SELECT * FROM `channels` ORDER BY `created_at` DESC")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Create a new channel.
+     * Create a new channel with extended details.
      */
-    public static function create(string $name, string $type = 'public'): bool
+    public static function createWithDetails(array $data): int|bool
     {
         $db = Database::getConnection();
-        $stmt = $db->prepare("INSERT INTO `channels` (`name`, `type`) VALUES (?, ?)");
-        return $stmt->execute([$name, $type]);
+        $stmt = $db->prepare("INSERT INTO `channels` (`name`, `description`, `slug`, `type`, `settings`) VALUES (?, ?, ?, ?, ?)");
+        
+        $settings = json_encode($data['settings'] ?? []);
+        
+        if ($stmt->execute([
+            $data['name'],
+            $data['description'] ?? '',
+            $data['slug'] ?? '',
+            $data['type'] ?? 'public',
+            $settings
+        ])) {
+            $id = $db->lastInsertId();
+            
+            // Assign owner
+            if (isset($data['owner_id'])) {
+                self::assignMember($id, $data['owner_id'], 'owner');
+            }
+            
+            // Assign other members
+            if (isset($data['members']) && is_array($data['members'])) {
+                foreach ($data['members'] as $member) {
+                    self::assignMember($id, $member['uid'], $member['role'] ?? 'member');
+                }
+            }
+            
+            return $id;
+        }
+        return false;
+    }
+
+    /**
+     * Assign a member to a channel.
+     */
+    public static function assignMember(int $channelId, int $userId, string $role = 'member'): bool
+    {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("INSERT INTO `channel_members` (`channel_id`, `user_id`, `role`) VALUES (?, ?, ?)");
+        return $stmt->execute([$channelId, $userId, $role]);
+    }
+
+    /**
+     * Get all members of this channel.
+     */
+    public function getMembers(): array
+    {
+        $stmt = $this->conn->prepare("
+            SELECT m.*, p.first_name, p.last_name, a.username 
+            FROM `channel_members` m
+            LEFT JOIN `profiles` p ON m.user_id = p.uid
+            LEFT JOIN `auth` a ON m.user_id = a.id
+            WHERE m.channel_id = ?
+        ");
+        $stmt->execute([$this->id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
