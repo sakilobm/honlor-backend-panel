@@ -521,7 +521,7 @@ const AdminApp = {
                 const latency = Math.floor(Math.random() * 40) + 12;
 
                 html += `
-                    <tr class="hover:bg-white/[0.03] transition-all duration-300 group">
+                    <tr onclick="AdminApp.openChannelWorkspace('${ch.id}')" class="hover:bg-white/[0.03] transition-all duration-300 group cursor-pointer">
                         <td class="px-8 py-6">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-black text-xs shadow-xl shadow-indigo-500/5 transition-transform group-hover:scale-110">
@@ -2351,9 +2351,11 @@ const AdminApp = {
         document.getElementById('wizard-prev').classList.toggle('hidden', this.wizard.currentStep === 1);
         
         const nextBtn = document.getElementById('wizard-next');
-        if (this.wizard.currentStep === this.wizard.totalSteps) {
+        if (this.wizard.currentStep === 4) {
+            nextBtn.innerHTML = `Finalize Channel <i class="ph-bold ph-check-circle ml-2 opacity-60"></i>`;
             nextBtn.onclick = () => this.submitWizard();
         } else {
+            nextBtn.innerHTML = `Next Step <i class="ph-bold ph-arrow-right ml-2 opacity-60"></i>`;
             nextBtn.onclick = () => this.navWizard(1);
         }
     },
@@ -2454,11 +2456,132 @@ const AdminApp = {
         toast.info('Protocol Initiated', 'Synchronizing new node cluster...');
 
         ApiClient.post('channels', 'create', payload).then(res => {
-            toast.success('Registry Success', 'New communication node is now online.');
+            toast.success('Channel Created', 'New communication channel is now online.');
             this.closeWizard();
             this.loadChannelList();
+            
+            // Auto-open Workspace for new channel
+            if (res.id) {
+                setTimeout(() => this.openChannelWorkspace(res.id), 1000);
+            }
         }).catch(err => {
             toast.error('Registry Failure', err.error || 'Connection to global server failed.');
+        });
+    },
+
+    /**
+     * Channel Workspace (Chat) Intelligence
+     */
+    currentChannelId: null,
+
+    openChannelWorkspace: function(id) {
+        this.currentChannelId = id;
+        const workspaceBtn = document.getElementById('tab-workspace-btn');
+        if (workspaceBtn) workspaceBtn.classList.remove('hidden');
+
+        // Fetch Channel Snapshot
+        ApiClient.get('channels', 'messages', { id }).then(data => {
+            this.currentChannelId = id;
+            this.switchTab('channels', 'workspace');
+
+            // Hide Empty Overlay
+            const overlay = document.getElementById('ws-empty-overlay');
+            if (overlay) overlay.classList.add('hidden');
+
+            // Reset UI
+            if (data.success) {
+                // Update Sidebar Info
+                document.getElementById('ws-channel-name').innerText = data.channel.name;
+                document.getElementById('ws-channel-description').innerText = data.channel.description || 'No description provided.';
+                document.getElementById('ws-channel-type').innerText = data.channel.type;
+                document.getElementById('ws-channel-icon').innerText = data.channel.name.substring(0, 2).toUpperCase();
+                document.getElementById('ws-channel-owner').innerText = data.channel.owner_name || 'System Admin'; // Assuming owner_name join if added, else fallback
+                
+                this.renderWorkspaceMembers(data.members);
+                this.renderChatHistory(data.messages);
+            }
+        });
+    },
+
+    renderWorkspaceMembers: function(members) {
+        const list = document.getElementById('ws-member-list');
+        document.getElementById('ws-member-count').innerText = `${members.length} Total`;
+        
+        let html = '';
+        members.forEach(m => {
+            html += `
+                <div class="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/5 group hover:bg-white/[0.05] transition-all">
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${m.username}" class="w-10 h-10 rounded-xl">
+                            <span class="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-[var(--surface)] rounded-full"></span>
+                        </div>
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-tight" style="color: var(--text-main);">${m.first_name || m.username}</p>
+                            <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest text-primary">${m.role}</p>
+                        </div>
+                    </div>
+                    <button class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:text-primary">
+                        <i class="ph-bold ph-dots-three"></i>
+                    </button>
+                </div>
+            `;
+        });
+        list.innerHTML = html;
+    },
+
+    renderChatHistory: function(messages) {
+        const history = document.getElementById('ws-chat-history');
+        if (messages.length === 0) {
+            history.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-24 opacity-20">
+                    <i class="ph-bold ph-brackets-angle text-6xl mb-4"></i>
+                    <p class="font-black text-[10px] uppercase tracking-widest">Initial Linkage Established. No packets intercepted.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        messages.forEach(msg => {
+            const isSelf = msg.user_id == this.session.user.id;
+            const bubbleClass = isSelf ? 'bg-primary text-white ml-auto rounded-l-[1.5rem] rounded-tr-[1.5rem] rounded-br-none' : 'bg-white/[0.05] border border-white/5 mr-auto rounded-r-[1.5rem] rounded-tl-[1.5rem] rounded-bl-none';
+            const alignClass = isSelf ? 'items-end' : 'items-start';
+            const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            html += `
+                <div class="flex gap-4 ${isSelf ? 'flex-row-reverse' : ''} group animate-in slide-in-from-bottom-2">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.username}" class="w-10 h-10 rounded-xl mt-1 shadow-lg">
+                    <div class="flex flex-col ${alignClass} max-w-[70%]">
+                        <div class="flex items-center gap-3 mb-2 px-1">
+                            <span class="text-[10px] font-black uppercase tracking-widest" style="color: var(--text-main);">${isSelf ? 'You (Admin)' : msg.first_name || msg.username}</span>
+                            <span class="text-[8px] font-bold opacity-30 uppercase tracking-widest">${time}</span>
+                        </div>
+                        <div class="p-5 ${bubbleClass} shadow-2xl">
+                            <p class="text-sm font-medium leading-relaxed">${msg.message}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        history.innerHTML = html;
+        history.scrollTop = history.scrollHeight;
+    },
+
+    sendMessage: function() {
+        const input = document.getElementById('ws-chat-input');
+        const message = input.value.trim();
+        if (!message || !this.currentChannelId) return;
+
+        input.value = '';
+        
+        ApiClient.post('channels', 'send', {
+            channel_id: this.currentChannelId,
+            message: message
+        }).then(data => {
+            if (data.success) {
+                this.openChannelWorkspace(this.currentChannelId); // Simple refresh for now
+            }
         });
     },
 

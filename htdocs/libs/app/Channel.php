@@ -20,29 +20,32 @@ class Channel
     public ?string $description;
     public ?string $slug;
     public ?string $type;
-    public array $settings = [];
+    public $settings;
+    public $created_at;
     public string $table = 'channels';
     public $conn;
 
     public function __construct($id)
     {
-        $this->id = (int)$id;
-        $this->table = 'channels';
-        $this->conn = Database::getConnection();
-
-        $stmt = $this->conn->prepare("SELECT * FROM `channels` WHERE `id` = ? LIMIT 1");
-        $stmt->execute([$this->id]);
+        $db = Database::getConnection();
+        $stmt = $db->prepare("SELECT * FROM `channels` WHERE `id` = ?");
+        $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($row) {
+            $this->id = $row['id'];
             $this->name = $row['name'];
             $this->description = $row['description'];
             $this->slug = $row['slug'];
             $this->type = $row['type'];
-            $this->settings = $row['settings'] ? json_decode($row['settings'], true) : [];
-        } else {
-            throw new \Exception("Channel ID {$id} not found.");
+            $this->settings = json_decode($row['settings'], true);
+            $this->created_at = $row['created_at'];
         }
+    }
+
+    public static function getById(int $id): ?self {
+        $chan = new self($id);
+        return $chan->id ? $chan : null;
     }
 
     /**
@@ -98,6 +101,48 @@ class Channel
         $db = Database::getConnection();
         $stmt = $db->prepare("INSERT INTO `channel_members` (`channel_id`, `user_id`, `role`) VALUES (?, ?, ?)");
         return $stmt->execute([$channelId, $userId, $role]);
+    }
+
+    /**
+     * Fetch channel messaging history
+     */
+    public static function getMessages(int $channelId, int $limit = 50): array {
+        $db = Database::getConnection();
+        $sql = "SELECT m.*, u.username, u.first_name, u.last_name 
+                FROM `channel_messages` m
+                JOIN `users` u ON m.user_id = u.id
+                WHERE m.channel_id = ?
+                ORDER BY m.created_at ASC 
+                LIMIT ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$channelId, $limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Post a new message to the channel
+     */
+    public static function postMessage(int $channelId, int $userId, string $message, string $type = 'text'): int|bool {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("INSERT INTO `channel_messages` (`channel_id`, `user_id`, `message`, `type`) VALUES (?, ?, ?, ?)");
+        if ($stmt->execute([$channelId, $userId, $message, $type])) {
+            return $db->lastInsertId();
+        }
+        return false;
+    }
+
+    /**
+     * Fetch detailed member list with profile info
+     */
+    public static function getDetailedMembers(int $channelId): array {
+        $db = Database::getConnection();
+        $sql = "SELECT cm.role, u.id, u.username, u.first_name, u.last_name, u.email
+                FROM `channel_members` cm
+                JOIN `users` u ON cm.user_id = u.id
+                WHERE cm.channel_id = ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$channelId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
