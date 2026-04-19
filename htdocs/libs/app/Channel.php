@@ -40,6 +40,7 @@ class Channel
             $this->type = $row['type'];
             $this->settings = json_decode($row['settings'], true);
             $this->created_at = $row['created_at'];
+            $this->conn = $db; // Ensure connection is persisted for instance methods
         }
     }
 

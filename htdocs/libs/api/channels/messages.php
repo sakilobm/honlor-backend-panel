@@ -9,22 +9,34 @@ use Session;
  * Endpoint: /api/channels/messages
  * Fetches the message history for a specific node cluster.
  */
-return function($params) {
+$messages = function() {
     Session::ensureLogin();
 
-    $channelId = (int)($params['id'] ?? 0);
+    $channelId = (int)($this->_request['id'] ?? 0);
     if (!$channelId) {
-        return ['error' => 'Valid Node ID required.'];
+        $this->response($this->json(['error' => 'Valid Node ID required.']), 400);
+    }
+
+    $channel = Channel::getById($channelId);
+    
+    // Graceful handling for deleted channels
+    if (!$channel) {
+        $this->response($this->json([
+            'success' => true,
+            'messages' => [],
+            'members' => [],
+            'channel' => null,
+            'note' => 'Node decommissioned or target unreachable.'
+        ]), 200);
     }
 
     $messages = Channel::getMessages($channelId);
     $members = Channel::getDetailedMembers($channelId);
-    $channel = Channel::getById($channelId);
 
-    return [
+    $this->response($this->json([
         'success' => true,
         'channel' => $channel,
         'messages' => $messages,
         'members' => $members
-    ];
+    ]), 200);
 };

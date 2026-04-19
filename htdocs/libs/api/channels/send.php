@@ -7,28 +7,32 @@ use Session;
 
 /**
  * Endpoint: /api/channels/send
- * Synchronizes a new message packet to the node cluster.
+ * Transmits a message through the specified node cluster.
  */
-return function($params) {
+$send = function() {
     $user = Session::ensureLogin();
 
-    $channelId = (int)($params['channel_id'] ?? 0);
-    $message = trim($params['message'] ?? '');
-    $type = $params['type'] ?? 'text';
+    $channelId = (int)($this->_request['channel_id'] ?? 0);
+    $message = $this->_request['message'] ?? '';
 
     if (!$channelId || empty($message)) {
-        return ['error' => 'Incomplete data packet. Transmission failed.'];
+        $this->response($this->json(['error' => 'Valid node ID and message payload required.']), 400);
     }
 
-    $messageId = Channel::postMessage($channelId, $user['id'], $message, $type);
+    $channel = Channel::getById($channelId);
+    if (!$channel) {
+        $this->response($this->json(['error' => 'Target node unreachable.']), 404);
+    }
 
-    if ($messageId) {
-        return [
+    $msgId = Channel::postMessage($channelId, $user->id, $message);
+
+    if ($msgId) {
+        $this->response($this->json([
             'success' => true,
-            'message_id' => $messageId,
-            'timestamp' => date('Y-m-d H:i:s')
-        ];
+            'message_id' => $msgId,
+            'status' => 'transmitted'
+        ]), 200);
+    } else {
+        $this->response($this->json(['error' => 'Transmission failure.']), 500);
     }
-
-    return ['error' => 'Internal sync failure. Check node health.'];
 };

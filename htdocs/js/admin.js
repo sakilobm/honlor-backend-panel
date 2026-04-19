@@ -564,10 +564,20 @@ const AdminApp = {
     },
 
     deleteChannel: function (id) {
-        if (!confirm('Permanently decommission this node?')) return;
-        ApiClient.post('channels', 'delete', { id }).then(res => {
-            toast.success('Confirmed', 'Node removed from network.');
-            this.loadChannelList();
+        this.confirm({
+            title: 'Node Decommission',
+            message: 'Are you absolutely sure you want to permanently decommission this node? This action will terminate all active pipelines and purge the regional identity vault.',
+            icon: 'ph-warning-octagon',
+            confirmLabel: 'Decommission Node',
+            type: 'danger',
+            purge: true
+        }).then(confirmed => {
+            if (confirmed) {
+                ApiClient.post('channels', 'delete', { id }).then(res => {
+                    toast.success('Confirmed', 'Node removed from network.');
+                    this.loadChannelList();
+                });
+            }
         });
     },
 
@@ -581,7 +591,7 @@ const AdminApp = {
         // Polling for real-time telemetry
         if (this.telemetryInterval) clearInterval(this.telemetryInterval);
         this.telemetryInterval = setInterval(() => {
-            if (Session.getCurrentPageIdentifier() === 'messages') {
+            if (this.currentSection === 'messages') {
                 this.loadMessageList();
                 this.loadFlaggedMessages();
             }
@@ -684,7 +694,7 @@ const AdminApp = {
                     const isPositive = log.message.toLowerCase().includes('success') || log.message.toLowerCase().includes('resolved') || log.message.toLowerCase().includes('approve');
                     const icon = isPositive ? 'ph-check-circle text-emerald-400' : 'ph-info text-blue-400';
                     const time = log.created_at ? new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'NOW';
-                    
+
                     ledgerHtml += `
                         <div class="flex gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all group/item">
                             <div class="w-10 h-10 shrink-0 rounded-xl bg-white/5 flex items-center justify-center">
@@ -748,13 +758,34 @@ const AdminApp = {
     },
 
     executeMessageAction: function (action, id) {
-        ApiClient.post('messages', 'action', { id, action }).then(res => {
-            toast.success('Governance Success', res.message);
-            this.loadMessageList();
-            this.loadFlaggedMessages();
-        }).catch(err => {
-            toast.error('Protocol Error', err.message);
-        });
+        let confirmOptions = null;
+        if (action === 'purge' || action === 'delete') {
+            confirmOptions = {
+                title: 'Packet Purge',
+                message: 'Are you sure you want to permanently remove this communication packet from the global ledger?',
+                icon: 'ph-trash',
+                confirmLabel: 'Purge Packet',
+                type: 'danger'
+            };
+        }
+
+        const execute = () => {
+            ApiClient.post('messages', 'action', { id, action }).then(res => {
+                toast.success('Governance Success', res.message);
+                this.loadMessageList();
+                this.loadFlaggedMessages();
+            }).catch(err => {
+                toast.error('Protocol Error', err.message);
+            });
+        };
+
+        if (confirmOptions) {
+            this.confirm(confirmOptions).then(confirmed => {
+                if (confirmed) execute();
+            });
+        } else {
+            execute();
+        }
     },
 
     /**
@@ -783,7 +814,7 @@ const AdminApp = {
             data.incidents.forEach(inc => {
                 const severityColor = inc.severity === 'Critical' ? 'bg-red-500/10 text-red-500 border-red-500/20' : (inc.severity === 'Moderate' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-400/20');
                 const urgencyPulse = inc.severity === 'Critical' ? 'bg-red-500' : (inc.severity === 'Moderate' ? 'bg-orange-500' : 'bg-blue-500');
-                
+
                 html += `
                     <tr class="hover:bg-white/[0.03] transition-all duration-300 group">
                         <td class="px-8 py-6">
@@ -926,13 +957,21 @@ const AdminApp = {
     },
 
     handleDeletion: function (id, status) {
-        if (!confirm(`Are you sure you want to ${status} this deletion request?`)) return;
-
-        ApiClient.post('users', 'process_deletion', { id, status }).then(res => {
-            toast.success('Governance', res.message);
-            this.loadDeletionRequests();
-        }).catch(err => {
-            toast.error('Error', err.error || 'Failed to process request.');
+        this.confirm({
+            title: 'Erasure Protocol',
+            message: `Are you sure you want to ${status} this deletion request? This will impact the subject's identity visibility.`,
+            icon: status === 'approved' ? 'ph-shield-check' : 'ph-prohibit',
+            confirmLabel: status === 'approved' ? 'Authorize Erasure' : 'Deny Request',
+            type: status === 'approved' ? 'info' : 'danger'
+        }).then(confirmed => {
+            if (confirmed) {
+                ApiClient.post('users', 'process_deletion', { id, status }).then(res => {
+                    toast.success('Governance', res.message);
+                    this.loadDeletionRequests();
+                }).catch(err => {
+                    toast.error('Error', err.error || 'Failed to process request.');
+                });
+            }
         });
     },
 
@@ -1113,7 +1152,7 @@ const AdminApp = {
                 const ctr = ((ad.clicks / ad.impressions) * 100 || 0).toFixed(2);
                 const statusColor = ad.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20';
                 const pulseColor = ad.status === 'Active' ? 'bg-emerald-400' : 'bg-orange-400';
-                
+
                 html += `
                     <tr class="hover:bg-white/[0.03] transition-all duration-300 group">
                         <td class="px-8 py-6">
@@ -1166,10 +1205,19 @@ const AdminApp = {
     },
 
     deleteAd: function (id) {
-        if (!confirm('Permanently delete this campaign?')) return;
-        ApiClient.post('ads', 'delete', { id }).then(res => {
-            toast.success('Confirmed', 'Campaign removed.');
-            this.loadAdList();
+        this.confirm({
+            title: 'Stream Termination',
+            message: 'Permanently delete this marketing campaign? This action will halt all associated fuel distribution and telemetry gathering.',
+            icon: 'ph-trash',
+            confirmLabel: 'Delete Campaign',
+            type: 'danger'
+        }).then(confirmed => {
+            if (confirmed) {
+                ApiClient.post('ads', 'delete', { id }).then(res => {
+                    toast.success('Confirmed', 'Campaign removed.');
+                    this.loadAdList();
+                });
+            }
         });
     },
 
@@ -1200,7 +1248,7 @@ const AdminApp = {
             ip_blocklist: document.getElementById('ip_blocklist').value
         };
 
-        const promises = Object.keys(data).map(key => 
+        const promises = Object.keys(data).map(key =>
             ApiClient.post('settings', 'update', { key: key, value: data[key] })
         );
 
@@ -1231,10 +1279,10 @@ const AdminApp = {
             auditTrail.style.opacity = '0.5';
             setTimeout(() => { auditTrail.style.opacity = '1'; }, 500);
         }
-        
+
         toast.info('Diagnostic Boot', 'Initializing performance audit sequence...');
         console.log("Control Center Telemetry: Synchronized Node Cluster v4.2");
-        
+
         // Simulation of node efficiency pulse
         const efficiency = document.querySelector('.ph-gear-six.animate-spin-slow');
         if (efficiency) {
@@ -1468,18 +1516,102 @@ const AdminApp = {
         ApiClient.post('roles', 'save', payload).then(res => {
             toast.success('Security Studio', res.message);
             window.closeModal();
-
             this.loadRoleList();
         }).catch(err => {
             toast.error('Governance Error', err.message || 'Identity protocol violation.');
         });
     },
 
+    confirm: function (options) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('global-confirm-modal');
+            const card = document.getElementById('global-confirm-card');
+            const iconBox = document.getElementById('global-confirm-icon-box');
+            const icon = document.getElementById('global-confirm-icon');
+            const title = document.getElementById('global-confirm-title');
+            const message = document.getElementById('global-confirm-message');
+            const abortBtn = document.getElementById('global-confirm-abort');
+            const executeBtn = document.getElementById('global-confirm-execute');
+            const progressContainer = document.getElementById('global-confirm-progress-container');
+            const progressBar = document.getElementById('global-confirm-progress-bar');
+            const progressPct = document.getElementById('global-confirm-progress-pct');
+
+            if (!modal || !executeBtn || !abortBtn) return resolve(false);
+
+            // Configure Content
+            title.innerText = options.title || 'Confirm Protocol';
+            message.innerText = options.message || 'Are you sure you want to proceed?';
+            icon.className = `ph-bold ${options.icon || 'ph-warning'} text-5xl`;
+            executeBtn.innerText = options.confirmLabel || 'Execute';
+
+            // Theme Configuration
+            if (options.type === 'danger') {
+                iconBox.className = 'w-24 h-24 rounded-[2.5rem] bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20 shadow-[0_0_40px_rgba(239,68,68,0.15)] animate-pulse';
+                executeBtn.className = 'btn-primary !bg-red-500 !shadow-[0_20px_40px_rgba(239,68,68,0.3)] !rounded-3xl !py-5 uppercase font-black tracking-widest text-[10px] hover:!bg-red-600';
+            } else {
+                iconBox.className = 'w-24 h-24 rounded-[2.5rem] bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-[0_0_40px_rgba(124,106,255,0.15)]';
+                executeBtn.className = 'btn-primary !rounded-3xl !py-5 uppercase font-black tracking-widest text-[10px] shadow-2xl';
+            }
+
+            progressContainer.classList.add('hidden');
+            abortBtn.disabled = false;
+            executeBtn.disabled = false;
+            executeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                executeBtn.removeEventListener('click', onConfirm);
+                abortBtn.removeEventListener('click', onCancel);
+            };
+
+            const onConfirm = () => {
+                if (options.purge) {
+                    executeBtn.disabled = true;
+                    executeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    executeBtn.innerText = 'Purge Initialized...';
+                    progressContainer.classList.remove('hidden');
+
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += Math.floor(Math.random() * 15) + 5;
+                        if (progress >= 100) {
+                            progress = 100;
+                            clearInterval(interval);
+                            setTimeout(() => { cleanup(); resolve(true); }, 600);
+                        }
+                        if (progressBar) progressBar.style.width = `${progress}%`;
+                        if (progressPct) progressPct.innerText = `${progress}%`;
+                    }, 200);
+                } else {
+                    cleanup();
+                    resolve(true);
+                }
+            };
+
+            const onCancel = () => { cleanup(); resolve(false); };
+
+            executeBtn.addEventListener('click', onConfirm);
+            abortBtn.addEventListener('click', onCancel);
+
+            modal.classList.remove('hidden');
+        });
+    },
+
     deleteRole: function (id) {
-        if (!confirm('Permanently deconstruct this security role? This may impact mapped identities.')) return;
-        ApiClient.post('roles', 'delete', { id }).then(res => {
-            toast.success('Deconstructed', 'Security role purged from vault.');
-            this.loadRoleList();
+        this.confirm({
+            title: 'Governance Deconstruction',
+            message: 'Permanently deconstruct this security role? This may impact mapped identities and absolute system clearance.',
+            icon: 'ph-shield-slash',
+            confirmLabel: 'Deconstruct Role',
+            type: 'danger',
+            purge: true
+        }).then(confirmed => {
+            if (confirmed) {
+                ApiClient.post('roles', 'delete', { id }).then(res => {
+                    toast.success('Deconstructed', 'Security role purged from vault.');
+                    this.loadRoleList();
+                });
+            }
         });
     },
 
@@ -1669,22 +1801,54 @@ const AdminApp = {
     },
 
     executeAction: function (action, id) {
-        toast.info('Processing', `Executing ${action}...`);
-
         let ns = 'users', method = 'status', payload = { id: id, action: action };
+        let confirmOptions = null;
 
-        if (action === 'flag_message' || action === 'delete_message' || action === 'resolve_flag') {
+        // Action-Specific Configuration
+        if (action === 'toggle_block' || action === 'suspend_account') {
+            confirmOptions = {
+                title: 'Identity Nullification',
+                message: 'Are you sure you want to toggle the access status of this identity? This will immediately sever or restore node connectivity.',
+                icon: 'ph-shield-warning',
+                confirmLabel: 'Confirm Status Change',
+                type: 'danger'
+            };
+        } else if (action === 'delete_message') {
+            ns = 'messages';
+            method = 'flag';
+            payload.action = 'delete';
+            confirmOptions = {
+                title: 'Packet Purge',
+                message: 'Permanently remove this communication packet from the ledger? This action cannot be reversed.',
+                icon: 'ph-trash',
+                confirmLabel: 'Purge Packet',
+                type: 'danger'
+            };
+        } else if (action === 'flag_message' || action === 'resolve_flag') {
             ns = 'messages';
             method = 'flag';
             payload.action = action.replace('_message', '').replace('_flag', '');
         }
 
-        ApiClient.post(ns, method, payload).then(res => {
-            toast.success('Confirmed', res.message);
-            if (ns === 'users') this.loadUserList();
-            if (ns === 'messages') this.loadMessageList();
-            if (window.closeDrawer) closeDrawer();
-        });
+        const execute = () => {
+            toast.info('Processing', `Executing ${action}...`);
+            ApiClient.post(ns, method, payload).then(res => {
+                toast.success('Confirmed', res.message);
+                if (ns === 'users') this.loadUserList();
+                if (ns === 'messages') this.loadMessageList();
+                if (window.closeDrawer) closeDrawer();
+            }).catch(err => {
+                toast.error('Protocol Error', err.error || 'Identity gatekeeping error.');
+            });
+        };
+
+        if (confirmOptions) {
+            this.confirm(confirmOptions).then(confirmed => {
+                if (confirmed) execute();
+            });
+        } else {
+            execute();
+        }
     },
 
     submitRoleUpdate: function (userId) {
@@ -1931,7 +2095,7 @@ const AdminApp = {
                 { title: "Latency Protocol", desc: "Signal latency remains stable at < 12ms across all decentralized vault shards.", color: "text-indigo-400" }
             ];
             const random = insights[Math.floor(Math.random() * insights.length)];
-            
+
             container.innerHTML = `
                 <div class="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-lg">
                     <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 mb-8 mx-auto shadow-2xl">
@@ -2162,7 +2326,7 @@ const AdminApp = {
                                 <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">Requested: ${new Date(req.created_at).toLocaleString()}</p>
                             </div>
                             <div class="flex gap-3 pt-6 border-t border-slate-100">
-                                <button onclick="AdminApp.authorizeHandshake(${req.id}, 'reject')" class="btn-secondary !bg-red-500/5 !border-red-500/10 !text-red-500 hover:!bg-red-500/10 flex-1 !justify-center py-3 text-[10px] font-black uppercase">Termnate</button>
+                                <button onclick="AdminApp.processIdentityHandshake(${req.id}, 'reject')" class="btn-secondary !bg-red-500/5 !border-red-500/10 !text-red-500 hover:!bg-red-500/10 flex-1 !justify-center py-3 text-[10px] font-black uppercase">Termnate</button>
                                 <button onclick="AdminApp.openHandshakeAuthorize(${req.id})" class="btn-primary flex-1 !justify-center py-3 text-[10px] font-black uppercase shadow-lg shadow-primary/20">Authorize</button>
                             </div>
                         </div>
@@ -2174,17 +2338,23 @@ const AdminApp = {
         });
     },
 
-    authorizeHandshake: function (id, action, roleId = 0) {
-        if (action === 'reject' && !confirm('Terminate this Identity Handshake? User will remain restricted.')) return;
-
-        // Finalize Protocol
-        ApiClient.post('users', 'authorize', { id, action, role_id: roleId }).then(res => {
-            toast.success('Security Event', res.message);
-            closeModal();
-            this.loadHandshakeHub();
-            this.loadUserList(); // Sync main list
-        }).catch(err => {
-            toast.error('Protocol Error', err.error || 'Authorization failed.');
+    processIdentityHandshake: function (id, action) {
+        this.confirm({
+            title: 'Identity Verification',
+            message: action === 'reject' ? 'Terminate this Identity Handshake? User will remain restricted from global nodes.' : 'Authorize this Handshake Request and grant identity clearance?',
+            icon: action === 'reject' ? 'ph-prohibit' : 'ph-shield-check',
+            confirmLabel: action === 'reject' ? 'Terminate Handshake' : 'Authorize Handshake',
+            type: action === 'reject' ? 'danger' : 'success'
+        }).then(confirmed => {
+            if (confirmed) {
+                ApiClient.post('security', 'process_handshake', { id, action }).then(res => {
+                    toast.success('Governance Sync', res.message);
+                    this.loadHandshakeHub();
+                    this.loadUserList();
+                }).catch(err => {
+                    toast.error('Protocol Error', err.message);
+                });
+            }
         });
     },
 
@@ -2300,7 +2470,7 @@ const AdminApp = {
         selectedMembers: []
     },
 
-    initChannelWizard: function() {
+    initChannelWizard: function () {
         this.wizard.currentStep = 1;
         this.wizard.selectedMembers = [];
         this.updateWizardUI();
@@ -2314,7 +2484,7 @@ const AdminApp = {
         `;
     },
 
-    navWizard: function(delta) {
+    navWizard: function (delta) {
         const nextStep = this.wizard.currentStep + delta;
         if (nextStep < 1 || nextStep > this.wizard.totalSteps) return;
 
@@ -2334,7 +2504,7 @@ const AdminApp = {
         }
     },
 
-    updateWizardUI: function() {
+    updateWizardUI: function () {
         document.querySelectorAll('.wizard-pane').forEach(p => p.classList.add('hidden'));
         document.querySelector(`.wizard-pane[data-step="${this.wizard.currentStep}"]`).classList.remove('hidden');
 
@@ -2349,7 +2519,7 @@ const AdminApp = {
         document.getElementById('wizard-progress-bar').style.height = `${progress}%`;
 
         document.getElementById('wizard-prev').classList.toggle('hidden', this.wizard.currentStep === 1);
-        
+
         const nextBtn = document.getElementById('wizard-next');
         if (this.wizard.currentStep === 4) {
             nextBtn.innerHTML = `Finalize Channel <i class="ph-bold ph-check-circle ml-2 opacity-60"></i>`;
@@ -2360,7 +2530,7 @@ const AdminApp = {
         }
     },
 
-    searchWizardUsers: function(q) {
+    searchWizardUsers: function (q) {
         const results = document.getElementById('wizard-search-results');
         if (q.length < 2) {
             results.classList.add('hidden');
@@ -2393,7 +2563,7 @@ const AdminApp = {
         });
     },
 
-    selectWizardUser: function(uid, name, username) {
+    selectWizardUser: function (uid, name, username) {
         if (this.wizard.selectedMembers.some(m => m.uid === uid)) return;
         this.wizard.selectedMembers.push({ uid, name, username, role: 'member' });
         document.getElementById('wizard-user-search').value = '';
@@ -2401,7 +2571,7 @@ const AdminApp = {
         this.renderSelectedMembers();
     },
 
-    renderSelectedMembers: function() {
+    renderSelectedMembers: function () {
         const target = document.getElementById('wizard-selected-members');
         if (this.wizard.selectedMembers.length === 0) {
             target.innerHTML = `<div class="p-6 rounded-[1.5rem] border border-dashed border-[var(--border-color)] text-center opacity-40"><p class="font-black text-[10px] uppercase tracking-widest" style="color: var(--text-muted);">No agents authorized yet.</p></div>`;
@@ -2421,9 +2591,9 @@ const AdminApp = {
                     </div>
                     <div class="flex items-center gap-3">
                         <select onchange="AdminApp.wizard.selectedMembers[${idx}].role = this.value" class="bg-[var(--glass-bg)] border border-[var(--border-color)] rounded-xl px-4 py-2 text-[9px] font-black uppercase tracking-widest outline-none" style="color: var(--text-main);">
-                            <option value="member" ${m.role === 'member'?'selected':''}>Member</option>
-                            <option value="moderator" ${m.role === 'moderator'?'selected':''}>Moderator</option>
-                            <option value="curator" ${m.role === 'curator'?'selected':''}>Curator</option>
+                            <option value="member" ${m.role === 'member' ? 'selected' : ''}>Member</option>
+                            <option value="moderator" ${m.role === 'moderator' ? 'selected' : ''}>Moderator</option>
+                            <option value="curator" ${m.role === 'curator' ? 'selected' : ''}>Curator</option>
                         </select>
                         <button onclick="AdminApp.removeWizardUser(${m.uid})" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
                             <i class="ph-bold ph-trash"></i>
@@ -2435,12 +2605,12 @@ const AdminApp = {
         target.innerHTML = html;
     },
 
-    removeWizardUser: function(uid) {
+    removeWizardUser: function (uid) {
         this.wizard.selectedMembers = this.wizard.selectedMembers.filter(m => m.uid !== uid);
         this.renderSelectedMembers();
     },
 
-    submitWizard: function() {
+    submitWizard: function () {
         const payload = {
             name: document.getElementById('wizard-name').value,
             slug: document.getElementById('wizard-slug').value,
@@ -2459,7 +2629,7 @@ const AdminApp = {
             toast.success('Channel Created', 'New communication channel is now online.');
             this.closeWizard();
             this.loadChannelList();
-            
+
             // Auto-open Workspace for new channel
             if (res.id) {
                 setTimeout(() => this.openChannelWorkspace(res.id), 1000);
@@ -2474,7 +2644,7 @@ const AdminApp = {
      */
     currentChannelId: null,
 
-    openChannelWorkspace: function(id) {
+    openChannelWorkspace: function (id) {
         this.currentChannelId = id;
         const workspaceBtn = document.getElementById('tab-workspace-btn');
         if (workspaceBtn) workspaceBtn.classList.remove('hidden');
@@ -2489,24 +2659,27 @@ const AdminApp = {
             if (overlay) overlay.classList.add('hidden');
 
             // Reset UI
-            if (data.success) {
+            if (data.success && data.channel) {
                 // Update Sidebar Info
                 document.getElementById('ws-channel-name').innerText = data.channel.name;
                 document.getElementById('ws-channel-description').innerText = data.channel.description || 'No description provided.';
                 document.getElementById('ws-channel-type').innerText = data.channel.type;
                 document.getElementById('ws-channel-icon').innerText = data.channel.name.substring(0, 2).toUpperCase();
-                document.getElementById('ws-channel-owner').innerText = data.channel.owner_name || 'System Admin'; // Assuming owner_name join if added, else fallback
-                
+                document.getElementById('ws-channel-owner').innerText = data.channel.owner_name || 'System Admin';
+
                 this.renderWorkspaceMembers(data.members);
                 this.renderChatHistory(data.messages);
+            } else if (data.success && !data.channel) {
+                toast.error('Transmission Loss', 'Target node is unreachable or decommissioned.');
+                this.switchTab('channels', 'list');
             }
         });
     },
 
-    renderWorkspaceMembers: function(members) {
+    renderWorkspaceMembers: function (members) {
         const list = document.getElementById('ws-member-list');
         document.getElementById('ws-member-count').innerText = `${members.length} Total`;
-        
+
         let html = '';
         members.forEach(m => {
             html += `
@@ -2530,7 +2703,7 @@ const AdminApp = {
         list.innerHTML = html;
     },
 
-    renderChatHistory: function(messages) {
+    renderChatHistory: function (messages) {
         const history = document.getElementById('ws-chat-history');
         if (messages.length === 0) {
             history.innerHTML = `
@@ -2568,13 +2741,13 @@ const AdminApp = {
         history.scrollTop = history.scrollHeight;
     },
 
-    sendMessage: function() {
+    sendMessage: function () {
         const input = document.getElementById('ws-chat-input');
         const message = input.value.trim();
         if (!message || !this.currentChannelId) return;
 
         input.value = '';
-        
+
         ApiClient.post('channels', 'send', {
             channel_id: this.currentChannelId,
             message: message
@@ -2585,7 +2758,7 @@ const AdminApp = {
         });
     },
 
-    closeWizard: function() {
+    closeWizard: function () {
         closeModal();
     }
 };

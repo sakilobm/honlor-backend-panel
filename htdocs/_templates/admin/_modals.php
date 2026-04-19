@@ -781,3 +781,50 @@
         </div>
     </div>
 </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Global Modal: Universal Confirmation Protocol -->
+<div id="global-confirm-modal" class="modal-overlay hidden bg-slate-950/40 backdrop-blur-3xl">
+    <div id="global-confirm-card" class="modal-card !max-w-lg transition-all duration-500 border-white/5 bg-gradient-to-b from-white/[0.05] to-transparent shadow-[0_50px_100px_rgba(0,0,0,0.4)]">
+        <div class="p-10 text-center">
+            <!-- Dynamic Glowing Header -->
+            <div class="flex justify-center mb-10">
+                <div id="global-confirm-icon-box" class="w-24 h-24 rounded-[2.5rem] flex items-center justify-center border transition-all duration-500">
+                    <i id="global-confirm-icon" class="text-5xl"></i>
+                </div>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="space-y-4 mb-12">
+                <h3 id="global-confirm-title" class="text-3xl font-black uppercase tracking-tighter" style="color: var(--text-main);">Confirm Protocol</h3>
+                <p id="global-confirm-subtitle" class="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 opacity-60">System Authority Verification</p>
+                <div id="global-confirm-divider" class="h-[1px] w-12 mx-auto my-6 opacity-30"></div>
+                <p id="global-confirm-message" class="text-sm font-bold leading-relaxed px-4" style="color: var(--text-main);">---</p>
+            </div>
+
+            <!-- Animation Layer (Optional) -->
+            <div id="global-confirm-progress-container" class="hidden mb-10 px-8 space-y-3">
+                <div class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-primary animate-pulse">
+                    <span id="global-confirm-progress-label">Processing...</span>
+                    <span id="global-confirm-progress-pct">0%</span>
+                </div>
+                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5">
+                    <div id="global-confirm-progress-bar" class="h-full bg-primary w-0 rounded-full shadow-[0_0_15px_rgba(124,106,255,0.5)] transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Action Cluster -->
+            <div class="grid grid-cols-2 gap-4">
+                <button type="button" id="global-confirm-abort" class="btn-secondary !rounded-3xl !py-5 uppercase font-black tracking-widest text-[10px] group transition-all">
+                    <span class="opacity-60 group-hover:opacity-100 transition-opacity">Abort</span>
+                </button>
+                <button type="button" id="global-confirm-execute" class="btn-primary !rounded-3xl !py-5 uppercase font-black tracking-widest text-[10px] transition-all active:scale-95 shadow-2xl">
+                    Execute
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
