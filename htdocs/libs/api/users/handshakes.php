@@ -14,11 +14,11 @@ $handshakes = function()
 
     $conn = \Aether\Database::getConnection();
     
-    // Fetch users with pending requests
+    // Fetch users with pending requests (include NULL roles for newly registered identities)
     $sql = "SELECT a.id, a.username, a.email, a.created_at, p.firstname, p.lastname, p.avatar 
             FROM `auth` a
             LEFT JOIN `profiles` p ON a.id = p.id
-            WHERE a.`request_pending` = 1 AND a.`role_id` = 0
+            WHERE a.`request_pending` = 1 AND (a.`role_id` = 0 OR a.`role_id` IS NULL)
             ORDER BY a.created_at DESC";
             
     $stmt = $conn->prepare($sql);

@@ -151,7 +151,8 @@
 
             <div class="stat-card border-white/5 bg-white/[0.02] flex flex-col pt-10">
                  <h3 class="text-[10px] font-black uppercase tracking-[0.2em] mb-12 opacity-60">Verified Resolution Stream</h3>
-                 <div class="space-y-8 flex-grow" id="reports-history-list">
+                 <div class="space-y-6 flex-grow relative min-h-[300px] z-10" id="reports-history-list">
+                      <div class="absolute left-[3px] top-4 bottom-4 w-px bg-white/5 z-0"></div>
                       <!-- History Synchronized by JS -->
                  </div>
                  <div class="mt-12 p-6 rounded-3xl border border-dashed border-white/20 text-center" style="background-color: var(--glass-bg);">

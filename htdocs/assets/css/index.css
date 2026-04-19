@@ -475,3 +475,89 @@ body.dark-mode { background: var(--background); }
     .main-panel { margin-left: 0; }
     .sidebar-toggle { display: flex; }
 }
+/* ─── Sidebar Collapse System ─────────────────────────────── */
+#sidebar {
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s ease;
+    overflow: visible !important;
+    z-index: 100;
+}
+
+/* Ensure the main content expands to fill space */
+body:not(.sidebar-collapsed) #sidebar + main {
+    width: calc(100% - var(--sidebar-width));
+}
+
+#sidebar.sidebar-collapsed {
+    width: 90px !important;
+    min-width: 90px !important;
+}
+
+#sidebar.sidebar-collapsed + main {
+    width: calc(100% - 90px);
+}
+
+/* Hide text and elements when collapsed */
+#sidebar.sidebar-collapsed .sidebar-hide {
+    display: none !important;
+}
+
+/* Duotone Icon System & Alignment */
+.nav-duotone {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+#sidebar.sidebar-collapsed .nav-duotone {
+    margin: 0 !important;
+}
+
+#sidebar.sidebar-collapsed .nav-link-premium {
+    justify-content: center !important;
+    padding: 12px 0 !important;
+    margin: 4px 10px !important;
+}
+
+/* Duotone Color Variants */
+.nav-blue   { background: rgba(56, 139, 253, 0.1);  color: #388bfd; border: 1px solid rgba(56, 139, 253, 0.15); }
+.nav-purple { background: rgba(163, 113, 247, 0.1); color: #a371f7; border: 1px solid rgba(163, 113, 247, 0.15); }
+.nav-green  { background: rgba(63, 185, 80, 0.1);   color: #3fb950; border: 1px solid rgba(63, 185, 80, 0.15); }
+.nav-indigo { background: rgba(102, 126, 234, 0.1); color: #667eea; border: 1px solid rgba(102, 126, 234, 0.15); }
+.nav-orange { background: rgba(255, 153, 0, 0.1);   color: #ff9900; border: 1px solid rgba(255, 153, 0, 0.15); }
+.nav-red    { background: rgba(248, 81, 73, 0.1);   color: #f85149; border: 1px solid rgba(248, 81, 73, 0.15); }
+.nav-amber  { background: rgba(210, 153, 34, 0.1);  color: #d29922; border: 1px solid rgba(210, 153, 34, 0.15); }
+.nav-cyan   { background: rgba(0, 255, 255, 0.1);   color: #00ffff; border: 1px solid rgba(0, 255, 255, 0.15); }
+.nav-rose   { background: rgba(255, 51, 102, 0.1);  color: #ff3366; border: 1px solid rgba(255, 51, 102, 0.15); }
+.nav-primary{ background: rgba(124, 106, 255, 0.1); color: #7c6aff; border: 1px solid rgba(124, 106, 255, 0.15); }
+.nav-emerald{ background: rgba(16, 185, 129, 0.1);  color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); }
+
+/* Toggle Fixes */
+#sidebar-toggle {
+    right: -1rem;
+}
+
+#sidebar.sidebar-collapsed #toggle-icon {
+    /* Rotation handled in toggleSidebarFailsafe for consistency */
+}
+
+/* Force branding and containers to center */
+#sidebar.sidebar-collapsed .p-8,
+#sidebar.sidebar-collapsed .p-6 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+#sidebar.sidebar-collapsed .glass-card {
+    padding: 0.75rem !important;
+    justify-content: center !important;
+    width: auto !important;
+}
+
+#sidebar.sidebar-collapsed .nav-group-title {
+    display: none !important;
+}
