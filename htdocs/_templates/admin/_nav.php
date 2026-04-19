@@ -35,28 +35,46 @@
     <!-- Failsafe Sidebar Handler (Zero-Dependency) -->
     <script>
         function toggleSidebarResilient() {
-            const sidebar = document.getElementById('sidebar');
-            const icon = document.getElementById('toggle-icon');
+            var sidebar = document.getElementById('sidebar');
+            var icon = document.getElementById('toggle-icon');
             if (!sidebar) return;
-            console.log("toggleSidebarResilient");
 
-            const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
+            var isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
             localStorage.setItem('sidebar-collapsed', isCollapsed);
 
             if (icon) {
                 if (isCollapsed) {
-                    icon.classList.replace('ph-caret-left', 'ph-caret-right');
+                    icon.classList.remove('ph-caret-left');
+                    icon.classList.add('ph-caret-right');
                 } else {
-                    icon.classList.replace('ph-caret-right', 'ph-caret-left');
+                    icon.classList.remove('ph-caret-right');
+                    icon.classList.add('ph-caret-left');
                 }
             }
 
-            // Fire a resize event to notify any charts or maps
-            window.dispatchEvent(new Event('resize'));
-
-            // Gracefully notify AdminApp if it has loaded
+            // Sync AdminApp if available
             if (window.AdminApp && typeof AdminApp.syncSidebarIcon === 'function') {
                 AdminApp.syncSidebarIcon();
+            }
+
+            // Force reflow for charts
+            window.dispatchEvent(new Event('resize'));
+        }
+
+        function toggleMobileSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebar-overlay');
+            if (!sidebar) return;
+
+            var isActive = sidebar.classList.toggle('sidebar-mobile-active');
+            if (overlay) {
+                if (isActive) {
+                    overlay.classList.remove('hidden');
+                    setTimeout(function() { overlay.style.opacity = '1'; }, 10);
+                } else {
+                    overlay.style.opacity = '0';
+                    setTimeout(function() { overlay.classList.add('hidden'); }, 300);
+                }
             }
         }
     </script>
@@ -162,7 +180,7 @@
                 </div>
             </div>
             <button
-                class="sidebar-hide w-10 h-10 shrink-0 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
+                class="w-10 h-10 shrink-0 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
                 title="Logout" onclick="window.location.href='<?= get_config('base_path') ?>admin?logout=1'">
                 <i class="ph-bold ph-power text-lg"></i>
             </button>

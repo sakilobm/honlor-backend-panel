@@ -216,56 +216,34 @@
         window.adminId = '<?php echo Session::getUser()->id; ?>';
 
         function toggleTheme() {
-            const html = document.documentElement;
-            const icon = document.getElementById('theme-icon');
-            const isLight = html.classList.toggle('light');
+            var html = document.documentElement;
+            var icon = document.getElementById('theme-icon');
+            var isLight = html.classList.toggle('light');
 
             if (isLight) {
-                icon.classList.replace('ph-moon', 'ph-sun');
+                if (icon) icon.classList.replace('ph-moon', 'ph-sun');
                 localStorage.setItem('admin-theme', 'light');
             } else {
-                icon.classList.replace('ph-sun', 'ph-moon');
+                if (icon) icon.classList.replace('ph-sun', 'ph-moon');
                 localStorage.setItem('admin-theme', 'dark');
             }
-        }
-
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) sidebar.classList.toggle('-translate-x-full');
         }
 
         // Apply saved theme icon on load
         (function () {
             if (localStorage.getItem('admin-theme') === 'light') {
-                const icon = document.getElementById('theme-icon');
+                var icon = document.getElementById('theme-icon');
                 if (icon) {
                     icon.classList.remove('ph-moon');
                     icon.classList.add('ph-sun');
                 }
             }
         })();
-    </script>
-
-    <script>
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            const isOpen = sidebar.classList.contains('translate-x-0');
-
-            if (isOpen) {
-                sidebar.classList.replace('translate-x-0', '-translate-x-full');
-                overlay.classList.replace('opacity-100', 'opacity-0');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-            } else {
-                sidebar.classList.replace('-translate-x-full', 'translate-x-0');
-                overlay.classList.remove('hidden');
-                setTimeout(() => overlay.classList.replace('opacity-0', 'opacity-100'), 10);
-            }
-        }
 
         // Close mobile sidebar on escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('translate-x-0')) {
+        document.addEventListener('keydown', function (e) {
+            var sidebar = document.getElementById('sidebar');
+            if (e.key === 'Escape' && sidebar && sidebar.classList.contains('sidebar-mobile-active')) {
                 toggleMobileSidebar();
             }
         });

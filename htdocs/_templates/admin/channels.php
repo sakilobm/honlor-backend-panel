@@ -83,15 +83,17 @@
     <div id="tab-content-workspace" class="tab-content hidden animate-in fade-in duration-700 relative">
         <!-- Workspace Empty State Overlay -->
         <div id="ws-empty-overlay" class="absolute inset-0 z-50 flex items-center justify-center bg-[var(--surface)]/80 backdrop-blur-md rounded-[2.5rem] border border-[var(--border-color)]">
-            <div class="text-center max-w-sm px-8">
+            <div class="text-center max-w-sm px-8 mx-auto">
                 <div class="w-24 h-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-4xl mb-8 mx-auto shadow-2xl shadow-primary/10 animate-pulse">
                     <i class="ph-bold ph-chats-teardrop"></i>
                 </div>
                 <h3 class="text-2xl font-black uppercase tracking-tighter mb-4" style="color: var(--text-main);">Select a <span class="gradient-text">Channel</span></h3>
                 <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest leading-relaxed mb-10">Choose an active communication cluster from the directory to begin live monitoring or team coordination.</p>
-                <button onclick="AdminApp.switchTab('channels', 'list')" class="btn-primary !rounded-2xl !px-10 !py-4 uppercase text-[10px] font-black tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all">
-                    Browse Directory
-                </button>
+                <div class="flex justify-center">
+                    <button onclick="AdminApp.switchTab('channels', 'list')" class="btn-primary !rounded-2xl !px-10 !py-4 uppercase text-[10px] font-black tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+                        Browse Directory
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -179,7 +181,7 @@
                         <button class="btn-secondary !p-2.5 !rounded-xl transition-all hover:bg-white/10" title="Protocols">
                             <i class="ph-bold ph-gear-six text-lg opacity-40"></i>
                         </button>
-                        <button class="btn-secondary !px-6 !py-2.5 !rounded-xl transition-all font-black text-[9px] uppercase tracking-widest flex items-center gap-3">
+                        <button class="btn-secondary !px-6 !py-2.5 !rounded-xl transition-all font-black text-[9px] uppercase tracking-widest flex items-center gap-3 justify-center">
                             <i class="ph-bold ph-shield-check text-emerald-500"></i>
                             Moderation Mode
                         </button>
