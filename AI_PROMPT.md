@@ -150,4 +150,29 @@ Strict structure to maintain or clone. **HTDOCS is the only public folder.**
 
 ---
 
+## 🌟 Modern Project Domains & Modules (v4.0+)
+The application layer (`libs/app/` & `libs/api/`) now includes several new modules that have been established during recent development sprints. You must be aware of these components and their intended scopes:
+
+### 1. Channels ("Live Workspace")
+- **Heart**: `libs/app/Channel.php`
+- **Nerves**: `libs/api/channels/`
+- **Focus**: Core channel orchestration. Represents the "Live Workspace" interface, having transitioned from the older "Nodes" branding. Integrates heavily with the UI (e.g., "Create Channel" wizard and "Quick Tip" cards).
+
+### 2. Settings ("Control Center")
+- **Heart**: `libs/app/Settings.php`
+- **Nerves**: `libs/api/settings/`
+- **Focus**: The platform's settings dashboard. Designed as a "Command Orchestration" suite with stylized feature toggles, real-time telemetry elements, and is customized for Light/Dark mode resilience.
+
+### 3. Identity, Roles & Compliance ("Zero-Trust")
+- **Heart**: `libs/app/Role.php`, `libs/app/Compliance.php`
+- **Nerves**: `libs/api/roles/`, `libs/api/compliance/`
+- **Focus**: Enforcing "Zero-Trust Identity Lockdown" and robust security governance. Also dictates structures for volunteer enrolment tracking (Address, Taluka, District, State).
+
+### 4. Messaging & Platform Health
+- **Heart**: `libs/app/Message.php`, `libs/app/DashboardStats.php`
+- **Nerves**: `libs/api/messages/`, `libs/api/dashboard/`
+- **Focus**: Manages messaging states and dashboard analytics. Integrates conceptually with systems like Supabase, Firebase FCM, Tinode, and RabbitMQ to act as the central nervous system for platform telemetry.
+
+---
+
 **CRITICAL COMPLIANCE**: When "learning" this project, your goal is **Zero Variance**. Replicate these tables, patterns, and soul-vs-body separations perfectly in all generated code.
