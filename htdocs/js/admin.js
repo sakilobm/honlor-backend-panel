@@ -3242,12 +3242,22 @@ var AdminApp = {
         }
 
         var drawer = document.getElementById('webhook-error-drawer');
-        if (drawer) { drawer.classList.remove('hidden'); drawer.classList.add('flex'); }
+        if (drawer) {
+            drawer.classList.remove('hidden');
+            drawer.classList.add('flex');
+            setTimeout(() => { drawer.classList.remove('translate-x-full'); }, 10);
+        }
     },
 
     closeWebhookErrorDrawer: function () {
         var drawer = document.getElementById('webhook-error-drawer');
-        if (drawer) { drawer.classList.remove('flex'); drawer.classList.add('hidden'); }
+        if (drawer) {
+            drawer.classList.add('translate-x-full');
+            setTimeout(() => { 
+                drawer.classList.remove('flex'); 
+                drawer.classList.add('hidden'); 
+            }, 500);
+        }
     },
 
     /* ================================================================
@@ -3367,21 +3377,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
 window.closeModal = function () {
     var modals = document.querySelectorAll('.modal-overlay, [id*="-modal"]');
-    for (var i = 0; i < modals.length; i++) {
-        var m = modals[i];
+    modals.forEach(m => {
         if (!m.classList.contains('hidden')) {
-            m.classList.add('hidden');
-            m.classList.remove('flex');
+            m.classList.add('opacity-0');
+            setTimeout(() => {
+                m.classList.add('hidden');
+                m.classList.remove('flex', 'opacity-0');
+            }, 300);
         }
-    }
+    });
     document.body.style.overflow = 'auto';
 };
 
 window.closeDrawer = function () {
+    // Check for specific drawers
+    var whDrawer = document.getElementById('webhook-error-drawer');
+    if (whDrawer && !whDrawer.classList.contains('hidden')) {
+        AdminApp.closeWebhookErrorDrawer();
+        return;
+    }
+    
     var drawer = document.getElementById('side-drawer');
-    if (drawer) drawer.classList.add('translate-x-full');
+    if (drawer) {
+        drawer.classList.add('translate-x-full');
+        setTimeout(() => { drawer.classList.add('hidden'); }, 500);
+    }
 };
 
 window.openModal = function (id) {
-    AdminApp.openModal(id);
+    var m = document.getElementById(id);
+    if (m) {
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
 };

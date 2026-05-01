@@ -188,7 +188,7 @@
     <script src="<?= get_config('base_path') ?>js/admin.js?v=<?= time() ?>"></script>
 
     <!-- Global Modals System -->
-    <div id="global-modal-container" class="modal-overlay hidden z-[100]">
+    <div id="global-modal-container" class="modal-overlay hidden z-[9999]">
         <div id="modal-content-target" class="w-full h-full flex items-center justify-center p-6">
             <!-- Dynamic Modals (Ban, Warn, Create, Delete) injected here -->
         </div>
@@ -196,7 +196,7 @@
 
     <!-- Side Drawer (Record Inspection) -->
     <div id="side-drawer"
-        class="fixed inset-y-0 right-0 w-[450px] z-[90] translate-x-full transition-transform duration-500 backdrop-blur-3xl shadow-[-20px_0_50px_rgba(0,0,0,0.5)] border-l"
+        class="fixed inset-y-0 right-0 w-[450px] z-[9999] translate-x-full transition-transform duration-500 backdrop-blur-3xl shadow-[-20px_0_50px_rgba(0,0,0,0.5)] border-l"
         style="background-color: var(--surface-glass); border-color: var(--border-color);">
         <div id="drawer-content-target" class="h-full flex flex-col">
             <!-- Dynamic Drawer Content injected here -->
@@ -241,6 +241,68 @@
             }
         });
     </script>
+    <!-- Webhook Hub: Add Hook Modal (Global Scope) -->
+    <div id="add-webhook-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-[#030407]/80 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-300">
+        <div class="w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] border border-white/10" style="background-color:var(--surface-glass); backdrop-blur-2xl;">
+            <div class="p-8 border-b flex items-center justify-between" style="border-color:var(--border-color);">
+                <div>
+                    <h3 class="text-xl font-black uppercase tracking-tight">Register <span class="gradient-text">Webhook</span></h3>
+                    <p class="text-[9px] font-bold opacity-30 uppercase tracking-[0.2em] mt-1">Configure automated delivery endpoint</p>
+                </div>
+                <button onclick="window.closeModal()" class="w-10 h-10 rounded-2xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center justify-center border border-white/5 shadow-inner">
+                    <i class="ph-bold ph-x text-sm"></i>
+                </button>
+            </div>
+            <div class="p-8 space-y-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Hook Name</label>
+                    <input type="text" id="wh-new-name" placeholder="e.g. Slack Notifier" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-4 font-bold text-sm focus:border-primary outline-none transition-all" style="color:var(--text-main);">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Endpoint URL</label>
+                    <input type="url" id="wh-new-url" placeholder="https://hooks.example.com/..." class="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-4 font-bold text-sm focus:border-primary outline-none transition-all font-mono" style="color:var(--text-main);">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Events</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <?php foreach(['user.created','user.deleted','message.flagged','channel.created','report.submitted','login.failed'] as $ev): ?>
+                        <label class="flex items-center gap-2 p-3 rounded-xl border border-white/10 hover:border-primary/40 cursor-pointer bg-white/[0.02] text-[10px] font-black uppercase tracking-widest transition-all">
+                            <input type="checkbox" class="wh-event-check accent-primary" value="<?= $ev ?>"> <?= $ev ?>
+                        </label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Secret Key (HMAC)</label>
+                    <input type="text" id="wh-new-secret" placeholder="Optional signing secret" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-4 font-bold text-sm focus:border-primary outline-none transition-all font-mono" style="color:var(--text-main);">
+                </div>
+                <button onclick="AdminApp.saveNewWebhook()" class="w-full btn-primary !p-5 !rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-primary/30 mt-4 group">
+                    <i class="ph-bold ph-webhook text-lg group-hover:rotate-12 transition-transform"></i>
+                    <span class="text-[10px] font-black uppercase tracking-widest">Register &amp; Monitor</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Webhook Hub: Error Drawer (Global Scope) -->
+    <div id="webhook-error-drawer" class="hidden fixed inset-y-0 right-0 w-full max-w-md z-[9999] shadow-[-64px_0_128px_rgba(0,0,0,0.8)] flex flex-col transition-all duration-500 ease-out border-l border-white/10 translate-x-full" style="background-color:var(--surface); backdrop-blur-3xl;">
+        <div class="p-8 border-b flex items-center justify-between shrink-0" style="border-color:var(--border-color);">
+            <div>
+                <h3 class="text-xl font-black uppercase tracking-tight text-red-400">Error <span style="color:var(--text-main)">Log</span></h3>
+                <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mt-1" id="wh-drawer-name">—</p>
+            </div>
+            <button onclick="AdminApp.closeWebhookErrorDrawer()" class="w-11 h-11 rounded-2xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center justify-center border border-white/5 shadow-inner">
+                <i class="ph-bold ph-x text-base"></i>
+            </button>
+        </div>
+        <div class="p-8 flex-grow overflow-y-auto custom-scrollbar space-y-4" id="wh-drawer-errors"></div>
+        <div class="p-6 border-t shrink-0 bg-[#030407]/40" style="border-color:var(--border-color);">
+            <button onclick="AdminApp.retryWebhook(AdminApp._drawerHookId)" class="w-full btn-primary !p-5 !rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-primary/20">
+                <i class="ph-bold ph-arrow-clockwise text-lg"></i>
+                <span class="text-[10px] font-black uppercase tracking-widest">Retry All Deliveries</span>
+            </button>
+        </div>
+    </div>
 </body>
 
 </html>
