@@ -23,7 +23,7 @@ class Webhook
             `id`         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             `name`       VARCHAR(120) NOT NULL,
             `url`        TEXT NOT NULL,
-            `events`     TEXT DEFAULT '[]' COMMENT 'JSON array of event names',
+            `events`     TEXT COMMENT 'JSON array of event names',
             `secret`     VARCHAR(255) DEFAULT NULL,
             `status`     ENUM('healthy','failing','paused') DEFAULT 'healthy',
             `paused`     TINYINT(1) DEFAULT 0,

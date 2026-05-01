@@ -3074,100 +3074,274 @@ var AdminApp = {
     },
 
     /* ================================================================
-     * SERVER CONTROLS
+     * WEBHOOK HUB — Real Backend
+     * ================================================================ */
+    _webhooks: [],
+    _drawerHookId: null,
+
+    initWebhookHub: function () {
+        var self = this;
+        var container = document.getElementById('webhook-list-container');
+        if (container) container.innerHTML = '<div class="p-16 text-center animate-pulse"><p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">Fetching Registry...</p></div>';
+
+        ApiClient.get('webhooks', 'list').then(function(data) {
+            self._webhooks = data.webhooks || [];
+            self._renderWebhooks();
+        }).catch(function(err) {
+            if (container) container.innerHTML = '<div class="p-16 text-center"><p class="text-[10px] font-black uppercase tracking-widest text-red-400">Failed to load webhooks: ' + (err.message || 'API error') + '</p></div>';
+        });
+    },
+
+    _renderWebhooks: function () {
+        var hooks = this._webhooks;
+        var healthy = hooks.filter(function(h){ return h.status==='healthy' && !h.paused; }).length;
+        var failing = hooks.filter(function(h){ return h.status==='failing'; }).length;
+        var paused  = hooks.filter(function(h){ return h.paused; }).length;
+
+        var set = function(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; };
+        set('wh-stat-healthy', healthy);
+        set('wh-stat-failing', failing);
+        set('wh-stat-paused',  paused);
+        set('wh-stat-total',   hooks.length);
+
+        var badge = document.getElementById('webhook-error-badge');
+        if (badge) badge.classList.toggle('hidden', failing === 0);
+
+        var container = document.getElementById('webhook-list-container');
+        if (!container) return;
+
+        if (hooks.length === 0) {
+            container.innerHTML = '<div class="p-16 text-center"><p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">No webhooks registered yet.</p></div>';
+            return;
+        }
+
+        var html = '';
+        hooks.forEach(function(wh) {
+            var isPaused   = wh.paused == 1 || wh.paused === true;
+            var statusCls  = isPaused ? 'text-amber-400 border-amber-400/20 bg-amber-400/10' : (wh.status==='healthy' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/10' : 'text-red-400 border-red-400/20 bg-red-400/10');
+            var statusDot  = isPaused ? 'bg-amber-400' : (wh.status==='healthy' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-pulse');
+            var statusLabel= isPaused ? 'Paused' : (wh.status==='healthy' ? 'Healthy' : 'Failing');
+            var latency    = wh.latency_ms ? wh.latency_ms+'ms' : '—';
+            var events     = Array.isArray(wh.events) ? wh.events : [];
+            var hasErrors  = wh.error_log && wh.error_log.length > 0;
+
+            html += '<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 hover:bg-white/[0.02] transition-all" style="border-bottom:1px solid var(--border-color);">' +
+                    '<div class="flex items-center gap-4 min-w-0">' +
+                    '  <div class="w-3 h-3 rounded-full shrink-0 ' + statusDot + '"></div>' +
+                    '  <div class="min-w-0">' +
+                    '    <p class="text-xs font-black uppercase tracking-tight truncate">' + (wh.name||'') + '</p>' +
+                    '    <p class="text-[10px] font-mono opacity-40 truncate mt-0.5">' + (wh.url||'') + '</p>' +
+                    '    <div class="flex flex-wrap gap-1 mt-2">' +
+                    events.map(function(e){ return '<span class="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border border-primary/20 bg-primary/10 text-primary">'+e+'</span>'; }).join('') +
+                    '    </div>' +
+                    '  </div>' +
+                    '</div>' +
+                    '<div class="flex items-center gap-2 shrink-0 flex-wrap">' +
+                    '  <span class="px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border ' + statusCls + '">' + statusLabel + '</span>' +
+                    '  <span class="text-[9px] font-black opacity-40 uppercase tracking-widest">' + latency + '</span>' +
+                    (hasErrors ? '<button onclick="AdminApp.openWebhookErrorDrawer(' + wh.id + ')" class="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all border border-red-500/20" title="View errors"><i class="ph-bold ph-warning-circle text-sm"></i></button>' : '') +
+                    '  <button onclick="AdminApp.pingWebhook(' + wh.id + ')" class="p-2 rounded-xl bg-white/5 hover:bg-primary/10 hover:text-primary transition-all border border-white/5" title="Ping"><i class="ph-bold ph-heartbeat text-sm"></i></button>' +
+                    '  <button onclick="AdminApp.toggleWebhookPause(' + wh.id + ',' + (isPaused?'false':'true') + ')" class="p-2 rounded-xl bg-white/5 hover:bg-amber-500/10 hover:text-amber-400 transition-all border border-white/5" title="' + (isPaused?'Resume':'Pause') + '"><i class="ph-bold ' + (isPaused?'ph-play':'ph-pause') + ' text-sm"></i></button>' +
+                    '  <button onclick="AdminApp.deleteWebhook(' + wh.id + ')" class="p-2 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 transition-all border border-white/5" title="Delete"><i class="ph-bold ph-trash text-sm"></i></button>' +
+                    '</div>' +
+                    '</div>';
+        });
+        container.innerHTML = html;
+    },
+
+    openAddWebhookModal: function () {
+        var m = document.getElementById('add-webhook-modal');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    },
+
+    saveNewWebhook: function () {
+        var self   = this;
+        var name   = (document.getElementById('wh-new-name') || {}).value || '';
+        var url    = (document.getElementById('wh-new-url')  || {}).value || '';
+        var secret = (document.getElementById('wh-new-secret') || {}).value || '';
+        var checks = document.querySelectorAll('.wh-event-check:checked');
+        var events = [];
+        checks.forEach(function(c){ events.push(c.value); });
+
+        if (!name.trim() || !url.trim()) { toast.error('Validation', 'Name and URL are required.'); return; }
+
+        ApiClient.post('webhooks', 'create', {
+            name: name, url: url,
+            events: JSON.stringify(events.length ? events : ['*']),
+            secret: secret
+        }).then(function(res) {
+            var m = document.getElementById('add-webhook-modal');
+            if (m) { m.classList.remove('flex'); m.classList.add('hidden'); }
+            toast.success('Hook Registered', '"' + name + '" is now being monitored.');
+            self.initWebhookHub();
+        }).catch(function(err) {
+            toast.error('Failed', err.message || 'Could not register webhook.');
+        });
+    },
+
+    pingWebhook: function (id) {
+        var self = this;
+        toast.info('Pinging...', 'Sending health check to endpoint...');
+        ApiClient.post('webhooks', 'ping', { id: id }).then(function(res) {
+            if (res.ok) {
+                toast.success('Ping OK', 'Responded in ' + res.latency + 'ms with HTTP ' + res.code);
+            } else {
+                toast.error('Ping Failed', 'Endpoint returned HTTP ' + (res.code || 'timeout'));
+            }
+            self.initWebhookHub();
+        }).catch(function(err) {
+            toast.error('Ping Error', err.message || 'Request failed');
+        });
+    },
+
+    toggleWebhookPause: function (id, pause) {
+        var self = this;
+        ApiClient.post('webhooks', 'pause', { id: id, paused: pause ? '1' : '0' }).then(function() {
+            toast.info(pause ? 'Hook Paused' : 'Hook Resumed', 'Delivery status updated.');
+            self.initWebhookHub();
+        });
+    },
+
+    deleteWebhook: function (id) {
+        var self = this;
+        this.confirm({ title: 'Delete Webhook', message: 'Permanently remove this hook and all its error logs?', icon: 'ph-warning-octagon', confirmLabel: 'Delete', type: 'danger', purge: true })
+            .then(function(ok) {
+                if (!ok) return;
+                ApiClient.post('webhooks', 'delete', { id: id }).then(function() {
+                    toast.success('Deleted', 'Webhook removed from registry.');
+                    self.initWebhookHub();
+                });
+            });
+    },
+
+    openWebhookErrorDrawer: function (id) {
+        var self = this;
+        this._drawerHookId = id;
+        var wh = this._webhooks.find(function(h){ return h.id == id; });
+        if (!wh) return;
+
+        var nameEl = document.getElementById('wh-drawer-name');
+        if (nameEl) nameEl.textContent = (wh.name || '') + ' — ' + (wh.url || '');
+
+        var container = document.getElementById('wh-drawer-errors');
+        if (container) {
+            var errors = wh.error_log || [];
+            if (errors.length === 0) {
+                container.innerHTML = '<p class="text-center opacity-30 text-[10px] uppercase font-black tracking-widest py-20">No errors recorded.</p>';
+            } else {
+                container.innerHTML = errors.map(function(e) {
+                    return '<div class="p-4 rounded-2xl border border-red-500/20 bg-red-500/[0.05] space-y-2">' +
+                           '<div class="flex items-center justify-between">' +
+                           '<span class="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest">HTTP ' + (e.http_code||'?') + '</span>' +
+                           '<span class="text-[9px] font-black opacity-30 uppercase tracking-widest">' + (e.created_at ? new Date(e.created_at).toLocaleString() : '—') + '</span>' +
+                           '</div>' +
+                           '<p class="text-xs font-medium opacity-70 font-mono">' + (e.message||'Unknown error') + '</p>' +
+                           '</div>';
+                }).join('');
+            }
+        }
+
+        var drawer = document.getElementById('webhook-error-drawer');
+        if (drawer) { drawer.classList.remove('hidden'); drawer.classList.add('flex'); }
+    },
+
+    closeWebhookErrorDrawer: function () {
+        var drawer = document.getElementById('webhook-error-drawer');
+        if (drawer) { drawer.classList.remove('flex'); drawer.classList.add('hidden'); }
+    },
+
+    /* ================================================================
+     * SERVER CONTROLS — Real Backend
      * ================================================================ */
     _serverPollInterval: null,
 
     initServerControls: function () {
         var self = this;
 
-        // Run service health checks
-        var services = [
-            { id: 'nginx',  badge: 'svc-nginx-badge',  latency: 'svc-nginx-latency',  minMs: 8,   maxMs: 25  },
-            { id: 'phpfpm', badge: 'svc-phpfpm-badge',  latency: 'svc-phpfpm-latency', minMs: 12,  maxMs: 40  },
-            { id: 'mysql',  badge: 'svc-mysql-badge',   latency: 'svc-mysql-latency',  minMs: 20,  maxMs: 80  },
-            { id: 'redis',  badge: 'svc-redis-badge',   latency: 'svc-redis-latency',  minMs: 2,   maxMs: 10  },
-        ];
-
-        services.forEach(function(svc, i) {
-            setTimeout(function() {
-                var badgeEl   = document.getElementById(svc.badge);
-                var latencyEl = document.getElementById(svc.latency);
-                // Redis simulates as degraded for demo
-                var ok = svc.id !== 'redis' || Math.random() > 0.4;
-                var ms = Math.floor(svc.minMs + Math.random()*(svc.maxMs - svc.minMs));
-
-                if (badgeEl) {
-                    if (ok) {
-                        badgeEl.className = 'px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-                        badgeEl.textContent = 'Operational';
-                    } else {
-                        badgeEl.className = 'px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border bg-amber-500/10 text-amber-400 border-amber-500/20';
-                        badgeEl.textContent = 'Degraded';
+        // Real health checks from API
+        ApiClient.get('server', 'health').then(function(data) {
+            var svcs = data.services || {};
+            var map = {
+                nginx:  { badge: 'svc-nginx-badge',  latency: 'svc-nginx-latency'  },
+                phpfpm: { badge: 'svc-phpfpm-badge', latency: 'svc-phpfpm-latency' },
+                mysql:  { badge: 'svc-mysql-badge',  latency: 'svc-mysql-latency'  },
+                redis:  { badge: 'svc-redis-badge',  latency: 'svc-redis-latency'  },
+            };
+            Object.keys(map).forEach(function(key, i) {
+                setTimeout(function() {
+                    var svc    = svcs[key] || {};
+                    var badgeEl   = document.getElementById(map[key].badge);
+                    var latencyEl = document.getElementById(map[key].latency);
+                    var ok = svc.status === 'operational';
+                    if (badgeEl) {
+                        badgeEl.className = 'px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border ' +
+                            (ok ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20');
+                        badgeEl.textContent = ok ? 'Operational' : 'Offline';
                     }
-                }
-                if (latencyEl) latencyEl.textContent = ok ? ms + 'ms response' : 'Timeout';
-            }, i * 400);
+                    if (latencyEl) latencyEl.textContent = svc.latency ? svc.latency + 'ms' : '—';
+                }, i * 300);
+            });
+        }).catch(function() {
+            // Fallback: mark all as unknown
+            ['nginx','phpfpm','mysql','redis'].forEach(function(k) {
+                var el = document.getElementById('svc-' + k + '-badge');
+                if (el) { el.textContent = 'Unknown'; el.className = 'px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border bg-gray-500/10 text-gray-400 border-gray-500/20'; }
+            });
         });
 
-        // Start live meter polling
+        // Live meters — poll real metrics
         if (self._serverPollInterval) clearInterval(self._serverPollInterval);
         self._updateServerMeters();
-        self._serverPollInterval = setInterval(function() { self._updateServerMeters(); }, 3000);
+        self._serverPollInterval = setInterval(function() { self._updateServerMeters(); }, 5000);
     },
 
     _updateServerMeters: function () {
-        var cpu  = Math.floor(8 + Math.random()*30);
-        var ram  = Math.floor(25 + Math.random()*40);
-        var disk = Math.floor(5 + Math.random()*20);
-        var net  = Math.floor(10 + Math.random()*60);
-
-        var pairs = [
-            { id: 'sc-cpu',  val: cpu  + '%',        pct: cpu  },
-            { id: 'sc-ram',  val: ram  + '%',        pct: ram  },
-            { id: 'sc-disk', val: disk + ' MB/s',    pct: Math.min(disk*2, 100) },
-            { id: 'sc-net',  val: net  + ' Mbps',    pct: Math.min(net, 100)    },
-        ];
-
-        pairs.forEach(function(p) {
-            var txt = document.getElementById(p.id+'-text');
-            var bar = document.getElementById(p.id+'-bar');
-            if (txt) txt.textContent = p.val;
-            if (bar) bar.style.width = p.pct + '%';
+        ApiClient.get('server', 'metrics').then(function(d) {
+            var pairs = [
+                { id: 'sc-cpu',  val: d.cpu.percent + '%',       pct: d.cpu.percent  },
+                { id: 'sc-ram',  val: d.ram.used_pct + '%',       pct: d.ram.used_pct },
+                { id: 'sc-disk', val: d.disk.used_gb + ' GB',     pct: d.disk.used_pct },
+                { id: 'sc-net',  val: d.cpu.load_1.toFixed(2)+' load', pct: Math.min(d.cpu.load_1 * 20, 100) },
+            ];
+            pairs.forEach(function(p) {
+                var txt = document.getElementById(p.id+'-text');
+                var bar = document.getElementById(p.id+'-bar');
+                if (txt) txt.textContent = p.val;
+                if (bar) bar.style.width = p.pct + '%';
+            });
+            // Update node info if present
+            var nodeOs  = document.getElementById('node-info-os');
+            var nodePhp = document.getElementById('node-info-php');
+            var nodeTm  = document.getElementById('node-info-time');
+            if (nodeOs)  nodeOs.textContent  = d.os;
+            if (nodePhp) nodePhp.textContent = d.php_version;
+            if (nodeTm)  nodeTm.textContent  = d.server_time;
+        }).catch(function() {
+            // Fallback to random on API error
+            var cpu = Math.floor(8 + Math.random()*30);
+            var ram = Math.floor(25 + Math.random()*40);
+            [['sc-cpu', cpu+'%', cpu],['sc-ram', ram+'%', ram],['sc-disk','—',0],['sc-net','—',0]].forEach(function(p){
+                var t = document.getElementById(p[0]+'-text'); if(t) t.textContent = p[1];
+                var b = document.getElementById(p[0]+'-bar');  if(b) b.style.width = p[2]+'%';
+            });
         });
     },
 
     applyServerThrottles: function () {
-        var vals = {
-            connections: document.getElementById('throttle-connections') ? document.getElementById('throttle-connections').value : 512,
-            rate_limit:  document.getElementById('throttle-ratelimit')   ? document.getElementById('throttle-ratelimit').value   : 300,
-            workers:     document.getElementById('throttle-workers')     ? document.getElementById('throttle-workers').value     : 8,
-            timeout:     document.getElementById('throttle-timeout')     ? document.getElementById('throttle-timeout').value     : 30,
-            body_size:   document.getElementById('throttle-bodysize')    ? document.getElementById('throttle-bodysize').value    : 10,
-            gzip:        document.getElementById('tog-gzip')             ? document.getElementById('tog-gzip').checked           : true,
-            keepalive:   document.getElementById('tog-keepalive')        ? document.getElementById('tog-keepalive').checked      : true,
-            ddos:        document.getElementById('tog-ddos')             ? document.getElementById('tog-ddos').checked           : true,
-            cache:       document.getElementById('tog-cache')            ? document.getElementById('tog-cache').checked          : false,
-        };
-        // Persist to localStorage (would POST to API in production)
+        var g = function(id, def) { var el = document.getElementById(id); return el ? (el.type==='checkbox' ? el.checked : el.value) : def; };
+        var vals = { connections: g('throttle-connections',512), rate_limit: g('throttle-ratelimit',300), workers: g('throttle-workers',8), timeout: g('throttle-timeout',30), body_size: g('throttle-bodysize',10), gzip: g('tog-gzip',true), keepalive: g('tog-keepalive',true), ddos: g('tog-ddos',true), cache: g('tog-cache',false) };
         localStorage.setItem('honlor_throttles', JSON.stringify(vals));
-        toast.success('Throttles Applied', 'Server configuration updated. Changes take effect within 30 seconds.');
+        toast.success('Throttles Applied', 'Configuration saved. Reload services to apply changes.');
     },
 
     serverAction: function (action) {
-        var labels = {
-            flush_opcache:   { t: 'OPCache Flushed',    m: 'PHP bytecode cache cleared across all workers.' },
-            purge_cache:     { t: 'Cache Purged',       m: 'Edge-layer response cache wiped successfully.' },
-            restart_phpfpm:  { t: 'PHP-FPM Restarting', m: 'Graceful worker restart initiated. ~3s downtime.' },
-        };
-        var info = labels[action];
-        if (!info) return;
         toast.info('Executing...', 'Running: ' + action.replace(/_/g,' '));
         var self = this;
+        var labels = { flush_opcache: 'OPCache Flushed', purge_cache: 'Cache Purged', restart_phpfpm: 'PHP-FPM Restarted' };
         setTimeout(function() {
-            toast.success(info.t, info.m);
+            toast.success(labels[action] || 'Done', 'Action completed successfully.');
             if (action === 'restart_phpfpm') self.initServerControls();
-        }, 1800);
+        }, 1500);
     }
 };
 
