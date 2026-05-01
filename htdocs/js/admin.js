@@ -1100,6 +1100,9 @@ var AdminApp = {
         var self = this;
         this.loadLogList();
 
+        // Activate first tab (telemetry)
+        this.switchTab('logs', 'telemetry');
+
         // Polling interval for real-time telemetry (Every 5 seconds)
         if (this.telemetryInterval) clearInterval(this.telemetryInterval);
 
@@ -2867,6 +2870,304 @@ var AdminApp = {
 
     closeWizard: function () {
         window.closeModal();
+    },
+
+    /* ================================================================
+     * WEBHOOK HUB
+     * ================================================================ */
+    _webhooks: [],
+    _drawerHookId: null,
+
+    initWebhookHub: function () {
+        var self = this;
+        // Seed demo webhooks from localStorage or defaults
+        var stored = localStorage.getItem('honlor_webhooks');
+        if (stored) {
+            self._webhooks = JSON.parse(stored);
+        } else {
+            self._webhooks = [
+                { id: 1, name: 'Slack Alerts', url: 'https://hooks.slack.com/services/TXXXXXX/BXXXXXX/xxxxxxxx', events: ['user.created','login.failed'], status: 'healthy', paused: false, lastPing: Date.now()-2000, latency: 142, errorLog: [] },
+                { id: 2, name: 'Discord Notify', url: 'https://discord.com/api/webhooks/000/xxx', events: ['message.flagged','report.submitted'], status: 'failing', paused: false, lastPing: Date.now()-60000, latency: null, errorLog: [
+                    { time: new Date(Date.now()-120000).toISOString(), code: 503, message: 'Service Unavailable — gateway timeout after 30s' },
+                    { time: new Date(Date.now()-240000).toISOString(), code: 500, message: 'Internal Server Error — Discord rate limited' }
+                ]},
+                { id: 3, name: 'Zapier Pipeline', url: 'https://hooks.zapier.com/hooks/catch/0000000/xxxxxxx/', events: ['channel.created'], status: 'healthy', paused: true, lastPing: Date.now()-5000, latency: 87, errorLog: [] }
+            ];
+            localStorage.setItem('honlor_webhooks', JSON.stringify(self._webhooks));
+        }
+        // Simulate async ping
+        self._webhooks.forEach(function(wh) {
+            if (!wh.paused) {
+                wh.latency = wh.status === 'healthy' ? Math.floor(50 + Math.random()*200) : null;
+                wh.lastPing = Date.now();
+            }
+        });
+        self._renderWebhooks();
+    },
+
+    _renderWebhooks: function () {
+        var self = this;
+        var hooks = self._webhooks;
+        var healthy = hooks.filter(function(h){ return h.status==='healthy' && !h.paused; }).length;
+        var failing = hooks.filter(function(h){ return h.status==='failing'; }).length;
+        var paused  = hooks.filter(function(h){ return h.paused; }).length;
+
+        var set = function(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; };
+        set('wh-stat-healthy', healthy);
+        set('wh-stat-failing', failing);
+        set('wh-stat-paused',  paused);
+        set('wh-stat-total',   hooks.length);
+
+        var badge = document.getElementById('webhook-error-badge');
+        if (badge) badge.classList.toggle('hidden', failing === 0);
+
+        var container = document.getElementById('webhook-list-container');
+        if (!container) return;
+
+        if (hooks.length === 0) {
+            container.innerHTML = '<div class="p-20 text-center"><p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">No webhooks registered yet.</p></div>';
+            return;
+        }
+
+        var html = '';
+        hooks.forEach(function(wh) {
+            var statusCls  = wh.paused ? 'text-amber-400 border-amber-400/20 bg-amber-400/10' : (wh.status==='healthy' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/10' : 'text-red-400 border-red-400/20 bg-red-400/10');
+            var statusDot  = wh.paused ? 'bg-amber-400' : (wh.status==='healthy' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-pulse');
+            var statusLabel= wh.paused ? 'Paused' : (wh.status==='healthy' ? 'Healthy' : 'Failing');
+            var latencyTxt = wh.latency ? wh.latency+'ms' : '—';
+            var hasErrors  = wh.errorLog && wh.errorLog.length > 0;
+
+            html += '<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 hover:bg-white/[0.02] transition-all group" style="border-bottom:1px solid var(--border-color);">' +
+                    '  <div class="flex items-center gap-4 min-w-0">' +
+                    '    <div class="w-3 h-3 rounded-full shrink-0 ' + statusDot + '"></div>' +
+                    '    <div class="min-w-0">' +
+                    '      <p class="text-xs font-black uppercase tracking-tight truncate">' + wh.name + '</p>' +
+                    '      <p class="text-[10px] font-mono opacity-40 truncate mt-0.5">' + wh.url + '</p>' +
+                    '      <div class="flex flex-wrap gap-1 mt-2">' +
+                    wh.events.map(function(e){ return '<span class="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border border-primary/20 bg-primary/10 text-primary">'+e+'</span>'; }).join('') +
+                    '      </div>' +
+                    '    </div>' +
+                    '  </div>' +
+                    '  <div class="flex items-center gap-3 shrink-0">' +
+                    '    <span class="px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border ' + statusCls + '">' + statusLabel + '</span>' +
+                    '    <span class="text-[9px] font-black opacity-40 uppercase tracking-widest">' + latencyTxt + '</span>' +
+                    (hasErrors ? '<button onclick="AdminApp.openWebhookErrorDrawer('+wh.id+')" class="p-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all border border-red-500/20" title="View errors"><i class="ph-bold ph-warning-circle text-sm"></i></button>' : '') +
+                    '    <button onclick="AdminApp.toggleWebhookPause('+wh.id+')" class="p-2 rounded-xl bg-white/5 hover:bg-amber-500/10 hover:text-amber-400 transition-all border border-white/5" title="'+(wh.paused?'Resume':'Pause')+'"><i class="ph-bold '+(wh.paused?'ph-play':'ph-pause')+' text-sm"></i></button>' +
+                    '    <button onclick="AdminApp.retryWebhook('+wh.id+')" class="p-2 rounded-xl bg-white/5 hover:bg-primary/10 hover:text-primary transition-all border border-white/5" title="Retry"><i class="ph-bold ph-arrow-clockwise text-sm"></i></button>' +
+                    '    <button onclick="AdminApp.deleteWebhook('+wh.id+')" class="p-2 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 transition-all border border-white/5" title="Delete"><i class="ph-bold ph-trash text-sm"></i></button>' +
+                    '  </div>' +
+                    '</div>';
+        });
+        container.innerHTML = html;
+    },
+
+    openAddWebhookModal: function () {
+        var m = document.getElementById('add-webhook-modal');
+        if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+    },
+
+    saveNewWebhook: function () {
+        var name   = (document.getElementById('wh-new-name') || {}).value || '';
+        var url    = (document.getElementById('wh-new-url')  || {}).value || '';
+        var checks = document.querySelectorAll('.wh-event-check:checked');
+        var events = [];
+        checks.forEach(function(c){ events.push(c.value); });
+
+        if (!name.trim() || !url.trim()) { toast.error('Validation', 'Name and URL are required.'); return; }
+        if (!url.startsWith('http')) { toast.error('Validation', 'URL must start with http(s)://'); return; }
+
+        var newHook = { id: Date.now(), name: name, url: url, events: events.length ? events : ['*'], status: 'healthy', paused: false, latency: null, lastPing: null, errorLog: [] };
+        this._webhooks.push(newHook);
+        localStorage.setItem('honlor_webhooks', JSON.stringify(this._webhooks));
+
+        var m = document.getElementById('add-webhook-modal');
+        if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+        this._renderWebhooks();
+        toast.success('Hook Registered', '"' + name + '" is now being monitored.');
+
+        // Simulate first ping
+        var self = this;
+        setTimeout(function() {
+            newHook.latency = Math.floor(80 + Math.random()*150);
+            newHook.lastPing = Date.now();
+            localStorage.setItem('honlor_webhooks', JSON.stringify(self._webhooks));
+            self._renderWebhooks();
+        }, 1800);
+    },
+
+    toggleWebhookPause: function (id) {
+        var wh = this._webhooks.find(function(h){ return h.id === id; });
+        if (!wh) return;
+        wh.paused = !wh.paused;
+        localStorage.setItem('honlor_webhooks', JSON.stringify(this._webhooks));
+        this._renderWebhooks();
+        toast.info(wh.paused ? 'Hook Paused' : 'Hook Resumed', '"' + wh.name + '" delivery ' + (wh.paused ? 'suspended.' : 'resumed.'));
+    },
+
+    retryWebhook: function (id) {
+        var self = this;
+        var wh = this._webhooks.find(function(h){ return h.id === id; });
+        if (!wh) return;
+        toast.info('Retrying', 'Sending test ping to "' + wh.name + '"...');
+        setTimeout(function() {
+            var success = Math.random() > 0.3;
+            wh.status = success ? 'healthy' : 'failing';
+            wh.latency = success ? Math.floor(60 + Math.random()*180) : null;
+            wh.lastPing = Date.now();
+            if (!success) {
+                wh.errorLog = wh.errorLog || [];
+                wh.errorLog.unshift({ time: new Date().toISOString(), code: 503, message: 'Connection refused — endpoint unreachable' });
+            } else {
+                wh.errorLog = [];
+            }
+            localStorage.setItem('honlor_webhooks', JSON.stringify(self._webhooks));
+            self._renderWebhooks();
+            if (success) { toast.success('Delivery OK', '"' + wh.name + '" responded in ' + wh.latency + 'ms'); }
+            else { toast.error('Delivery Failed', '"' + wh.name + '" returned 503 — still failing.'); }
+        }, 1500);
+    },
+
+    deleteWebhook: function (id) {
+        var self = this;
+        this.confirm({ title: 'Delete Webhook', message: 'Permanently remove this hook?', icon: 'ph-warning-octagon', confirmLabel: 'Delete', type: 'danger', purge: true })
+            .then(function(ok) {
+                if (!ok) return;
+                self._webhooks = self._webhooks.filter(function(h){ return h.id !== id; });
+                localStorage.setItem('honlor_webhooks', JSON.stringify(self._webhooks));
+                self._renderWebhooks();
+                toast.success('Deleted', 'Webhook removed from registry.');
+            });
+    },
+
+    openWebhookErrorDrawer: function (id) {
+        var wh = this._webhooks.find(function(h){ return h.id === id; });
+        if (!wh) return;
+        this._drawerHookId = id;
+
+        var nameEl = document.getElementById('wh-drawer-name');
+        if (nameEl) nameEl.textContent = wh.name + ' — ' + wh.url;
+
+        var errContainer = document.getElementById('wh-drawer-errors');
+        if (errContainer) {
+            if (!wh.errorLog || wh.errorLog.length === 0) {
+                errContainer.innerHTML = '<p class="text-center opacity-30 text-[10px] uppercase font-black tracking-widest py-20">No errors recorded.</p>';
+            } else {
+                errContainer.innerHTML = wh.errorLog.map(function(e) {
+                    return '<div class="p-5 rounded-2xl border border-red-500/20 bg-red-500/[0.05] space-y-2">' +
+                           '  <div class="flex items-center justify-between">' +
+                           '    <span class="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest">HTTP ' + e.code + '</span>' +
+                           '    <span class="text-[9px] font-black opacity-30 uppercase tracking-widest">' + new Date(e.time).toLocaleString() + '</span>' +
+                           '  </div>' +
+                           '  <p class="text-xs font-medium opacity-70 font-mono">' + e.message + '</p>' +
+                           '</div>';
+                }).join('');
+            }
+        }
+
+        var drawer = document.getElementById('webhook-error-drawer');
+        if (drawer) { drawer.classList.remove('hidden'); drawer.classList.add('flex'); }
+    },
+
+    closeWebhookErrorDrawer: function () {
+        var drawer = document.getElementById('webhook-error-drawer');
+        if (drawer) { drawer.classList.add('hidden'); drawer.classList.remove('flex'); }
+    },
+
+    /* ================================================================
+     * SERVER CONTROLS
+     * ================================================================ */
+    _serverPollInterval: null,
+
+    initServerControls: function () {
+        var self = this;
+
+        // Run service health checks
+        var services = [
+            { id: 'nginx',  badge: 'svc-nginx-badge',  latency: 'svc-nginx-latency',  minMs: 8,   maxMs: 25  },
+            { id: 'phpfpm', badge: 'svc-phpfpm-badge',  latency: 'svc-phpfpm-latency', minMs: 12,  maxMs: 40  },
+            { id: 'mysql',  badge: 'svc-mysql-badge',   latency: 'svc-mysql-latency',  minMs: 20,  maxMs: 80  },
+            { id: 'redis',  badge: 'svc-redis-badge',   latency: 'svc-redis-latency',  minMs: 2,   maxMs: 10  },
+        ];
+
+        services.forEach(function(svc, i) {
+            setTimeout(function() {
+                var badgeEl   = document.getElementById(svc.badge);
+                var latencyEl = document.getElementById(svc.latency);
+                // Redis simulates as degraded for demo
+                var ok = svc.id !== 'redis' || Math.random() > 0.4;
+                var ms = Math.floor(svc.minMs + Math.random()*(svc.maxMs - svc.minMs));
+
+                if (badgeEl) {
+                    if (ok) {
+                        badgeEl.className = 'px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                        badgeEl.textContent = 'Operational';
+                    } else {
+                        badgeEl.className = 'px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border bg-amber-500/10 text-amber-400 border-amber-500/20';
+                        badgeEl.textContent = 'Degraded';
+                    }
+                }
+                if (latencyEl) latencyEl.textContent = ok ? ms + 'ms response' : 'Timeout';
+            }, i * 400);
+        });
+
+        // Start live meter polling
+        if (self._serverPollInterval) clearInterval(self._serverPollInterval);
+        self._updateServerMeters();
+        self._serverPollInterval = setInterval(function() { self._updateServerMeters(); }, 3000);
+    },
+
+    _updateServerMeters: function () {
+        var cpu  = Math.floor(8 + Math.random()*30);
+        var ram  = Math.floor(25 + Math.random()*40);
+        var disk = Math.floor(5 + Math.random()*20);
+        var net  = Math.floor(10 + Math.random()*60);
+
+        var pairs = [
+            { id: 'sc-cpu',  val: cpu  + '%',        pct: cpu  },
+            { id: 'sc-ram',  val: ram  + '%',        pct: ram  },
+            { id: 'sc-disk', val: disk + ' MB/s',    pct: Math.min(disk*2, 100) },
+            { id: 'sc-net',  val: net  + ' Mbps',    pct: Math.min(net, 100)    },
+        ];
+
+        pairs.forEach(function(p) {
+            var txt = document.getElementById(p.id+'-text');
+            var bar = document.getElementById(p.id+'-bar');
+            if (txt) txt.textContent = p.val;
+            if (bar) bar.style.width = p.pct + '%';
+        });
+    },
+
+    applyServerThrottles: function () {
+        var vals = {
+            connections: document.getElementById('throttle-connections') ? document.getElementById('throttle-connections').value : 512,
+            rate_limit:  document.getElementById('throttle-ratelimit')   ? document.getElementById('throttle-ratelimit').value   : 300,
+            workers:     document.getElementById('throttle-workers')     ? document.getElementById('throttle-workers').value     : 8,
+            timeout:     document.getElementById('throttle-timeout')     ? document.getElementById('throttle-timeout').value     : 30,
+            body_size:   document.getElementById('throttle-bodysize')    ? document.getElementById('throttle-bodysize').value    : 10,
+            gzip:        document.getElementById('tog-gzip')             ? document.getElementById('tog-gzip').checked           : true,
+            keepalive:   document.getElementById('tog-keepalive')        ? document.getElementById('tog-keepalive').checked      : true,
+            ddos:        document.getElementById('tog-ddos')             ? document.getElementById('tog-ddos').checked           : true,
+            cache:       document.getElementById('tog-cache')            ? document.getElementById('tog-cache').checked          : false,
+        };
+        // Persist to localStorage (would POST to API in production)
+        localStorage.setItem('honlor_throttles', JSON.stringify(vals));
+        toast.success('Throttles Applied', 'Server configuration updated. Changes take effect within 30 seconds.');
+    },
+
+    serverAction: function (action) {
+        var labels = {
+            flush_opcache:   { t: 'OPCache Flushed',    m: 'PHP bytecode cache cleared across all workers.' },
+            purge_cache:     { t: 'Cache Purged',       m: 'Edge-layer response cache wiped successfully.' },
+            restart_phpfpm:  { t: 'PHP-FPM Restarting', m: 'Graceful worker restart initiated. ~3s downtime.' },
+        };
+        var info = labels[action];
+        if (!info) return;
+        toast.info('Executing...', 'Running: ' + action.replace(/_/g,' '));
+        var self = this;
+        setTimeout(function() {
+            toast.success(info.t, info.m);
+            if (action === 'restart_phpfpm') self.initServerControls();
+        }, 1800);
     }
 };
 

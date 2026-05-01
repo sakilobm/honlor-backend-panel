@@ -249,54 +249,48 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* Sidebar Collapse System (Desktop Only) */
-        @media (min-width: 768px) {
-            #sidebar { @apply transition-all duration-500 ease-in-out; }
-            #sidebar.sidebar-collapsed { @apply w-20; }
-            #sidebar.sidebar-collapsed .sidebar-hide { display: none !important; }
-            
-            /* Centering Nav Items */
-            #sidebar.sidebar-collapsed .nav-group-title { 
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                @apply px-0 h-0 mb-6 overflow-hidden opacity-0; 
-            }
-            #sidebar.sidebar-collapsed .nav-link-premium { @apply justify-center px-0 mx-0 w-full; }
-            #sidebar.sidebar-collapsed .nav-duotone { @apply mx-0 scale-90 rounded-full; }
-            #sidebar.sidebar-collapsed .nav-link-premium.active .nav-duotone { @apply scale-100; }
-            #sidebar.sidebar-collapsed .nav-link-premium.active::before { @apply left-0 w-1 rounded-r-lg; }
-            
-            #sidebar .nav-link-premium.active { @apply pl-8; } /* Luxury space for expanded view */
-            #sidebar .nav-link-premium.active .nav-duotone { @apply scale-110 shadow-xl shadow-primary/10; }
-            
-            /* Profile Card Compression */
-            #sidebar.sidebar-collapsed .p-8, #sidebar.sidebar-collapsed .p-6 { @apply px-3; }
-            #sidebar.sidebar-collapsed .glass-card { 
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 1rem;
-                @apply p-1 pb-4 rounded-full !border-transparent bg-transparent shadow-none; 
-            }
-            #sidebar.sidebar-collapsed .glass-card img { @apply w-10 h-10 border-primary/20 rounded-full; }
-            #sidebar.sidebar-collapsed .glass-card button { @apply scale-90 rounded-full; }
-
-            /* Brand Logo Centering */
-            #sidebar.sidebar-collapsed .flex.items-center.gap-3.mb-10 { 
-                display: flex;
-                justify-content: center; 
-            }
-            #sidebar.sidebar-collapsed .w-12.h-12 { @apply w-10 h-10; }
-            
-            /* Animation & Handle Styling */
-            #sidebar.sidebar-collapsed #sidebar-toggle { @apply -right-4; }
-            #sidebar.sidebar-collapsed #toggle-icon { @apply rotate-180; }
-        }
+        /* Sidebar Collapse System — always visible, no mobile breakpoints */
+        #sidebar { @apply transition-all duration-500 ease-in-out; }
+        #sidebar.sidebar-collapsed { @apply w-20; }
+        #sidebar.sidebar-collapsed .sidebar-hide { display: none !important; }
         
-        /* Mobile Sidebar Overrides */
-        .sidebar-mobile-active { @apply translate-x-0 !important; }
-        .sidebar-mobile-active #sidebar-toggle { @apply hidden; } /* Hide desktop toggle on mobile drawer */
+        /* Centering Nav Items in collapsed state */
+        #sidebar.sidebar-collapsed .nav-group-title { 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            @apply px-0 h-0 mb-6 overflow-hidden opacity-0; 
+        }
+        #sidebar.sidebar-collapsed .nav-link-premium { @apply justify-center px-0 mx-0 w-full; }
+        #sidebar.sidebar-collapsed .nav-duotone { @apply mx-0 scale-90 rounded-full; }
+        #sidebar.sidebar-collapsed .nav-link-premium.active .nav-duotone { @apply scale-100; }
+        #sidebar.sidebar-collapsed .nav-link-premium.active::before { @apply left-0 w-1 rounded-r-lg; }
+        
+        #sidebar .nav-link-premium.active { @apply pl-8; }
+        #sidebar .nav-link-premium.active .nav-duotone { @apply scale-110 shadow-xl shadow-primary/10; }
+        
+        /* Profile Card Compression */
+        #sidebar.sidebar-collapsed .p-8, #sidebar.sidebar-collapsed .p-6 { @apply px-3; }
+        #sidebar.sidebar-collapsed .glass-card { 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            @apply p-1 pb-4 rounded-full !border-transparent bg-transparent shadow-none; 
+        }
+        #sidebar.sidebar-collapsed .glass-card img { @apply w-10 h-10 border-primary/20 rounded-full; }
+        #sidebar.sidebar-collapsed .glass-card button { @apply scale-90 rounded-full; }
+
+        /* Brand Logo Centering */
+        #sidebar.sidebar-collapsed .flex.items-center.gap-3.mb-10 { 
+            display: flex;
+            justify-content: center; 
+        }
+        #sidebar.sidebar-collapsed .w-12.h-12 { @apply w-10 h-10; }
+        
+        /* Toggle handle */
+        #sidebar.sidebar-collapsed #sidebar-toggle { @apply -right-4; }
+        #sidebar.sidebar-collapsed #toggle-icon { @apply rotate-180; }
     }
 
     /* Scrollbar override */

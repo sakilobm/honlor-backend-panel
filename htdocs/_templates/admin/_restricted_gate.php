@@ -14,7 +14,7 @@
         <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full animate-pulse"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-400/5 blur-[120px] rounded-full animate-pulse" style="animation-delay: 1s;"></div>
     </div>
-    
+
     <script>
         window.isRestricted = true;
         window.adminId = '<?php echo Session::getUser()->id; ?>';

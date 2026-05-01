@@ -1,9 +1,9 @@
 <aside id="sidebar"
-    class="w-80 shrink-0 border-r transition-all duration-500 md:relative fixed inset-y-0 left-0 z-[100] -translate-x-full md:translate-x-0 flex flex-col backdrop-blur-3xl"
+    class="w-80 shrink-0 border-r transition-all duration-500 flex flex-col backdrop-blur-3xl relative"
     style="background-color: var(--surface-glass); border-color: var(--border-color); overflow: visible !important;">
-    <!-- Mobile Close Button -->
+    <!-- Mobile Close Button (hidden — sidebar is always visible) -->
     <button
-        class="md:hidden absolute top-6 right-6 p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all border border-primary/20"
+        class="hidden"
         onclick="toggleMobileSidebar()">
         <i class="ph-bold ph-x text-xl"></i>
     </button>
@@ -24,9 +24,9 @@
             </div>
         </div>
 
-        <!-- Sidebar Toggle (Desktop Handle) -->
+        <!-- Sidebar Toggle Handle -->
         <button id="sidebar-toggle"
-            class="hidden md:flex absolute -right-4 top-10 w-8 h-8 bg-primary text-black rounded-full items-center justify-center transition-all z-50 shadow-2xl hover:scale-110 active:scale-90 border-4 border-[#030407]"
+            class="flex absolute -right-4 top-10 w-8 h-8 bg-primary text-white rounded-full items-center justify-center transition-all z-50 shadow-2xl hover:scale-110 active:scale-90 border-2 border-white/20"
             onclick="toggleSidebarResilient()">
             <i class="ph-bold ph-caret-left text-xs" id="toggle-icon"></i>
         </button>

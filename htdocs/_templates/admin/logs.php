@@ -1,4 +1,4 @@
-<div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+<div id="section-logs" class="section space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
@@ -15,6 +15,23 @@
             </button>
         </div>
     </div>
+
+    <!-- Tab Navigation -->
+    <div class="flex gap-8 border-b border-[var(--border-color)]" id="logs-tabs">
+        <button class="tab-btn active uppercase tracking-[0.2em] text-[10px] font-black whitespace-nowrap" data-tab="telemetry" onclick="AdminApp.switchTab('logs','telemetry')">
+            Live Telemetry <div class="tab-underline"></div>
+        </button>
+        <button class="tab-btn uppercase tracking-[0.2em] text-[10px] font-black whitespace-nowrap" data-tab="server-controls" onclick="AdminApp.switchTab('logs','server-controls'); AdminApp.initServerControls();">
+            Server Health &amp; Throttles <div class="tab-underline"></div>
+        </button>
+        <button class="tab-btn uppercase tracking-[0.2em] text-[10px] font-black whitespace-nowrap" data-tab="webhooks" onclick="AdminApp.switchTab('logs','webhooks'); AdminApp.initWebhookHub();">
+            <span class="flex items-center gap-2">Webhook Hub <span id="webhook-error-badge" class="hidden w-2 h-2 rounded-full bg-red-500 animate-pulse"></span></span>
+            <div class="tab-underline"></div>
+        </button>
+    </div>
+
+    <!-- Tab: Live Telemetry (all existing content wrapped) -->
+    <div id="tab-content-telemetry" class="tab-content space-y-8 animate-in fade-in duration-700">
 
     <!-- Stats Grid (High-Fidelity) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -225,5 +242,358 @@
                 <div class="absolute bottom-0 left-0 w-0 h-1 bg-primary group-hover:w-full transition-all duration-700 shadow-[0_0_15px_rgba(124,106,255,0.5)]"></div>
             </button>
         </div>
-    </div>
-</div>
+    </div><!-- /monitoring-grid -->
+    </div><!-- /tab-content-telemetry -->
+
+    <!-- Tab: Server Health & Throttles -->
+    <div id="tab-content-server-controls" class="tab-content hidden space-y-8 animate-in fade-in duration-700">
+
+        <!-- Service Health Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="service-health-grid">
+            <!-- Nginx -->
+            <div class="stat-card !p-6 border-emerald-400/20 group relative overflow-hidden">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-400/10 flex items-center justify-center text-emerald-400 border border-emerald-400/20 group-hover:bg-emerald-400 group-hover:text-white transition-all">
+                        <i class="ph-bold ph-globe text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black uppercase tracking-widest opacity-40">Web Server</p>
+                        <p class="text-xs font-black uppercase tracking-tight">Nginx</p>
+                    </div>
+                </div>
+                <span class="svc-status-badge px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border bg-emerald-500/10 text-emerald-400 border-emerald-500/20" id="svc-nginx-badge">Checking...</span>
+                <p class="text-[9px] font-bold opacity-30 mt-3 uppercase tracking-widest" id="svc-nginx-latency">—</p>
+                <div class="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent"></div>
+            </div>
+            <!-- PHP-FPM -->
+            <div class="stat-card !p-6 border-blue-400/20 group relative overflow-hidden">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-400/10 flex items-center justify-center text-blue-400 border border-blue-400/20 group-hover:bg-blue-400 group-hover:text-white transition-all">
+                        <i class="ph-bold ph-brackets-curly text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black uppercase tracking-widest opacity-40">Runtime</p>
+                        <p class="text-xs font-black uppercase tracking-tight">PHP-FPM</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border bg-emerald-500/10 text-emerald-400 border-emerald-500/20" id="svc-phpfpm-badge">Checking...</span>
+                <p class="text-[9px] font-bold opacity-30 mt-3 uppercase tracking-widest" id="svc-phpfpm-latency">—</p>
+                <div class="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/30 to-transparent"></div>
+            </div>
+            <!-- MySQL -->
+            <div class="stat-card !p-6 border-orange-400/20 group relative overflow-hidden">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-2xl bg-orange-400/10 flex items-center justify-center text-orange-400 border border-orange-400/20 group-hover:bg-orange-400 group-hover:text-white transition-all">
+                        <i class="ph-bold ph-database text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black uppercase tracking-widest opacity-40">Database</p>
+                        <p class="text-xs font-black uppercase tracking-tight">MySQL</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border bg-emerald-500/10 text-emerald-400 border-emerald-500/20" id="svc-mysql-badge">Checking...</span>
+                <p class="text-[9px] font-bold opacity-30 mt-3 uppercase tracking-widest" id="svc-mysql-latency">—</p>
+                <div class="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-orange-400/30 to-transparent"></div>
+            </div>
+            <!-- Redis -->
+            <div class="stat-card !p-6 border-red-400/20 group relative overflow-hidden">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-2xl bg-red-400/10 flex items-center justify-center text-red-400 border border-red-400/20 group-hover:bg-red-400 group-hover:text-white transition-all">
+                        <i class="ph-bold ph-lightning text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-black uppercase tracking-widest opacity-40">Cache Layer</p>
+                        <p class="text-xs font-black uppercase tracking-tight">Redis</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border bg-amber-500/10 text-amber-400 border-amber-500/20" id="svc-redis-badge">Checking...</span>
+                <p class="text-[9px] font-bold opacity-30 mt-3 uppercase tracking-widest" id="svc-redis-latency">—</p>
+                <div class="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-red-400/30 to-transparent"></div>
+            </div>
+        </div>
+
+        <!-- Two-column layout: Throttle Controls + Live Meters -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- Throttle Controls -->
+            <div class="glass-card !p-8 space-y-8">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xl font-black uppercase tracking-tight">Server <span class="gradient-text">Throttles</span></h3>
+                    <button onclick="AdminApp.applyServerThrottles()" class="btn-primary !px-6 !py-3 !rounded-2xl text-[9px] font-black uppercase tracking-widest">
+                        <i class="ph-bold ph-floppy-disk"></i> Apply
+                    </button>
+                </div>
+
+                <!-- Max Connections -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-60 flex items-center gap-2"><i class="ph ph-plugs text-sm"></i> Max Connections</label>
+                        <span class="text-sm font-black text-primary" id="throttle-connections-val">512</span>
+                    </div>
+                    <input type="range" id="throttle-connections" min="64" max="2048" step="64" value="512"
+                           oninput="document.getElementById('throttle-connections-val').textContent=this.value"
+                           class="w-full accent-primary h-1.5 rounded-full cursor-pointer">
+                    <div class="flex justify-between text-[9px] font-black opacity-30 uppercase tracking-widest"><span>64</span><span>2048</span></div>
+                </div>
+
+                <!-- Request Rate Limit -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-60 flex items-center gap-2"><i class="ph ph-gauge text-sm"></i> Rate Limit (req/min)</label>
+                        <span class="text-sm font-black text-primary" id="throttle-ratelimit-val">300</span>
+                    </div>
+                    <input type="range" id="throttle-ratelimit" min="30" max="3000" step="30" value="300"
+                           oninput="document.getElementById('throttle-ratelimit-val').textContent=this.value"
+                           class="w-full accent-primary h-1.5 rounded-full cursor-pointer">
+                    <div class="flex justify-between text-[9px] font-black opacity-30 uppercase tracking-widest"><span>30</span><span>3000</span></div>
+                </div>
+
+                <!-- Worker Threads -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-60 flex items-center gap-2"><i class="ph ph-cpu text-sm"></i> Worker Threads</label>
+                        <span class="text-sm font-black text-primary" id="throttle-workers-val">8</span>
+                    </div>
+                    <input type="range" id="throttle-workers" min="1" max="64" step="1" value="8"
+                           oninput="document.getElementById('throttle-workers-val').textContent=this.value"
+                           class="w-full accent-primary h-1.5 rounded-full cursor-pointer">
+                    <div class="flex justify-between text-[9px] font-black opacity-30 uppercase tracking-widest"><span>1</span><span>64</span></div>
+                </div>
+
+                <!-- Request Timeout -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-60 flex items-center gap-2"><i class="ph ph-timer text-sm"></i> Request Timeout (s)</label>
+                        <span class="text-sm font-black text-primary" id="throttle-timeout-val">30</span>
+                    </div>
+                    <input type="range" id="throttle-timeout" min="5" max="300" step="5" value="30"
+                           oninput="document.getElementById('throttle-timeout-val').textContent=this.value"
+                           class="w-full accent-primary h-1.5 rounded-full cursor-pointer">
+                    <div class="flex justify-between text-[9px] font-black opacity-30 uppercase tracking-widest"><span>5s</span><span>300s</span></div>
+                </div>
+
+                <!-- Body Size Limit -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-60 flex items-center gap-2"><i class="ph ph-file-arrow-up text-sm"></i> Max Body Size (MB)</label>
+                        <span class="text-sm font-black text-primary" id="throttle-bodysize-val">10</span>
+                    </div>
+                    <input type="range" id="throttle-bodysize" min="1" max="100" step="1" value="10"
+                           oninput="document.getElementById('throttle-bodysize-val').textContent=this.value"
+                           class="w-full accent-primary h-1.5 rounded-full cursor-pointer">
+                    <div class="flex justify-between text-[9px] font-black opacity-30 uppercase tracking-widest"><span>1 MB</span><span>100 MB</span></div>
+                </div>
+
+                <!-- Quick Toggles -->
+                <div class="space-y-4 pt-2 border-t border-[var(--border-color)]">
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4">Protocol Toggles</p>
+                    <?php
+                    $toggles = [
+                        ['id'=>'tog-gzip','label'=>'Gzip Compression','sub'=>'Compress responses','color'=>'blue','default'=>true],
+                        ['id'=>'tog-keepalive','label'=>'HTTP Keep-Alive','sub'=>'Persistent connections','color'=>'green','default'=>true],
+                        ['id'=>'tog-ddos','label'=>'DDoS Shield','sub'=>'Auto-block flood patterns','color'=>'red','default'=>true],
+                        ['id'=>'tog-cache','label'=>'Response Cache','sub'=>'Edge-layer caching','color'=>'purple','default'=>false],
+                    ];
+                    foreach ($toggles as $t): ?>
+                    <div class="flex items-center justify-between p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-2)] hover:border-<?= $t['color'] ?>-400/30 transition-all group">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-tight"><?= $t['label'] ?></p>
+                            <p class="text-[9px] font-bold opacity-30 uppercase tracking-widest mt-0.5"><?= $t['sub'] ?></p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="<?= $t['id'] ?>" class="sr-only peer" <?= $t['default'] ? 'checked' : '' ?>>
+                            <div class="w-12 h-6 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[3px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-<?= $t['color'] ?>-500 shadow-lg"></div>
+                        </label>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- Live Resource Meters + Quick Actions -->
+            <div class="space-y-8">
+                <!-- Live meters card -->
+                <div class="glass-card !p-8 space-y-8">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-black uppercase tracking-tight">Live <span class="gradient-text">Meters</span></h3>
+                        <span class="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-emerald-400">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live
+                        </span>
+                    </div>
+                    <?php foreach([
+                        ['id'=>'sc-cpu','label'=>'CPU Utilization','color'=>'from-primary to-blue-500','shadow'=>'shadow-[0_0_12px_#7c6aff]','val'=>'—'],
+                        ['id'=>'sc-ram','label'=>'Memory Usage','color'=>'from-purple-500 to-pink-500','shadow'=>'shadow-[0_0_12px_#a855f7]','val'=>'—'],
+                        ['id'=>'sc-disk','label'=>'Disk I/O','color'=>'from-amber-500 to-orange-500','shadow'=>'shadow-[0_0_12px_#f97316]','val'=>'—'],
+                        ['id'=>'sc-net','label'=>'Network Throughput','color'=>'from-cyan-500 to-blue-400','shadow'=>'shadow-[0_0_12px_#06b6d4]','val'=>'—'],
+                    ] as $m): ?>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-end">
+                            <span class="text-[10px] font-black uppercase tracking-widest opacity-70"><?= $m['label'] ?></span>
+                            <span class="text-sm font-black tracking-tighter" id="<?= $m['id'] ?>-text" style="color:var(--text-main)"><?= $m['val'] ?></span>
+                        </div>
+                        <div class="h-2 w-full rounded-full overflow-hidden" style="background-color:var(--glass-bg); border:1px solid var(--border-color);">
+                            <div id="<?= $m['id'] ?>-bar" class="h-full bg-gradient-to-r <?= $m['color'] ?> <?= $m['shadow'] ?> transition-all duration-1000 ease-out rounded-full" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="glass-card !p-8 space-y-4">
+                    <h3 class="text-xl font-black uppercase tracking-tight mb-6">Quick <span class="gradient-text">Actions</span></h3>
+                    <?php
+                    $actions = [
+                        ['icon'=>'ph-broom','label'=>'Flush OPCache','sub'=>'Clear PHP bytecode cache','color'=>'blue','fn'=>"AdminApp.serverAction('flush_opcache')"],
+                        ['icon'=>'ph-trash','label'=>'Purge Response Cache','sub'=>'Clear edge-layer CDN cache','color'=>'amber','fn'=>"AdminApp.serverAction('purge_cache')"],
+                        ['icon'=>'ph-arrow-clockwise','label'=>'Restart PHP-FPM','sub'=>'Graceful worker restart','color'=>'purple','fn'=>"AdminApp.serverAction('restart_phpfpm')"],
+                        ['icon'=>'ph-shield-warning','label'=>'Trigger Health Check','sub'=>'Full stack diagnostic run','color'=>'emerald','fn'=>"AdminApp.initServerControls()"],
+                    ];
+                    foreach ($actions as $a): ?>
+                    <button onclick="<?= $a['fn'] ?>" class="w-full flex items-center gap-5 p-5 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-2)] hover:border-<?= $a['color'] ?>-400/40 hover:bg-<?= $a['color'] ?>-400/[0.04] transition-all group text-left">
+                        <div class="w-11 h-11 rounded-2xl bg-<?= $a['color'] ?>-400/10 flex items-center justify-center text-<?= $a['color'] ?>-400 border border-<?= $a['color'] ?>-400/20 group-hover:scale-110 transition-transform shrink-0">
+                            <i class="ph-bold <?= $a['icon'] ?> text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-tight"><?= $a['label'] ?></p>
+                            <p class="text-[9px] font-bold opacity-30 uppercase tracking-widest mt-0.5"><?= $a['sub'] ?></p>
+                        </div>
+                        <i class="ph-bold ph-arrow-right ml-auto opacity-0 group-hover:opacity-60 transition-all text-sm"></i>
+                    </button>
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- Uptime / Info block -->
+                <div class="glass-card !p-8 border-primary/10 bg-gradient-to-br from-primary/[0.04] to-transparent space-y-5">
+                    <h3 class="text-xl font-black uppercase tracking-tight">Node <span class="gradient-text">Info</span></h3>
+                    <?php
+                    $info = [
+                        ['icon'=>'ph-linux-logo','label'=>'OS','val'=>php_uname('s').' '.php_uname('r'),'color'=>'text-primary'],
+                        ['icon'=>'ph-brackets-curly','label'=>'PHP Version','val'=>phpversion(),'color'=>'text-blue-400'],
+                        ['icon'=>'ph-database','label'=>'Database','val'=>'MySQL 8.0','color'=>'text-orange-400'],
+                        ['icon'=>'ph-clock','label'=>'Server Time','val'=>date('Y-m-d H:i:s T'),'color'=>'text-emerald-400'],
+                    ];
+                    foreach ($info as $row): ?>
+                    <div class="flex justify-between items-center group">
+                        <span class="text-[10px] font-black uppercase tracking-widest opacity-50 flex items-center gap-2 group-hover:opacity-100 transition-all">
+                            <i class="ph <?= $row['icon'] ?> text-base <?= $row['color'] ?>"></i> <?= $row['label'] ?>
+                        </span>
+                        <span class="text-[10px] font-black tracking-widest font-mono"><?= htmlspecialchars($row['val']) ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div><!-- /tab-content-server-controls -->
+
+    <!-- Tab: Webhook Hub -->
+    <div id="tab-content-webhooks" class="tab-content hidden space-y-8 animate-in fade-in duration-700">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <h3 class="text-2xl font-black uppercase tracking-tight">Webhook <span class="gradient-text">Hub</span></h3>
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mt-1">Monitor outbound hook health, inspect errors, and manage delivery pipelines</p>
+            </div>
+            <button onclick="AdminApp.openAddWebhookModal()" class="btn-primary !px-8 !py-4 !rounded-2xl shadow-xl shadow-primary/20 flex items-center gap-3">
+                <i class="ph-bold ph-plus-circle text-lg"></i>
+                <span class="text-[10px] font-black uppercase tracking-widest">Register Hook</span>
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="stat-card !p-6 border-emerald-400/20 bg-emerald-400/[0.04]">
+                <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">Healthy</p>
+                <p class="text-3xl font-black tracking-tighter text-emerald-400" id="wh-stat-healthy">—</p>
+            </div>
+            <div class="stat-card !p-6 border-red-400/20 bg-red-400/[0.04]">
+                <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">Failing</p>
+                <p class="text-3xl font-black tracking-tighter text-red-400" id="wh-stat-failing">—</p>
+            </div>
+            <div class="stat-card !p-6 border-amber-400/20 bg-amber-400/[0.04]">
+                <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">Paused</p>
+                <p class="text-3xl font-black tracking-tighter text-amber-400" id="wh-stat-paused">—</p>
+            </div>
+            <div class="stat-card !p-6 border-primary/20 bg-primary/[0.04]">
+                <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">Total</p>
+                <p class="text-3xl font-black tracking-tighter text-primary" id="wh-stat-total">—</p>
+            </div>
+        </div>
+
+        <!-- Hook List -->
+        <div class="stat-card !p-0 overflow-hidden" style="background-color:var(--glass-bg);border:1px solid var(--border-color);">
+            <div class="p-6 border-b flex items-center justify-between" style="border-color:var(--border-color);background-color:var(--surface-glass);">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_#7c6aff]"></div>
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em]">Registered Endpoints</h4>
+                </div>
+                <button onclick="AdminApp.initWebhookHub()" class="p-2 rounded-xl bg-white/5 hover:bg-primary hover:text-white transition-all border border-white/5">
+                    <i class="ph-bold ph-arrow-clockwise text-sm"></i>
+                </button>
+            </div>
+            <div id="webhook-list-container" class="divide-y" style="border-color:var(--border-color);">
+                <div class="p-16 text-center animate-pulse">
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">Initializing Hook Registry...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Webhook Modal -->
+        <div id="add-webhook-modal" class="hidden fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/70 backdrop-blur-md">
+            <div class="w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl" style="background-color:var(--surface);border:1px solid var(--border-color);">
+                <div class="p-8 border-b flex items-center justify-between" style="border-color:var(--border-color);">
+                    <h3 class="text-lg font-black uppercase tracking-tight">Register <span class="gradient-text">Webhook</span></h3>
+                    <button onclick="document.getElementById('add-webhook-modal').classList.replace('flex','hidden')" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center justify-center">
+                        <i class="ph-bold ph-x text-sm"></i>
+                    </button>
+                </div>
+                <div class="p-8 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Hook Name</label>
+                        <input type="text" id="wh-new-name" placeholder="e.g. Slack Notifier" class="w-full bg-[var(--surface-2)] border border-[var(--border-color)] rounded-2xl p-4 font-bold text-sm focus:border-primary outline-none transition-all" style="color:var(--text-main);">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Endpoint URL</label>
+                        <input type="url" id="wh-new-url" placeholder="https://hooks.example.com/..." class="w-full bg-[var(--surface-2)] border border-[var(--border-color)] rounded-2xl p-4 font-bold text-sm focus:border-primary outline-none transition-all font-mono" style="color:var(--text-main);">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Events</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <?php foreach(['user.created','user.deleted','message.flagged','channel.created','report.submitted','login.failed'] as $ev): ?>
+                            <label class="flex items-center gap-2 p-3 rounded-xl border border-[var(--border-color)] hover:border-primary/40 cursor-pointer bg-[var(--surface-2)] text-[10px] font-black uppercase tracking-widest">
+                                <input type="checkbox" class="wh-event-check accent-primary" value="<?= $ev ?>"> <?= $ev ?>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Secret Key (HMAC)</label>
+                        <input type="text" id="wh-new-secret" placeholder="Optional signing secret" class="w-full bg-[var(--surface-2)] border border-[var(--border-color)] rounded-2xl p-4 font-bold text-sm focus:border-primary outline-none transition-all font-mono" style="color:var(--text-main);">
+                    </div>
+                    <button onclick="AdminApp.saveNewWebhook()" class="w-full btn-primary !p-5 !rounded-2xl flex items-center justify-center gap-3">
+                        <i class="ph-bold ph-webhook text-lg"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest">Register &amp; Monitor</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Drawer -->
+        <div id="webhook-error-drawer" class="hidden fixed inset-y-0 right-0 w-full max-w-md z-[300] shadow-2xl flex-col" style="background-color:var(--surface);border-left:1px solid var(--border-color);">
+            <div class="p-6 border-b flex items-center justify-between shrink-0" style="border-color:var(--border-color);">
+                <div>
+                    <h3 class="font-black uppercase tracking-tight text-red-400">Error <span style="color:var(--text-main)">Log</span></h3>
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mt-1" id="wh-drawer-name">—</p>
+                </div>
+                <button onclick="AdminApp.closeWebhookErrorDrawer()" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center justify-center">
+                    <i class="ph-bold ph-x text-sm"></i>
+                </button>
+            </div>
+            <div class="p-6 flex-grow overflow-y-auto custom-scrollbar space-y-3" id="wh-drawer-errors"></div>
+            <div class="p-4 border-t shrink-0" style="border-color:var(--border-color);">
+                <button onclick="AdminApp.retryWebhook(AdminApp._drawerHookId)" class="w-full btn-primary !p-4 !rounded-2xl flex items-center justify-center gap-3">
+                    <i class="ph-bold ph-arrow-clockwise text-lg"></i>
+                    <span class="text-[10px] font-black uppercase tracking-widest">Retry All Deliveries</span>
+                </button>
+            </div>
+        </div>
+    </div><!-- /tab-content-webhooks -->
+</div><!-- /section-logs -->

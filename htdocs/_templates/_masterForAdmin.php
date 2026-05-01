@@ -8,10 +8,8 @@
 
 <body class="h-screen flex transition-colors duration-500 overflow-hidden relative">
 
-    <!-- Mobile Sidebar Overlay -->
-    <div id="sidebar-overlay"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[95] hidden md:hidden opacity-0 transition-opacity duration-300"
-        onclick="toggleMobileSidebar()"></div>
+    <!-- Mobile Sidebar Overlay (hidden — sidebar always visible) -->
+    <div id="sidebar-overlay" class="hidden"></div>
 
 
     <!-- Sidebar Component (admin/_nav) -->
@@ -24,11 +22,6 @@
             class="h-20 border-b flex items-center justify-between px-8 shrink-0 backdrop-blur-lg sticky top-0 z-40 transition-all duration-300"
             style="background-color: var(--surface-glass); border-color: var(--border-color);">
             <div class="flex items-center gap-3 md:gap-6 flex-grow max-w-2xl">
-                <button
-                    class="md:hidden p-2 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center"
-                    style="color: var(--text-muted);" onclick="toggleMobileSidebar()">
-                    <i class="ph-bold ph-list text-2xl"></i>
-                </button>
                 <div class="relative flex-grow group hidden xs:block">
 
                     <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 transition-colors"
