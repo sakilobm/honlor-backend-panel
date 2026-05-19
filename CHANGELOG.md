@@ -1,4 +1,51 @@
 
+## [v11.3.0] – 2026-05-18T14:30:00Z
+
+### Added
+- **Global Toast CSS styling integration**:
+  - Added glassmorphic styling, left borders, animations, and custom typography to `.toast-panel`, `.toast-item`, `.toast`, and sub-elements inside `htdocs/_templates/core/_head.php`.
+  - Added `slideIn` keyframe animation to animate the toast popup.
+
+### Fixed
+- **Unstyled Login Toasts**: Fixed the issue where running `showToast()` or receiving auth alerts on the `/login` and `/signup` templates displayed raw, unstyled text.
+
+### Architectural Decision
+- **Tailwind Play CDN Styling**: Embedded the toast styles inside the runtime `<style type="text/tailwindcss">` block inside `core/_head.php` to leverage Tailwind's Play CDN engine. This ensures `@apply` directives are compiled on-the-fly inside the browser, maintaining consistency with our admin style schema without introducing offline CSS build scripts.
+
+### Escape Plan / Rollback Notes
+- **Database Implications**: None. This release has zero database structure changes.
+- **Rollback Path**: Revert `htdocs/_templates/core/_head.php` by deleting the added Toast Notification style segment (lines 106-141) or running `git checkout htdocs/_templates/core/_head.php`.
+- **Forward-Fix Path**: Modify the specific class names or values directly inside `core/_head.php` to address any specific spacing or color overrides.
+
+## [v11.2.0] – 2026-05-18T06:05:00Z
+
+### Added
+- **Supabase App Reports Live Ingress Review & Reply System**:
+  - Implemented cURL REST API adapter for Supabase (`htdocs/libs/src/SupabaseClient.php`) to fetch active/resolved reports and submit replies securely.
+  - Implemented dynamic database fallback: if Supabase URL and Keys are absent from `.env`, the system automatically runs a Mock JSON Storage (`scratch/supabase_reports_mock.json`), preventing panel failure.
+  - Added dedicated **App Reports (Supabase)** tab to Safety Center (`htdocs/_templates/admin/reports.php`) with real-time stats and search filtering.
+  - Implemented premium visual categorization chips matching options from React Native app (Spam: Lavender, Violence: Red, Abuse: Rose, Nudity: Amber, Drugs: Fuchsia, Personal Details: Cyan, Other: Slate).
+  - Designed dynamic glassmorphic modal to type custom replies like "We solved the issue" and submit resolution to Supabase.
+  - Registered `SupabaseClient` alias in loader script (`htdocs/libs/load.php`).
+  - Synced source controllers (`project/js/admin/admin_app.js`) and execution layers (`htdocs/js/admin.js`).
+
+### Architectural Decision
+- **REST API via cURL**: Opted for Supabase PostgREST client via cURL instead of pgsql PDO drivers to ensure 100% server compatibility without requiring complex local database driver setups.
+- **Fail-safe Mock JSON Fallback**: Structured the client to write and read from local JSON scratch file if `.env` keys are empty, guaranteeing that the admin dashboard remains robust and interactive until keys are supplied.
+- **In-Memory Dynamic Modals**: Designed the reply modal to construct itself dynamically in JS to keep HTML templates clean and maintain single-file maintainability.
+
+## [v11.1.0] – 2026-05-18T05:10:00Z
+
+### Added
+- **Active Stream Telemetry Columns**:
+  - Restored **Synchronization** and **Governance** columns to the Moderation stream.
+  - Synchronization displays live formatted message time and date matching the premium glassmorphic theme.
+  - Governance actions (Flag and Purge) render on row hover (`opacity-0 group-hover:opacity-100 transition-all`) to maintain clean interface layout.
+
+### Architectural Decision
+- Opted for hybrid formatted dates (Option 3) instead of Time-Ago or ISO format to match premium visual style.
+- Opted for hover-revealed glassmorphic micro-action buttons (Option 3) to keep the stream UI uncluttered and minimalist until explicitly hovered.
+
 ## [v11.0.0] – 2026-05-01T13:14:33Z
 
 ### Added

@@ -1,0 +1,36 @@
+graph TD
+    %% Nodes & Client Apps
+    RNApp["React Native App (Expo/Client)"]
+    AdminPanel["Honlor Admin Panel (Web Dashboard)"]
+
+    %% Databases & Storage
+    SupabaseDB[("Supabase DB (PostgreSQL)")]
+    LocalMockDB[("Local Fallback (JSON Mock Storage)")]
+    LocalMySQL[("Local MySQL DB (honlor_dashboard)")]
+
+    %% Backend Controllers (PHP API Engine)
+    subgraph Honlor Backend Panel
+        Router["Aether API Router (REST.php / API.php)"]
+        SBApi["Supabase API Endpoint (supabase_reports/list.php, action.php)"]
+        SBC["SupabaseClient Core (SupabaseClient.php)"]
+        
+        LocalApi["Compliance API Endpoint (compliance/list.php, action.php)"]
+        LocalModel["Local Compliance Model (Compliance.php)"]
+        
+        Router --> SBApi
+        Router --> LocalApi
+        
+        SBApi --> SBC
+        LocalApi --> LocalModel
+        
+        LocalModel --> LocalMySQL
+    end
+
+    %% Client and Database Interactions
+    RNApp -- "Submits Reports via API" --> SupabaseDB
+    
+    SBC -- "HTTP REST Request (cURL)" --> SupabaseDB
+    SBC -- "Dynamically falls back if no .env config" --> LocalMockDB
+
+    %% Dashboard Interactions
+    AdminPanel -- "GET/POST AJAX Calls" --> Router

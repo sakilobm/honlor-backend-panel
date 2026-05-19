@@ -471,33 +471,74 @@ const AdminApp = {
     },
 
     loadMessageList: function() {
-        const tbody = document.getElementById('messages-table-body');
+        var self = this;
+        var filterEl = document.getElementById('message-filter');
+        var filter = (filterEl) ? filterEl.value : '';
+        
+        var tbody = document.getElementById('messages-table-body');
+        var velocityMetric = document.getElementById('metric-velocity');
+        var flaggedBadge = document.getElementById('flagged-count-badge');
+
         if (!tbody) return;
 
-        ApiClient.get('messages', 'list').then(data => {
+        ApiClient.get('messages', 'list', { status: 'all', filter: filter }).then(data => {
+            // Update Metrics
+            if (velocityMetric) velocityMetric.innerText = data.metrics.velocity.toFixed(1);
+            if (flaggedBadge) {
+                flaggedBadge.innerText = data.metrics.flagged;
+                flaggedBadge.classList.toggle('hidden', data.metrics.flagged === 0);
+            }
+
             let html = '';
-            data.messages.forEach(msg => {
-                const statusBadge = msg.status === 'flagged' ? 'badge-warning' : (msg.status === 'deleted' ? 'badge-danger' : 'badge-success');
-                
+            const messages = data.messages || [];
+            messages.forEach(msg => {
+                const statusColor = (msg.status === 'flagged') ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                const statusLabel = (msg.status === 'flagged') ? 'Flagged' : 'Safe';
+                const avatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + msg.username;
+
                 html += `
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4 text-[11px] font-bold text-primary"># ${msg.channel_name}</td>
-                        <td class="px-6 py-4">
-                            <p class="font-bold text-sm mb-0.5">${msg.username}</p>
-                            <p class="text-xs text-gray-400 font-medium truncate max-w-xs">${msg.content}</p>
+                    <tr class="hover:bg-white/[0.03] transition-all duration-300 group">
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-[1rem] bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-[10px] uppercase shadow-lg shadow-indigo-500/5">
+                                    # ${msg.channel_name ? msg.channel_name.substring(0, 1) : '?'}
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-primary">${msg.channel_name}</p>
+                                    <p class="text-[8px] font-bold opacity-40 uppercase tracking-widest mt-0.5">Global Cluster</p>
+                                </div>
+                            </div>
                         </td>
-                        <td class="px-6 py-4"><span class="${statusBadge} uppercase">${msg.status}</span></td>
-                        <td class="px-6 py-4 text-xs font-semibold text-gray-400">${new Date(msg.created_at).toLocaleString()}</td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button onclick="AdminApp.executeAction('flag_message', '${msg.id}')" class="p-2 hover:bg-orange-500/10 hover:text-orange-400 rounded-xl transition-all text-gray-500"><i class="ph ph-flag text-lg"></i></button>
-                                <button onclick="AdminApp.executeAction('delete_message', '${msg.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-trash text-lg"></i></button>
+                        <td class="px-8 py-6">
+                            <div class="flex items-center gap-4">
+                                <img src="${avatar}" class="w-10 h-10 rounded-xl bg-white/5 border border-white/5 shadow-xl">
+                                <div>
+                                    <p class="text-xs font-black uppercase tracking-tight mb-0.5">${msg.username}</p>
+                                    <p class="text-[11px] font-medium opacity-70 line-clamp-1 max-w-sm italic">"${msg.content}"</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-8 py-6 text-center">
+                            <span class="px-3 py-1.5 ${statusColor} border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">${statusLabel}</span>
+                        </td>
+                        <td class="px-8 py-6">
+                            <p class="text-xs font-black tracking-tight" style="color: var(--text-main);">${new Date(msg.created_at).toLocaleTimeString()}</p>
+                            <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">${new Date(msg.created_at).toLocaleDateString()}</p>
+                        </td>
+                        <td class="px-8 py-6 text-right">
+                            <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                <button onclick="AdminApp.executeAction('flag_message', '${msg.id}')" class="w-10 h-10 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all shadow-xl shadow-orange-500/5">
+                                    <i class="ph-bold ph-flag text-lg"></i>
+                                </button>
+                                <button onclick="AdminApp.executeAction('delete_message', '${msg.id}')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5">
+                                    <i class="ph-bold ph-trash text-lg"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No messages found</td></tr>';
+            tbody.innerHTML = html || '<tr><td colspan="5" class="p-20 text-center opacity-30 font-black uppercase tracking-[0.2em] text-[10px]">No active signals in stream</td></tr>';
         });
     },
 
@@ -506,6 +547,7 @@ const AdminApp = {
      */
     initReports: function() {
         this.loadReportList();
+        this.loadSupabaseReportList();
     },
 
     loadReportList: function() {
@@ -542,6 +584,199 @@ const AdminApp = {
             tbody.innerHTML = html || '<tr><td colspan="4" class="p-12 text-center text-gray-500">No active incidents found. The system is secure.</td></tr>';
         });
     },
+
+    loadSupabaseReportList: function () {
+        var tbody = document.getElementById('supabase-reports-table-body');
+        var totalMetric = document.getElementById('metric-sb-total');
+        var resolvedMetric = document.getElementById('metric-sb-resolved');
+        var velocityMetric = document.getElementById('metric-sb-velocity');
+        var filterInput = document.getElementById('supabase-report-filter');
+        var filterValue = filterInput ? filterInput.value.toLowerCase() : '';
+
+        if (!tbody) return;
+
+        ApiClient.get('supabase_reports', 'list').then(function (data) {
+            if (totalMetric) totalMetric.innerText = data.metrics.total < 10 ? '0' + data.metrics.total : data.metrics.total;
+            if (resolvedMetric) resolvedMetric.innerText = data.metrics.resolved < 10 ? '0' + data.metrics.resolved : data.metrics.resolved;
+            if (velocityMetric) velocityMetric.innerText = data.metrics.velocity + '%';
+
+            var html = '';
+            var reports = data.reports || [];
+            
+            // Apply filtering if filter value exists
+            if (filterValue) {
+                reports = reports.filter(function (rep) {
+                    return (
+                        (rep.reason && rep.reason.toLowerCase().indexOf(filterValue) !== -1) ||
+                        (rep.details && rep.details.toLowerCase().indexOf(filterValue) !== -1) ||
+                        (rep.reporter_id && rep.reporter_id.toLowerCase().indexOf(filterValue) !== -1) ||
+                        (rep.reported_id && rep.reported_id.toLowerCase().indexOf(filterValue) !== -1) ||
+                        (rep.status && rep.status.toLowerCase().indexOf(filterValue) !== -1)
+                    );
+                });
+            }
+
+            for (var i = 0; i < reports.length; i++) {
+                var rep = reports[i];
+                var status = (rep.status || 'pending').toLowerCase();
+                
+                // Color badges for status
+                var statusClass = 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+                if (status === 'resolved' || status === 'solved') {
+                    statusClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                } else if (status === 'dismissed') {
+                    statusClass = 'bg-red-500/10 text-red-500 border-red-500/20';
+                }
+
+                // Cyberpunk badge colors for report reasons
+                var reason = rep.reason || 'Other';
+                var reasonClass = 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+                if (reason === 'Spam') reasonClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+                else if (reason === 'Violence') reasonClass = 'bg-red-500/10 text-red-400 border-red-500/20';
+                else if (reason === 'Abuse or Harassment') reasonClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                else if (reason === 'Nudity or Pornography') reasonClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                else if (reason === 'Illegal Drugs/Content') reasonClass = 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20';
+                else if (reason === 'Personal Details') reasonClass = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+
+                // Truncate UUIDs elegantly
+                var repUuidShort = rep.reporter_id ? 'usr_' + rep.reporter_id.substring(0, 4) : 'usr_anon';
+                var targetUuidShort = rep.reported_id ? 'usr_' + rep.reported_id.substring(0, 4) : 'usr_anon';
+                if (rep.channel_id) {
+                    targetUuidShort = 'ch_' + rep.channel_id.substring(0, 4);
+                }
+
+                // Synchronization timestamp
+                var localTimeStr = rep.created_at ? new Date(rep.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A';
+                var localDateStr = rep.created_at ? new Date(rep.created_at).toLocaleDateString([], {month: 'short', day: 'numeric'}) : 'N/A';
+
+                // Admin reply speech bubble indicator
+                var replyBubble = '';
+                if (rep.admin_reply) {
+                    replyBubble = ' <i class="ph-bold ph-chat-circle-text text-emerald-400 ml-1.5 cursor-help" title="Reply: &quot;' + rep.admin_reply + '&quot;"></i>';
+                }
+
+                html += '<tr class="hover:bg-white/[0.03] transition-all duration-300 group">' +
+                        '    <td class="px-8 py-6">' +
+                        '        <div class="flex items-center gap-4">' +
+                        '            <div class="flex -space-x-3 transition-transform group-hover:scale-105">' +
+                        '                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + rep.reporter_id + '" class="w-10 h-10 rounded-xl bg-purple-500/10 border-2 border-[var(--bg-main)] z-20 shadow-xl">' +
+                        '                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + (rep.reported_id || rep.channel_id) + '" class="w-10 h-10 rounded-xl bg-red-500/10 border-2 border-[var(--bg-main)] z-10 shadow-xl">' +
+                        '            </div>' +
+                        '            <div>' +
+                        '                <p class="text-[11px] font-black uppercase tracking-widest text-purple-400 truncate max-w-[150px]" title="Reporter UUID: ' + rep.reporter_id + '">By @' + repUuidShort + '</p>' +
+                        '                <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5" title="Reported UUID: ' + (rep.reported_id || rep.channel_id) + '">Reported @' + targetUuidShort + '</p>' +
+                        '            </div>' +
+                        '        </div>' +
+                        '    </td>' +
+                        '    <td class="px-8 py-6 text-center">' +
+                        '        <span class="px-3 py-1.5 ' + reasonClass + ' border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">' + reason + '</span>' +
+                        '        <p class="text-[8px] font-bold opacity-20 uppercase mt-2">App Report</p>' +
+                        '    </td>' +
+                        '    <td class="px-8 py-6 max-w-[300px]">' +
+                        '        <p class="text-[10px] font-medium opacity-70 italic" style="color: var(--text-main);">' + (rep.details ? '"' + rep.details + '"' : '<span class="opacity-30">No details provided</span>') + '</p>' +
+                        '    </td>' +
+                        '    <td class="px-8 py-6 text-center">' +
+                        '         <span class="px-3 py-1.5 ' + statusClass + ' border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">' + status.toUpperCase() + replyBubble + '</span>' +
+                        '    </td>' +
+                        '    <td class="px-8 py-6 text-center">' +
+                        '        <p class="text-[10px] font-black" style="color: var(--text-main);">' + localTimeStr + '</p>' +
+                        '        <p class="text-[8px] font-bold opacity-40 uppercase mt-0.5">' + localDateStr + '</p>' +
+                        '    </td>' +
+                        '    <td class="px-8 py-6 text-right">' +
+                        '         <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">';
+                
+                if (status === 'pending') {
+                    var detailsEscaped = (rep.details || '').replace(/['"\\]/g, '\\$&');
+                    html += '            <button onclick="AdminApp.openSupabaseReplyModal(\'' + rep.id + '\', \'' + reason + '\', \'' + detailsEscaped + '\')" class="px-3 py-2 rounded-xl bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all text-[8px] font-black uppercase tracking-widest border border-purple-500/20 shadow-xl">' +
+                            '                Reply & Solve' +
+                            '            </button>' +
+                            '            <button onclick="AdminApp.executeSupabaseAction(\'' + rep.id + '\', \'resolved\', \'Resolved by quick action\')" class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-xl shadow-emerald-500/5" title="Quick Resolve">' +
+                            '                <i class="ph-bold ph-check text-lg"></i>' +
+                            '            </button>' +
+                            '            <button onclick="AdminApp.executeSupabaseAction(\'' + rep.id + '\', \'dismissed\')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5" title="Dismiss Report">' +
+                            '                <i class="ph-bold ph-x text-lg"></i>' +
+                            '            </button>';
+                } else {
+                    html += '            <span class="text-[8px] font-black uppercase tracking-widest opacity-25">Resolved</span>';
+                }
+                
+                html += '         </div>' +
+                        '    </td>' +
+                        '</tr>';
+            }
+            tbody.innerHTML = html || '<tr><td colspan="6" class="p-24 text-center opacity-30 font-black uppercase tracking-[0.3em] text-[10px]">No Supabase reports in queue</td></tr>';
+        });
+    },
+
+    executeSupabaseAction: function (id, action, reply) {
+        var self = this;
+        var payload = { id: id, action: action };
+        if (reply) payload.reply = reply;
+
+        ApiClient.post('supabase_reports', 'action', payload).then(function (res) {
+            toast.success('Supabase Sync', 'Report resolved and database entry updated.');
+            self.loadSupabaseReportList();
+        }).catch(function (err) {
+            toast.error('Action Failed', err.error || 'Failed to update Supabase record.');
+        });
+    },
+
+    openSupabaseReplyModal: function (id, reason, details) {
+        var self = this;
+        var existing = document.getElementById('supabase-reply-modal');
+        if (existing) existing.remove();
+
+        var modalHtml = '<div id="supabase-reply-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[99999] flex items-center justify-center p-6 animate-in fade-in duration-300">' +
+                        '    <div class="w-full max-w-lg rounded-[2.5rem] border border-white/10 p-8 shadow-2xl space-y-6" style="background: rgba(20, 10, 30, 0.85);">' +
+                        '        <div class="flex justify-between items-center">' +
+                        '            <div>' +
+                        '                <h4 class="text-xl font-black uppercase tracking-tight text-white">App Report <span class="text-purple-400">Resolution</span></h4>' +
+                        '                <p class="text-[8px] font-bold uppercase tracking-widest text-purple-300/40 mt-1">ID: ' + id + '</p>' +
+                        '            </div>' +
+                        '            <button onclick="document.getElementById(\'supabase-reply-modal\').remove()" class="w-8 h-8 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 hover:text-white flex items-center justify-center transition-all">' +
+                        '                <i class="ph ph-x text-lg"></i>' +
+                        '            </button>' +
+                        '        </div>' +
+                        '        <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-white/80 space-y-3">' +
+                        '            <div class="flex justify-between">' +
+                        '                <span class="opacity-40 uppercase tracking-widest text-[9px] font-black">Reason</span>' +
+                        '                <span class="text-purple-400 font-bold">' + reason + '</span>' +
+                        '            </div>' +
+                        '            <div>' +
+                        '                <span class="opacity-40 uppercase tracking-widest text-[9px] font-black block mb-1">Details</span>' +
+                        '                <p class="italic text-white/95">"' + (details || 'No additional details provided.') + '"</p>' +
+                        '            </div>' +
+                        '        </div>' +
+                        '        <div class="space-y-2">' +
+                        '            <label class="text-[10px] font-black uppercase tracking-widest opacity-60 text-white">Reply message to the reporter</label>' +
+                        '            <textarea id="supabase-reply-message" placeholder="Type a message to the user... (e.g. We have solved the issue and taken action)" ' +
+                        '                      class="w-full h-32 rounded-2xl bg-black/40 border border-white/10 p-4 text-xs text-white placeholder-white/30 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all resize-none"></textarea>' +
+                        '        </div>' +
+                        '        <div class="flex gap-4 pt-2">' +
+                        '            <button onclick="document.getElementById(\'supabase-reply-modal\').remove()" class="btn-secondary !rounded-2xl flex-grow justify-center py-4 text-xs font-black uppercase tracking-widest">Cancel</button>' +
+                        '            <button id="supabase-submit-btn" class="btn-primary !rounded-2xl flex-grow justify-center py-4 text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-500/20">Submit Resolution</button>' +
+                        '        </div>' +
+                        '    </div>' +
+                        '</div>';
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        var submitBtn = document.getElementById('supabase-submit-btn');
+        if (submitBtn) {
+            submitBtn.onclick = function () {
+                var text = document.getElementById('supabase-reply-message').value.trim();
+                if (!text) {
+                    toast.error('Required Field', 'Please enter a reply message before resolving.');
+                    return;
+                }
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Synchronizing...';
+                self.executeSupabaseAction(id, 'resolved', text);
+                document.getElementById('supabase-reply-modal').remove();
+            };
+        }
+    },
+
 
     /**
      * Deletion Requests Logic

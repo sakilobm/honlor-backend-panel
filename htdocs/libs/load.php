@@ -18,6 +18,7 @@ class_alias('Aether\User', 'User');
 class_alias('Aether\UserSession', 'UserSession');
 class_alias('Aether\Database', 'Database');
 class_alias('Aether\WebAPI', 'WebAPI');
+class_alias('Aether\SupabaseClient', 'SupabaseClient');
 
 // Global config singleton (Legacy support)
 global $__site_config;

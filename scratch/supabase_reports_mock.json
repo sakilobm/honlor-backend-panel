@@ -1,0 +1,38 @@
+[
+  {
+    "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+    "reporter_id": "00000000-0000-0000-0000-000000000001",
+    "reported_id": "00000000-0000-0000-0000-000000000002",
+    "channel_id": "chat_channel_123",
+    "reason": "Spam",
+    "details": "This user is sending multiple promotional messages in our channel.",
+    "status": "pending",
+    "created_at": "2026-05-18T05:00:00.000Z",
+    "admin_reply": null,
+    "resolved_at": null
+  },
+  {
+    "id": "f5e4d3c2-b1a0-9e8d-7c6b-5a4f3e2d1c0b",
+    "reporter_id": "00000000-0000-0000-0000-000000000003",
+    "reported_id": "00000000-0000-0000-0000-000000000004",
+    "channel_id": null,
+    "reason": "Abuse or Harassment",
+    "details": "Threatening language and insults sent in private message.",
+    "status": "pending",
+    "created_at": "2026-05-18T05:30:00.000Z",
+    "admin_reply": null,
+    "resolved_at": null
+  },
+  {
+    "id": "e9876543-210f-eedd-ccbb-aa9876543210",
+    "reporter_id": "00000000-0000-0000-0000-000000000005",
+    "reported_id": "00000000-0000-0000-0000-000000000006",
+    "channel_id": null,
+    "reason": "Violence",
+    "details": "Promoting violent acts in the general forum.",
+    "status": "resolved",
+    "created_at": "2026-05-17T14:20:00.000Z",
+    "admin_reply": "We have reviewed the report and banned the reported account permanently.",
+    "resolved_at": "2026-05-17T15:00:00.000Z"
+  }
+]

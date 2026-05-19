@@ -26,6 +26,10 @@
             Resolution History
             <div class="tab-underline"></div>
         </button>
+        <button class="tab-btn uppercase tracking-widest text-[10px] font-black" data-tab="supabase" onclick="AdminApp.switchTab('reports', 'supabase')">
+            App Reports (Supabase)
+            <div class="tab-underline"></div>
+        </button>
     </div>
 
     <!-- Tab Content: Incidents -->
@@ -158,6 +162,98 @@
                  <div class="mt-12 p-6 rounded-3xl border border-dashed border-white/20 text-center" style="background-color: var(--glass-bg);">
                     <p class="text-[9px] font-bold opacity-40 uppercase tracking-[0.2em]" style="color: var(--text-muted);">Authenticating Resolution Ledger with Global Beacons</p>
                  </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Content: Supabase Reports -->
+    <div id="tab-content-supabase" class="tab-content hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <!-- Telemetry Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="stat-card border-purple-500/20 bg-gradient-to-br from-purple-500/[0.05] to-transparent relative overflow-hidden group">
+                <div class="flex items-center gap-6 relative z-10">
+                    <div class="w-16 h-16 rounded-[2rem] bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20 shadow-2xl shadow-purple-500/10 group-hover:scale-110 transition-transform duration-500">
+                        <i class="ph-bold ph-chats text-3xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Total App Reports</p>
+                        <p class="text-3xl font-black tracking-tighter mt-1" id="metric-sb-total">00</p>
+                    </div>
+                </div>
+                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl group-hover:bg-purple-500/10 transition-colors"></div>
+            </div>
+
+            <div class="stat-card border-emerald-400/20 bg-gradient-to-br from-emerald-400/[0.05] to-transparent relative overflow-hidden group">
+                <div class="flex items-center gap-6 relative z-10">
+                    <div class="w-16 h-16 rounded-[2rem] bg-emerald-400/10 flex items-center justify-center text-emerald-400 border border-emerald-400/20 shadow-2xl shadow-emerald-400/10 group-hover:rotate-12 transition-transform duration-500">
+                        <i class="ph-bold ph-shield-check text-3xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Resolved Reports</p>
+                        <p class="text-3xl font-black tracking-tighter mt-1" id="metric-sb-resolved">00</p>
+                    </div>
+                </div>
+                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-emerald-400/5 rounded-full blur-3xl group-hover:bg-emerald-400/10 transition-colors"></div>
+            </div>
+
+            <div class="stat-card border-cyan-400/20 bg-gradient-to-br from-cyan-400/[0.05] to-transparent relative overflow-hidden group">
+                <div class="flex items-center gap-6 relative z-10">
+                    <div class="w-16 h-16 rounded-[2rem] bg-cyan-400/10 flex items-center justify-center text-cyan-400 border border-cyan-400/20 shadow-2xl shadow-cyan-400/10 group-hover:-rotate-12 transition-transform duration-500">
+                        <i class="ph-bold ph-chart-line-up text-3xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Resolution Velocity</p>
+                        <p class="text-3xl font-black tracking-tighter mt-1" id="metric-sb-velocity">0.0%</p>
+                    </div>
+                </div>
+                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-cyan-400/5 rounded-full blur-3xl group-hover:bg-cyan-400/10 transition-colors"></div>
+            </div>
+        </div>
+
+        <!-- Live Stream Table -->
+        <div class="stat-card !p-0 overflow-hidden shadow-2xl" style="background-color: var(--glass-bg); border: 1px solid var(--border-color);">
+            <div class="p-8 border-b border-white/5 bg-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                    <h3 class="text-xl font-black uppercase tracking-tight">Supabase Live <span class="gradient-text">Report Ingress</span></h3>
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mt-1 flex items-center gap-3">
+                        <span class="flex h-2 w-2 relative">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-500 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                        </span>
+                        Real-time App Report Ingress Listener Active
+                    </p>
+                </div>
+                <div class="flex gap-4 w-full md:w-auto">
+                    <div class="relative flex-grow md:flex-none">
+                        <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-purple-400 opacity-60"></i>
+                        <input type="text" id="supabase-report-filter" placeholder="Filter Supabase Reports..." 
+                               onkeyup="AdminApp.loadSupabaseReportList()"
+                               class="w-full md:w-64 rounded-xl pl-12 pr-4 py-3 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                               style="background-color: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-main);">
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] border-b border-white/5" style="background-color: var(--glass-bg);">
+                            <th class="py-6 px-8">Reporter / Reported ID</th>
+                            <th class="py-6 px-8 text-center">Protocol Violation</th>
+                            <th class="py-6 px-8">Additional Details</th>
+                            <th class="py-6 px-8 text-center">Status</th>
+                            <th class="py-6 px-8 text-center">Synchronization</th>
+                            <th class="py-6 px-8 text-right">Governance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supabase-reports-table-body" class="divide-y divide-white/[0.03]">
+                        <tr><td colspan="6" class="p-32 text-center">
+                            <div class="flex flex-col items-center gap-4">
+                                <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                                <p class="font-black text-[10px] uppercase tracking-[0.3em] opacity-40">Authenticating Supabase Ingress Stream...</p>
+                            </div>
+                        </td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
