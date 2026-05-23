@@ -1,4 +1,30 @@
 
+## [v11.4.0] – 2026-05-23T15:52:00Z
+
+### Added
+- **App Version Control Interface**:
+  - Built high-fidelity, premium dark glassmorphic panel in `htdocs/_templates/admin/app_config.php` featuring active telemetry metrics (Active Target, Enforcement Ratio, Registry Status, Registered Shards).
+  - Built detailed upgrades registry table with monospaced URLs, hover-copy triggers, status pills, and slide-in drawer details.
+  - Implemented sleek "Publish Release" modal form with semantic version validation and target URL syntax checking.
+- **Local MySQL AppConfig Model & Controller**:
+  - Created `App\AppConfig` model in `htdocs/libs/app/AppConfig.php` running prepared PDO queries for list, get, create, update, and delete actions.
+  - Built automatic runtime migration failsafe to create and seed the `app_config` table on first execution.
+- **REST API Shard Routes**:
+  - Created 4 new REST routes under `htdocs/libs/api/app_config/` (`list.php`, `create.php`, `update.php`, `delete.php`) routed cleanly via rewrite rules.
+- **Audit Logging & System Visibility**:
+  - Automatically writes structured audit traces to the `logs` table upon publishing, updating, or decommissioning a version configuration, populating real-time telemetry streams instantly.
+- **Interactive Routing Integration**:
+  - Wired the new sub-section `app_config` inside navigation sidebar (`htdocs/_templates/admin/_nav.php`) and state machine routers inside `htdocs/js/admin.js` and `project/js/admin/admin_app.js`.
+
+### Architectural Decision
+- **Local-First SQL Connection**: Designed the version manager to store and manage configurations in the local MySQL database rather than Supabase PostgreSQL REST layers for now, matching the user's explicit setup requirements while leaving standard hooks for eventual Postgres migration.
+
+### Escape Plan / Rollback Notes
+- **Database Implications**: MySQL table `app_config` is added.
+- **Rollback Path (Database)**: Run `DROP TABLE IF EXISTS app_config;`.
+- **Rollback Path (Codebase)**: Decommission and delete `htdocs/_templates/admin/app_config.php`, the `/api/app_config/` directory, and model `htdocs/libs/app/AppConfig.php`. Revert Javascript edits using `git checkout`.
+- **Forward-Fix Path**: Perform standard edits inside `htdocs/libs/app/AppConfig.php` or `htdocs/js/admin.js` directly to adjust formatting or styles.
+
 ## [v11.3.0] – 2026-05-18T14:30:00Z
 
 ### Added

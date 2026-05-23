@@ -60,6 +60,7 @@ var AdminApp = {
             case 'policy_editor': this.initPolicyEditor(); break;
             case 'analytics': this.initAnalytics ? this.initAnalytics() : null; break;
             case 'roles': this.initRoles(); break;
+            case 'app_config': this.initAppConfig(); break;
         }
     },
 
@@ -2095,6 +2096,49 @@ var AdminApp = {
                     '    </div>' +
                     '</div>';
             });
+        } else if (type === 'app_config') {
+            var cfg = null;
+            if (self.appConfigs) {
+                for (var i = 0; i < self.appConfigs.length; i++) {
+                    if (self.appConfigs[i].id == id) { cfg = self.appConfigs[i]; break; }
+                }
+            }
+            if (!cfg) return;
+
+            target.innerHTML = '<div class="p-8 h-full flex flex-col">' +
+                '    <div class="flex items-center justify-between mb-8">' +
+                '        <h3 class="text-xl font-bold uppercase tracking-widest text-primary">Edit Shard</h3>' +
+                '        <button onclick="closeDrawer()" class="p-2 hover:bg-white/10 rounded-xl transition-all"><i class="ph ph-x text-2xl"></i></button>' +
+                '    </div>' +
+                '    <form id="appconfig-edit-form" class="space-y-6 flex-grow overflow-y-auto pr-2 custom-scrollbar">' +
+                '        <input type="hidden" name="id" value="' + cfg.id + '">' +
+                '        <div class="space-y-2">' +
+                '            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Version Tag (Semantic)</label>' +
+                '            <input type="text" name="latest_version" value="' + cfg.latest_version + '" class="w-full bg-transparent border rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all" style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">' +
+                '        </div>' +
+                '        <div class="space-y-2">' +
+                '            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Target Deployment URL</label>' +
+                '            <input type="url" name="update_url" value="' + cfg.update_url + '" class="w-full bg-transparent border rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all font-mono" style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">' +
+                '        </div>' +
+                '        <div class="p-6 rounded-2xl border flex items-center justify-between" style="background-color: var(--glass-bg); border-color: var(--border-color);">' +
+                '            <div>' +
+                '                <p class="text-xs font-black uppercase tracking-tight" style="color: var(--text-main);">Force Mandatory Upgrade</p>' +
+                '                <p class="text-[10px] font-bold opacity-30 mt-1 uppercase tracking-widest">Restrict platform access</p>' +
+                '            </div>' +
+                '            <label class="relative inline-flex items-center cursor-pointer">' +
+                '                <input type="checkbox" name="is_mandatory" value="1" ' + ((cfg.is_mandatory == 1 || cfg.is_mandatory === true) ? 'checked' : '') + ' class="sr-only peer">' +
+                '                <div class="w-14 h-7 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[\'\'] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-500 shadow-lg"></div>' +
+                '            </label>' +
+                '        </div>' +
+                '        <div class="space-y-2">' +
+                '            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Release Notes / Shard Notes</label>' +
+                '            <textarea name="description" rows="5" class="w-full bg-transparent border rounded-2xl p-4 text-sm focus:border-primary outline-none transition-all resize-none" style="background-color: var(--glass-bg); border-color: var(--border-color); color: var(--text-main);">' + (cfg.description || '') + '</textarea>' +
+                '        </div>' +
+                '    </form>' +
+                '    <div class="pt-6 border-t border-white/5">' +
+                '        <button onclick="AdminApp.submitAppConfigEdit()" class="w-full btn-primary !justify-center py-4">Synchronize Shard</button>' +
+                '    </div>' +
+                '</div>';
         }
     },
 
@@ -3559,6 +3603,172 @@ var AdminApp = {
             toast.success(labels[action] || 'Done', 'Action completed successfully.');
             if (action === 'restart_phpfpm') self.initServerControls();
         }, 1500);
+    },
+
+    /** App Version Control Logic **/
+    initAppConfig: function () {
+        var self = this;
+        this.appConfigs = [];
+        
+        var tbody = document.getElementById('appconfig-table-body');
+        if (!tbody) return;
+
+        tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center animate-pulse"><p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">Loading Shard Deployments...</p></td></tr>';
+
+        ApiClient.get('app_config', 'list').then(function (data) {
+            self.appConfigs = data.configs || [];
+
+            // Update Telemetry Metrics
+            var set = function(id, val) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = val;
+            };
+
+            set('stat-active-version', data.metrics.active_version || 'v0.0.0');
+            set('stat-enforcement-ratio', data.metrics.enforcement_ratio || '0%');
+            set('stat-sync-status', data.metrics.sync_status || 'ONLINE');
+            set('stat-total-releases', data.metrics.total_releases || 0);
+
+            var html = '';
+            for (var i = 0; i < self.appConfigs.length; i++) {
+                var cfg = self.appConfigs[i];
+                var isMandatory = (cfg.is_mandatory == 1 || cfg.is_mandatory === true);
+                var badgeColor = isMandatory ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+                var badgeLabel = isMandatory ? 'MANDATORY' : 'OPTIONAL';
+                
+                html += '<tr class="hover:bg-white/[0.03] transition-all duration-300 group">' +
+                        '    <td class="px-8 py-6">' +
+                        '        <div class="flex items-center gap-4">' +
+                        '            <div class="w-12 h-12 rounded-[1.25rem] bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shadow-2xl shadow-purple-500/10">' +
+                        '                <i class="ph-bold ph-git-branch text-xl"></i>' +
+                        '            </div>' +
+                        '            <div>' +
+                        '                <p class="text-xs font-black uppercase tracking-tight">' + cfg.latest_version + '</p>' +
+                        '                <p class="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-0.5">X-Class Deployment</p>' +
+                        '            </div>' +
+                        '        </div>' +
+                        '    </td>' +
+                        '    <td class="px-8 py-6">' +
+                        '        <span class="px-3 py-1.5 ' + badgeColor + ' border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">' + badgeLabel + '</span>' +
+                        '    </td>' +
+                        '    <td class="px-8 py-6 font-mono text-xs text-primary/80 truncate max-w-xs">' +
+                        '        <div class="flex items-center gap-2 group/url">' +
+                        '            <span class="truncate">' + cfg.update_url + '</span>' +
+                        '            <button onclick="navigator.clipboard.writeText(\'' + cfg.update_url + '\'); toast.success(\'Copied\', \'URL copied to clipboard.\')" class="opacity-0 group-hover/url:opacity-100 p-1 hover:bg-white/10 rounded transition-all text-gray-500"><i class="ph ph-copy text-xs"></i></button>' +
+                        '        </div>' +
+                        '    </td>' +
+                        '    <td class="px-8 py-6">' +
+                        '        <p class="text-xs text-gray-400 max-w-sm leading-relaxed truncate" title="' + (cfg.description || '') + '">' + (cfg.description || '<span class="opacity-20 italic">No notes provided</span>') + '</p>' +
+                        '    </td>' +
+                        '    <td class="px-8 py-6">' +
+                        '        <p class="text-xs font-black tracking-tight" style="color: var(--text-main);">' + new Date(cfg.updated_at).toLocaleTimeString() + '</p>' +
+                        '        <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">' + new Date(cfg.updated_at).toLocaleDateString() + '</p>' +
+                        '    </td>' +
+                        '    <td class="px-8 py-6 text-right">' +
+                        '        <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">' +
+                        '            <button onclick="AdminApp.openDrawer(\'app_config\', \'' + cfg.id + '\')" class="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5">' +
+                        '                <i class="ph-bold ph-pencil text-lg"></i>' +
+                        '            </button>' +
+                        '            <button onclick="AdminApp.deleteAppConfig(\'' + cfg.id + '\')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5">' +
+                        '                <i class="ph-bold ph-trash text-lg"></i>' +
+                        '            </button>' +
+                        '        </div>' +
+                        '    </td>' +
+                        '</tr>';
+            }
+
+            tbody.innerHTML = html || '<tr><td colspan="6" class="p-20 text-center opacity-30 font-black uppercase tracking-[0.2em] text-[10px]">No active versions in registry</td></tr>';
+        }).catch(function (err) {
+            console.error("Failed to load app version config list:", err);
+            tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center text-red-400 font-bold">Failed to load app configurations from SQL.</td></tr>';
+        });
+    },
+
+    openPublishReleaseModal: function () {
+        var m = document.getElementById('publish-release-modal');
+        if (m) {
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+    },
+
+    publishNewVersion: function () {
+        var self = this;
+        var version = document.getElementById('ac-new-version').value.trim();
+        var url = document.getElementById('ac-new-url').value.trim();
+        var isMandatory = document.getElementById('ac-new-mandatory').checked;
+        var description = document.getElementById('ac-new-description').value.trim();
+
+        if (!version || !url) {
+            toast.error('Required Fields', 'Version Identifier and Target Deployment URL are required.');
+            return;
+        }
+
+        // Validate URL format
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            toast.error('Invalid Protocol', 'URL must start with http:// or https://');
+            return;
+        }
+
+        var payload = {
+            latest_version: version,
+            update_url: url,
+            is_mandatory: isMandatory ? 1 : 0,
+            description: description
+        };
+
+        ApiClient.post('app_config', 'create', payload).then(function (res) {
+            toast.success('App Upgrade', res.message);
+            
+            // Reset fields
+            document.getElementById('ac-new-version').value = '';
+            document.getElementById('ac-new-url').value = '';
+            document.getElementById('ac-new-mandatory').checked = false;
+            document.getElementById('ac-new-description').value = '';
+
+            window.closeModal();
+            self.initAppConfig();
+        }).catch(function (err) {
+            toast.error('Deployment Failure', err.error || 'Failed to publish configuration.');
+        });
+    },
+
+    deleteAppConfig: function (id) {
+        var self = this;
+        this.confirm({
+            title: 'Decommission Upgrade Shard',
+            message: 'Are you absolutely sure you want to permanently decommission this version update configuration? Users on older builds will no longer receive upgrade protocols.',
+            icon: 'ph-warning-octagon',
+            confirmLabel: 'Decommission Shard',
+            type: 'danger',
+            purge: true
+        }).then(function (confirmed) {
+            if (confirmed) {
+                ApiClient.post('app_config', 'delete', { id: id }).then(function (res) {
+                    toast.success('Decommissioned', 'Upgrade target removed.');
+                    self.initAppConfig();
+                });
+            }
+        });
+    },
+
+    submitAppConfigEdit: function () {
+        var self = this;
+        var form = document.getElementById('appconfig-edit-form');
+        var formData = new FormData(form);
+        var payload = {};
+        formData.forEach(function(value, key) { payload[key] = value; });
+
+        payload['is_mandatory'] = form.querySelector('input[name="is_mandatory"]').checked ? 1 : 0;
+
+        ApiClient.post('app_config', 'update', payload).then(function(res) {
+            toast.success('App Version Control', res.message);
+            window.closeDrawer();
+            self.initAppConfig();
+        })['catch'](function(err) {
+            toast.error('Error', err.error || 'Failed to update configuration.');
+        });
     }
 };
 

@@ -20,10 +20,16 @@ graph TD
         Router --> SBApi
         Router --> LocalApi
         
-        SBApi --> SBC
         LocalApi --> LocalModel
         
+        AppConfigApi["App Config API (app_config/list.php, etc.)"]
+        AppConfigModel["AppConfig Model (AppConfig.php)"]
+        
+        Router --> AppConfigApi
+        AppConfigApi --> AppConfigModel
+        
         LocalModel --> LocalMySQL
+        AppConfigModel --> LocalMySQL
     end
 
     %% Client and Database Interactions
@@ -34,3 +40,4 @@ graph TD
 
     %% Dashboard Interactions
     AdminPanel -- "GET/POST AJAX Calls" --> Router
+

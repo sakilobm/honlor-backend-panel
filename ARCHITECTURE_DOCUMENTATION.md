@@ -31,7 +31,18 @@ The Honlor Admin Panel serves as the central nervous system for moderation, tele
 - Implements a stunning, dynamic reply modal to type custom messages and mark reports as solved in the Supabase backend.
 - Provides search filters to filter reports in real time on the client side.
 
+### 5. App Version Control Module (Governance Shards)
+- **Database Table:** Interacts with the `app_config` table (containing `id`, `latest_version`, `is_mandatory`, `update_url`, `description`, `updated_at`).
+- **PHP App Controller:** Implements `App\AppConfig` (`htdocs/libs/app/AppConfig.php`) to run database queries for version management, validation, and logs.
+- **REST Endpoints:** Exposes `/api/app_config/` REST routes:
+  - `list.php`: Returns the version queue and calculates key metrics (Enforcement Ratio, total releases, sync status).
+  - `create.php`: Validates and registers new client version binary upgrades.
+  - `update.php`: Updates metadata details or flips mandatory flags.
+  - `delete.php`: Safely purges obsolete release lines.
+- **Interactive UI:** Placed under **Governance** named **App Version Control**, showing real-time stats cards, custom switch toggles for instant enforcement, slide-out edit drawers, and custom modal inputs.
+
 ---
 
 ## Data Flow Diagram
 For the visual Mermaid representation of components, refer to [ARCHITECTURE_DIAGRAM.mmd](file:///var/www/html/honlor-admin-panel/ARCHITECTURE_DIAGRAM.mmd).
+

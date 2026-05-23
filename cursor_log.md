@@ -1,5 +1,38 @@
 # Cursor Development & Test Execution Log
 
+## [v11.4.0] - 2026-05-23T15:52:00Z
+
+### Summary of Changes
+- Created **App Version Control Dashboard** in `htdocs/_templates/admin/app_config.php` featuring dark glassmorphism styling, metrics widgets, version registry tables, publish modals, and drawer updates.
+- Created `App\AppConfig` model class (`htdocs/libs/app/AppConfig.php`) to fetch, insert, update, and decommission data from the local MySQL database.
+- Created 4 REST endpoints (`list.php`, `create.php`, `update.php`, `delete.php`) under `/api/app_config/` namespace.
+- Linked new interface to governance sidebar and SPA routing switch blocks in `htdocs/js/admin.js` and `project/js/admin/admin_app.js`.
+
+### Automated Tests
+- Test Runner `testing/run_all_test_scripts.sh` -> Not present in repository.
+- Unit and Integration test directories -> Empty.
+- Standard coverage gating bypassed.
+
+### Manual Verification
+1. **Database Schema & Data**:
+   - Migration script `scratch/migrate_app_config.php` executed perfectly on local MySQL `honlor_dashboard` database.
+   - Initial versions (`v1.2.0`, `v1.1.5`) successfully seeded.
+2. **API Endpoint Functionality**:
+   - Hit `/api/app_config/list` endpoint -> Returned seeded configs and telemetry stats (active build, enforcement ratio) correctly.
+   - Hit `/api/app_config/create` with version, URL, mandatory state, and notes -> Saved record and returned last insert ID.
+   - Hit `/api/app_config/update` with target ID -> Config metadata updated successfully.
+   - Hit `/api/app_config/delete` with target ID -> Config row purged safely.
+3. **UI SPA Routing & Interaction**:
+   - Sidebar navigation item correctly active and routes dynamically to `/admin?page=app_config` without page refreshes.
+   - Telemetry cards populate active target, enforcement ratio, and releases instantly.
+   - Upgrade target list builds correctly with active version highlighting and clipboard copy triggers.
+   - Form modals validate empty entries, semantic version tag types, and correct HTTP/HTTPS protocols.
+   - Edit drawer triggers sliding drawer from right side and populates with correct attributes. Updating form triggers instant re-render.
+4. **Structured Logging**:
+   - Checked `logs` table -> New entries detailingpublished, updated, and decommissioned configurations automatically logged with admin ID and IP context.
+
+Status: **ALL VERIFICATIONS SUCCESSFUL (PASS)**
+
 ## [v11.3.0] - 2026-05-18T14:30:00Z
 
 ### Summary of Changes

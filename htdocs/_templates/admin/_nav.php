@@ -136,6 +136,11 @@
                     <div class="nav-duotone nav-rose"><i class="ph-bold ph-read-cv-logo text-lg"></i></div>
                     <span class="sidebar-hide">Policy Studio</span>
                 </a>
+                <a href="javascript:AdminApp.switchSection('app_config')"
+                    class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'app_config' ? 'active' : '' ?>">
+                    <div class="nav-duotone nav-purple"><i class="ph-bold ph-git-branch text-lg"></i></div>
+                    <span class="sidebar-hide">App version Control</span>
+                </a>
             </nav>
         </div>
 

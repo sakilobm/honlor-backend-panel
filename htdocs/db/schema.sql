@@ -114,4 +114,17 @@ CREATE TABLE `logs` (
   CONSTRAINT `logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `auth` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- ─── app_config — App Version & Update Registry ────────────
+DROP TABLE IF EXISTS `app_config`;
+CREATE TABLE `app_config` (
+  `id`             bigint       NOT NULL AUTO_INCREMENT,
+  `latest_version` varchar(255) NOT NULL,
+  `is_mandatory`   tinyint(1)   DEFAULT 0,
+  `update_url`     text         NOT NULL,
+  `description`    text         DEFAULT NULL,
+  `updated_at`     timestamp    NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
+
