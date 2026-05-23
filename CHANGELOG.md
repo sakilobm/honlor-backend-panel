@@ -1,4 +1,28 @@
 
+## [v11.5.0] – 2026-05-23T18:31:00Z
+
+### Added
+- **Supabase Live Credentials Integrated**:
+  - Added `supabase_url`, `supabase_anon_key`, and `supabase_service_key` to `project/config.json`.
+  - All three values verified live: REST API returns HTTP 200, `hellow-world` edge function reachable, `get-all-users` returns real app users.
+  - `SupabaseClient.php` extended with two new methods:
+    - `invokeFunction(string $functionName, array $body, string $method)` — invokes any Edge Function via POST/PUT/PATCH using the service role key.
+    - `invokeFunctionGet(string $functionName, array $queryParams)` — invokes GET-based edge functions with query parameters.
+    - `ping()` — health check shortcut that calls `hellow-world` and returns boolean.
+  - All methods return a structured `['success', 'data', 'http_code', 'error']` array with full error logging via `error_log()`.
+  - Service key usage is strictly server-side (PHP only); never exposed to browser.
+
+### Architectural Decision
+- **Service Role Key via cURL (Server-Side Only)**: The service key bypasses Supabase RLS policies, making it suitable for admin panel actions where the dashboard acts as a trusted server. This key is stored in `project/config.json` which is already in `.gitignore`. It is never passed to the browser.
+- **Project URL**: `https://zloyckonnkiywllkyghf.supabase.co`
+
+### Escape Plan / Rollback Notes
+- **Database Implications**: None — credentials stored in `config.json` only, no schema changes.
+- **Rollback Path**: Remove `supabase_url`, `supabase_anon_key`, and `supabase_service_key` from `project/config.json`. System auto-falls-back to local mock JSON (`scratch/supabase_reports_mock.json`).
+- **Forward-Fix Path**: Rotate keys in Supabase Dashboard → Project Settings → API, then update `project/config.json`.
+
+---
+
 ## [v11.4.0] – 2026-05-23T15:52:00Z
 
 ### Added

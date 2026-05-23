@@ -6,6 +6,12 @@ namespace Aether;
  * Supabase client and fallback sync layer.
  * ========================================
  * PSR-4 Namespace: Aether\SupabaseClient
+ *
+ * Credentials are loaded via get_config() which reads from:
+ *   1. Environment variables (SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY)
+ *   2. project/config.json (supabase_url, supabase_anon_key, supabase_service_key)
+ *
+ * Project: https://zloyckonnkiywllkyghf.supabase.co
  */
 class SupabaseClient
 {
@@ -114,5 +120,135 @@ class SupabaseClient
         curl_close($ch);
 
         return ($httpCode >= 200 && $httpCode < 300);
+    }
+
+    // =========================================================
+    // Edge Function Invocation Layer
+    // =========================================================
+
+    /**
+     * Invoke a Supabase Edge Function using the Service Role Key.
+     *
+     * The service key bypasses all RLS policies — suitable for
+     * admin-panel server-side calls ONLY. Never expose to browser.
+     *
+     * @param  string $functionName  Edge function name (e.g. 'create-channel')
+     * @param  array  $body          JSON payload to send
+     * @param  string $method        HTTP method (default: POST)
+     * @return array                 ['success' => bool, 'data' => array, 'http_code' => int, 'error' => string|null]
+     */
+    public static function invokeFunction(string $functionName, array $body = [], string $method = 'POST'): array
+    {
+        $url        = get_config('supabase_url');
+        $serviceKey = get_config('supabase_service_key');
+
+        if (empty($url) || empty($serviceKey)) {
+            error_log("SupabaseClient::invokeFunction — supabase_url or supabase_service_key not configured.");
+            return [
+                'success'   => false,
+                'data'      => null,
+                'http_code' => 0,
+                'error'     => 'Supabase credentials not configured.',
+            ];
+        }
+
+        $endpoint = rtrim($url, '/') . '/functions/v1/' . ltrim($functionName, '/');
+
+        $ch = curl_init($endpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $serviceKey,
+            'apikey: '              . $serviceKey,
+        ]);
+
+        if (!empty($body) && in_array(strtoupper($method), ['POST', 'PUT', 'PATCH'])) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+        }
+
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlError) {
+            error_log("SupabaseClient::invokeFunction [{$functionName}] cURL error: {$curlError}");
+            return ['success' => false, 'data' => null, 'http_code' => 0, 'error' => $curlError];
+        }
+
+        $decoded = json_decode($response, true);
+        $success = ($httpCode >= 200 && $httpCode < 300);
+
+        if (!$success) {
+            error_log("SupabaseClient::invokeFunction [{$functionName}] HTTP {$httpCode}: {$response}");
+        }
+
+        return [
+            'success'   => $success,
+            'data'      => $decoded,
+            'http_code' => $httpCode,
+            'error'     => $success ? null : ($decoded['error'] ?? $decoded['message'] ?? "HTTP {$httpCode}"),
+        ];
+    }
+
+    /**
+     * Invoke a Supabase Edge Function via GET with query parameters.
+     *
+     * @param string $functionName  Edge function name
+     * @param array  $queryParams   Key-value pairs appended as ?key=value
+     */
+    public static function invokeFunctionGet(string $functionName, array $queryParams = []): array
+    {
+        $url        = get_config('supabase_url');
+        $serviceKey = get_config('supabase_service_key');
+
+        if (empty($url) || empty($serviceKey)) {
+            return ['success' => false, 'data' => null, 'http_code' => 0, 'error' => 'Supabase credentials not configured.'];
+        }
+
+        $endpoint = rtrim($url, '/') . '/functions/v1/' . ltrim($functionName, '/');
+        if (!empty($queryParams)) {
+            $endpoint .= '?' . http_build_query($queryParams);
+        }
+
+        $ch = curl_init($endpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $serviceKey,
+            'apikey: '              . $serviceKey,
+        ]);
+
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlError) {
+            return ['success' => false, 'data' => null, 'http_code' => 0, 'error' => $curlError];
+        }
+
+        $decoded = json_decode($response, true);
+        $success = ($httpCode >= 200 && $httpCode < 300);
+
+        return [
+            'success'   => $success,
+            'data'      => $decoded,
+            'http_code' => $httpCode,
+            'error'     => $success ? null : ($decoded['error'] ?? $decoded['message'] ?? "HTTP {$httpCode}"),
+        ];
+    }
+
+    /**
+     * Quick health check: ping the hellow-world function to verify connectivity.
+     * Returns true if the edge runtime is reachable.
+     */
+    public static function ping(): bool
+    {
+        $result = self::invokeFunction('hellow-world', [], 'POST');
+        return $result['success'];
     }
 }
