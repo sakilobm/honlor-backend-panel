@@ -355,118 +355,431 @@ var AdminApp = {
         });
     },
 
-    initUsers: function () {
-        this.userPage = 1;
-        this.loadUserList();
+    // ── APP USER MANAGEMENT (Supabase) ───────────────────────────────────────
+    appUserPage:   1,
+    appUserFilter: '',
+    appUserStatus: 'all',
+    appUserView:   'card',
+    appUserSearchTimeout: null,
+    _lastAppUsers: [],
 
-        var filterInput = document.getElementById('user-filter');
-        if (filterInput) {
-            var self = this;
-            var timeout;
-            filterInput.oninput = function () {
-                clearTimeout(timeout);
-                timeout = setTimeout(function () {
-                    self.userPage = 1;
-                    self.loadUserList(1, filterInput.value);
-                }, 300);
-            };
+    initUsers: function () {
+        this.appUserPage   = 1;
+        this.appUserFilter = '';
+        this.appUserStatus = 'all';
+        this.appUserView   = 'card';
+        this.loadAppUsers(1);
+        this.loadHandshakeHub();
+    },
+
+    loadAppUsers: function (page) {
+        var self = this;
+        page = page || this.appUserPage;
+        this.appUserPage = page;
+
+        var grid  = document.getElementById('app-users-card-grid');
+        var tbody = document.getElementById('app-users-table-body');
+        var loadingHtml = '<div class="col-span-full py-24 flex flex-col items-center gap-4 opacity-40"><div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p class="text-[10px] font-black uppercase tracking-[0.3em]">Loading...</p></div>';
+        if (grid)  grid.innerHTML  = loadingHtml;
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-20 text-center"><p class="text-[10px] font-black uppercase tracking-[0.3em] opacity-30 animate-pulse">Loading identities...</p></td></tr>';
+
+        ApiClient.get('users', 'app_list', {
+            page:   page,
+            limit:  12,
+            filter: this.appUserFilter,
+            status: this.appUserStatus
+        }).then(function (data) {
+            var users = data.users || [];
+            var total = data.total || 0;
+            var stats = data.stats || {};
+
+            // Update stat cards
+            var setEl = function(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; };
+            setEl('stat-users-total',    stats.total    || 0);
+            setEl('stat-users-onboarded', stats.onboarded || 0);
+            setEl('stat-users-new-week', stats.new_week || 0);
+            setEl('stat-users-banned',   stats.banned   || 0);
+
+            self._lastAppUsers = users;
+            if (self.appUserView === 'card') {
+                self.renderUserCards(users);
+            } else {
+                self.renderUserTable(users);
+            }
+
+            // Pagination text
+            var countEl = document.getElementById('app-users-count-text');
+            if (countEl) {
+                var start = (page - 1) * 12 + 1;
+                var end   = Math.min(page * 12, total);
+                countEl.textContent = total > 0 ? 'Showing ' + start + '–' + end + ' of ' + total + ' identities' : 'No identities found';
+            }
+        }).catch(function (err) {
+            var msg = '<div class="col-span-full py-20 text-center text-red-400"><p class="text-[10px] font-black uppercase tracking-[0.3em]">Failed to load users</p></div>';
+            if (grid) grid.innerHTML = msg;
+            console.error('app_list error', err);
+        });
+    },
+
+    renderUserCards: function (users) {
+        var grid = document.getElementById('app-users-card-grid');
+        if (!grid) return;
+
+        if (!users.length) {
+            grid.innerHTML = '<div class="col-span-full py-20 text-center opacity-30"><i class="ph-bold ph-users text-4xl mb-4 block"></i><p class="text-[10px] font-black uppercase tracking-[0.3em]">No identities found</p></div>';
+            return;
+        }
+
+        var html = '';
+        for (var i = 0; i < users.length; i++) {
+            var u = users[i];
+            var isBanned    = u.is_banned === true || u.is_banned == 1;
+            var isOnboarded = u.onboarding_completed === true || u.onboarding_completed == 1;
+            var displayName = u.full_name || u.username || 'Unknown';
+            var username    = u.username ? '@' + u.username : '';
+            var seed        = u.username || u.email || u.id;
+            var joinedDate  = u.created_at ? new Date(u.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+            var avatarUrl   = u.avatar_url || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(seed));
+            var cardClass   = isBanned ? 'user-card banned' : 'user-card';
+
+            var statusBadge = isBanned
+                ? '<span class="px-2 py-0.5 bg-red-500/10 border border-red-500/20 rounded-lg text-[8px] font-black text-red-400 uppercase tracking-widest">Banned</span>'
+                : (isOnboarded
+                    ? '<span class="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[8px] font-black text-emerald-400 uppercase tracking-widest">Active</span>'
+                    : '<span class="px-2 py-0.5 bg-gray-500/10 border border-gray-500/20 rounded-lg text-[8px] font-black text-gray-500 uppercase tracking-widest">Pending</span>');
+
+            var banAction = isBanned
+                ? '<button onclick="AdminApp.unbanAppUser(\'' + u.id + '\')" class="flex-1 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">Unban</button>'
+                : '<button onclick="AdminApp.openBanModal(\'' + u.id + '\')" class="flex-1 py-2 rounded-xl bg-red-500/10 text-red-400 text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Ban</button>';
+
+            html += '<div class="' + cardClass + '" onclick="AdminApp.openAppUserDrawer(\'' + u.id + '\')">' +
+                    '  <div class="h-16 relative" style="background: linear-gradient(135deg, var(--primary-color, #6366f1)22, transparent);">' +
+                    '    <div class="absolute -bottom-8 left-6">' +
+                    '      <div class="w-16 h-16 rounded-[1.5rem] border-4 overflow-hidden shadow-2xl" style="border-color: var(--glass-bg);">' +
+                    '        <img src="' + avatarUrl + '" class="w-full h-full object-cover bg-primary/10" alt="" onerror="this.src=\'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(seed) + '\'">' +
+                    '      </div>' +
+                    '    </div>' +
+                    '    <div class="absolute top-3 right-4">' + statusBadge + '</div>' +
+                    '  </div>' +
+                    '  <div class="px-6 pt-12 pb-5 space-y-4">' +
+                    '    <div>' +
+                    '      <p class="text-sm font-black tracking-tight truncate" style="color: var(--text-main);">' + displayName + '</p>' +
+                    '      <p class="text-[10px] font-bold opacity-40 tracking-widest truncate mt-0.5">' + username + '</p>' +
+                    '    </div>' +
+                    '    <p class="text-[10px] font-medium opacity-50 truncate">' + (u.email || '') + '</p>' +
+                    '    <div class="flex items-center gap-2 text-[9px] font-bold opacity-30 uppercase tracking-widest">' +
+                    '      <i class="ph ph-calendar-blank"></i>' +
+                    '      <span>' + joinedDate + '</span>' +
+                    '    </div>' +
+                    '    <div class="flex gap-2 pt-1" onclick="event.stopPropagation()">' +
+                    '      <button onclick="AdminApp.openAppUserDrawer(\'' + u.id + '\')" class="flex-1 py-2 rounded-xl bg-primary/10 text-primary text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">View</button>' +
+                    banAction +
+                    '    </div>' +
+                    '  </div>' +
+                    '</div>';
+        }
+        grid.innerHTML = html;
+    },
+
+    renderUserTable: function (users) {
+        var tbody = document.getElementById('app-users-table-body');
+        if (!tbody) return;
+
+        if (!users.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="py-16 text-center opacity-30 text-[10px] font-black uppercase tracking-[0.2em]">No identities found</td></tr>';
+            return;
+        }
+
+        var html = '';
+        for (var i = 0; i < users.length; i++) {
+            var u = users[i];
+            var isBanned    = u.is_banned === true || u.is_banned == 1;
+            var isOnboarded = u.onboarding_completed === true || u.onboarding_completed == 1;
+            var displayName = u.full_name || u.username || 'Unknown';
+            var seed        = u.username || u.email || u.id;
+            var avatarUrl   = u.avatar_url || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(seed));
+            var joinedDate  = u.created_at ? new Date(u.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+
+            var statusBadge = isBanned
+                ? '<span class="badge-danger">Banned</span>'
+                : (isOnboarded ? '<span class="badge-success">Active</span>' : '<span class="badge-neutral">Pending</span>');
+
+            var banBtn = isBanned
+                ? '<button onclick="AdminApp.unbanAppUser(\'' + u.id + '\')" class="p-2 hover:bg-emerald-500/10 hover:text-emerald-400 rounded-xl transition-all opacity-60 hover:opacity-100" title="Unban"><i class="ph ph-check-circle text-lg"></i></button>'
+                : '<button onclick="AdminApp.openBanModal(\'' + u.id + '\')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all opacity-60 hover:opacity-100" title="Ban"><i class="ph ph-prohibit text-lg"></i></button>';
+
+            html += '<tr class="hover:bg-white/[0.02] transition-colors group">' +
+                    '  <td class="px-6 py-4">' +
+                    '    <div class="flex items-center gap-4">' +
+                    '      <img src="' + avatarUrl + '" class="w-10 h-10 rounded-2xl bg-primary/10 flex-shrink-0 object-cover" alt="" onerror="this.src=\'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(seed) + '\'">' +
+                    '      <div>' +
+                    '        <p class="text-xs font-black tracking-tight">' + displayName + '</p>' +
+                    '        <p class="text-[10px] font-medium opacity-40 mt-0.5">' + (u.email || '') + '</p>' +
+                    '      </div>' +
+                    '    </div>' +
+                    '  </td>' +
+                    '  <td class="px-6 py-4 text-xs font-bold opacity-50">' + (u.username ? '@' + u.username : '—') + '</td>' +
+                    '  <td class="px-6 py-4">' + statusBadge + '</td>' +
+                    '  <td class="px-6 py-4">' +
+                    '    <span class="text-[10px] font-black uppercase tracking-widest ' + (isOnboarded ? 'text-emerald-400' : 'opacity-30') + '">' + (isOnboarded ? '✓ Yes' : '— No') + '</span>' +
+                    '  </td>' +
+                    '  <td class="px-6 py-4 text-[11px] font-semibold opacity-40">' + joinedDate + '</td>' +
+                    '  <td class="px-6 py-4 text-right">' +
+                    '    <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">' +
+                    '      <button onclick="AdminApp.openAppUserDrawer(\'' + u.id + '\')" class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all opacity-60 hover:opacity-100" title="View Profile"><i class="ph ph-eye text-lg"></i></button>' +
+                    banBtn +
+                    '    </div>' +
+                    '  </td>' +
+                    '</tr>';
+        }
+        tbody.innerHTML = html;
+    },
+
+    setAppUserView: function (view) {
+        this.appUserView = view;
+        var cardView  = document.getElementById('app-users-card-view');
+        var tableView = document.getElementById('app-users-table-view');
+        var btnCard   = document.getElementById('view-btn-card');
+        var btnTable  = document.getElementById('view-btn-table');
+
+        if (view === 'card') {
+            if (cardView)  cardView.classList.remove('hidden');
+            if (tableView) tableView.classList.add('hidden');
+            if (btnCard)   { btnCard.classList.add('active'); }
+            if (btnTable)  { btnTable.classList.remove('active'); }
+            this.renderUserCards(this._lastAppUsers || []);
+        } else {
+            if (cardView)  cardView.classList.add('hidden');
+            if (tableView) tableView.classList.remove('hidden');
+            if (btnCard)   { btnCard.classList.remove('active'); }
+            if (btnTable)  { btnTable.classList.add('active'); }
+            this.renderUserTable(this._lastAppUsers || []);
         }
     },
 
+    onAppUserSearch: function (val) {
+        var self = this;
+        clearTimeout(this.appUserSearchTimeout);
+        this.appUserSearchTimeout = setTimeout(function () {
+            self.appUserFilter = val.trim();
+            self.appUserPage   = 1;
+            self.loadAppUsers(1);
+        }, 320);
+    },
+
+    setAppUserStatus: function (status) {
+        this.appUserStatus = status;
+        this.appUserPage   = 1;
+        // Update chip states
+        var chips = ['all', 'active', 'banned'];
+        for (var i = 0; i < chips.length; i++) {
+            var el = document.getElementById('status-chip-' + chips[i]);
+            if (el) el.classList.toggle('active', chips[i] === status);
+        }
+        this.loadAppUsers(1);
+    },
+
+    changeAppUserPage: function (delta) {
+        var newPage = this.appUserPage + delta;
+        if (newPage < 1) return;
+        this.appUserPage = newPage;
+        this.loadAppUsers(newPage);
+    },
+
+    openAppUserDrawer: function (userId) {
+        var self = this;
+        var drawer = document.getElementById('side-drawer');
+        var target = document.getElementById('drawer-content-target');
+        if (!drawer || !target) return;
+
+        target.innerHTML = '<div class="flex flex-col items-center justify-center h-full space-y-4 opacity-50"><div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div><p class="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Loading Profile...</p></div>';
+        drawer.classList.remove('translate-x-full');
+        document.body.style.overflow = 'hidden';
+
+        ApiClient.post('users', 'app_action', { action: 'get_profile', user_id: userId }).then(function (data) {
+            var u = data.user;
+            if (!u) { target.innerHTML = '<div class="p-8 text-center opacity-40">User not found</div>'; return; }
+
+            var isBanned    = u.is_banned === true || u.is_banned == 1;
+            var isOnboarded = u.onboarding_completed === true || u.onboarding_completed == 1;
+            var displayName = u.full_name || u.username || 'Unknown';
+            var seed        = u.username || u.email || u.id;
+            var avatarUrl   = u.avatar_url || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(seed));
+            var joinedDate  = u.created_at ? new Date(u.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+            var updatedDate = u.updated_at  ? new Date(u.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+
+            var banSection = isBanned
+                ? '<div class="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl space-y-2">' +
+                  '  <div class="flex items-center gap-2 text-red-400"><i class="ph-bold ph-prohibit"></i><p class="text-[10px] font-black uppercase tracking-widest">Account Banned</p></div>' +
+                  '  <p class="text-[10px] opacity-60 font-medium">' + (u.ban_reason || 'No reason specified') + '</p>' +
+                  '  <p class="text-[9px] opacity-40">Since: ' + (u.banned_at ? new Date(u.banned_at).toLocaleDateString() : '—') + '</p>' +
+                  '</div>'
+                : '';
+
+            var banBtn = isBanned
+                ? '<button onclick="AdminApp.unbanAppUser(\'' + u.id + '\')" class="w-full py-3.5 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"><i class="ph-bold ph-check-circle"></i> Lift Ban</button>'
+                : '<button onclick="AdminApp.openBanModal(\'' + u.id + '\')" class="w-full py-3.5 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"><i class="ph-bold ph-prohibit"></i> Suspend Account</button>';
+
+            target.innerHTML =
+                '<div class="flex flex-col h-full">' +
+                // Header gradient + avatar
+                '  <div class="relative h-32 shrink-0" style="background: linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(139,92,246,0.1) 100%);">' +
+                '    <button onclick="closeDrawer()" class="absolute top-4 right-4 w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center text-white/70"><i class="ph ph-x"></i></button>' +
+                '    <div class="absolute -bottom-10 left-6">' +
+                '      <div class="w-20 h-20 rounded-[1.5rem] border-4 overflow-hidden shadow-2xl shadow-black/50" style="border-color: var(--bg-main);">' +
+                '        <img src="' + avatarUrl + '" class="w-full h-full object-cover bg-primary/10" alt="" onerror="this.src=\'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(seed) + '\'">' +
+                '      </div>' +
+                '    </div>' +
+                (isBanned ? '    <div class="absolute top-4 left-6 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-xl text-[8px] font-black text-red-400 uppercase tracking-widest flex items-center gap-1.5"><i class="ph-bold ph-prohibit"></i> Banned</div>' : '') +
+                '  </div>' +
+                // Name + username
+                '  <div class="px-6 pt-14 pb-4 border-b" style="border-color: var(--border-color);">' +
+                '    <h3 class="text-xl font-black tracking-tight" style="color: var(--text-main);">' + displayName + '</h3>' +
+                '    <p class="text-[11px] font-bold opacity-40 mt-0.5">' + (u.username ? '@' + u.username : '') + '</p>' +
+                '    <p class="text-[11px] font-medium opacity-50 mt-1">' + (u.email || '') + '</p>' +
+                '  </div>' +
+                // Stats row
+                '  <div class="grid grid-cols-3 divide-x shrink-0" style="border-bottom: 1px solid var(--border-color); border-color: var(--border-color);">' +
+                '    <div class="py-4 text-center"><p class="text-lg font-black">' + (u.friend_count || 0) + '</p><p class="text-[8px] font-black opacity-30 uppercase tracking-widest mt-0.5">Friends</p></div>' +
+                '    <div class="py-4 text-center"><p class="text-lg font-black">' + (u.channel_count || 0) + '</p><p class="text-[8px] font-black opacity-30 uppercase tracking-widest mt-0.5">Channels</p></div>' +
+                '    <div class="py-4 text-center"><p class="text-lg font-black ' + (u.report_count > 0 ? 'text-red-400' : '') + '">' + (u.report_count || 0) + '</p><p class="text-[8px] font-black opacity-30 uppercase tracking-widest mt-0.5">Reports</p></div>' +
+                '  </div>' +
+                // Scrollable body
+                '  <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5">' +
+                banSection +
+                // Meta info
+                '    <div class="space-y-3">' +
+                '      <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-30">Profile Info</p>' +
+                '      <div class="grid grid-cols-2 gap-3">' +
+                '        <div class="p-3 rounded-2xl border" style="background-color: var(--glass-bg); border-color: var(--border-color);">' +
+                '          <p class="text-[8px] font-black uppercase tracking-widest opacity-30 mb-1">Joined</p>' +
+                '          <p class="text-[11px] font-bold">' + joinedDate + '</p>' +
+                '        </div>' +
+                '        <div class="p-3 rounded-2xl border" style="background-color: var(--glass-bg); border-color: var(--border-color);">' +
+                '          <p class="text-[8px] font-black uppercase tracking-widest opacity-30 mb-1">Last Active</p>' +
+                '          <p class="text-[11px] font-bold">' + updatedDate + '</p>' +
+                '        </div>' +
+                '        <div class="p-3 rounded-2xl border col-span-2" style="background-color: var(--glass-bg); border-color: var(--border-color);">' +
+                '          <p class="text-[8px] font-black uppercase tracking-widest opacity-30 mb-1">Onboarding</p>' +
+                '          <p class="text-[11px] font-bold ' + (isOnboarded ? 'text-emerald-400' : 'opacity-40') + '">' + (isOnboarded ? 'Completed ✓' : 'Incomplete') + '</p>' +
+                '        </div>' +
+                '      </div>' +
+                '    </div>' +
+                // Edit form
+                '    <form id="app-user-edit-form" class="space-y-3">' +
+                '      <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-30">Edit Profile</p>' +
+                '      <input type="hidden" name="user_id" value="' + u.id + '">' +
+                '      <div class="space-y-1.5">' +
+                '        <label class="text-[9px] font-black uppercase tracking-widest opacity-40">Full Name</label>' +
+                '        <input type="text" name="full_name" value="' + (u.full_name || '') + '" class="w-full rounded-2xl px-4 py-3 text-sm font-medium focus:border-primary/50 outline-none transition-all" style="background-color: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-main);">' +
+                '      </div>' +
+                '      <div class="space-y-1.5">' +
+                '        <label class="text-[9px] font-black uppercase tracking-widest opacity-40">Username</label>' +
+                '        <input type="text" name="username" value="' + (u.username || '') + '" class="w-full rounded-2xl px-4 py-3 text-sm font-medium focus:border-primary/50 outline-none transition-all" style="background-color: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-main);">' +
+                '      </div>' +
+                '      <div class="space-y-1.5">' +
+                '        <label class="text-[9px] font-black uppercase tracking-widest opacity-40">Website</label>' +
+                '        <input type="text" name="website" value="' + (u.website || '') + '" class="w-full rounded-2xl px-4 py-3 text-sm font-medium focus:border-primary/50 outline-none transition-all" style="background-color: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-main);">' +
+                '      </div>' +
+                '    </form>' +
+                // User ID copy
+                '    <div class="p-3 rounded-2xl border flex items-center justify-between gap-4" style="background-color: var(--glass-bg); border-color: var(--border-color);">' +
+                '      <p class="text-[9px] font-mono opacity-30 truncate">' + u.id + '</p>' +
+                '      <button onclick="navigator.clipboard.writeText(\'' + u.id + '\'); toast.success(\'Copied\', \'User ID copied.\')" class="shrink-0 p-1.5 hover:bg-white/10 rounded-xl transition-all"><i class="ph ph-copy text-sm opacity-50"></i></button>' +
+                '    </div>' +
+                '  </div>' +
+                // Footer actions
+                '  <div class="p-5 border-t space-y-3 shrink-0" style="border-color: var(--border-color);">' +
+                '    <button onclick="AdminApp.submitAppUserEdit()" class="w-full py-3.5 rounded-2xl btn-primary flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest"><i class="ph-bold ph-floppy-disk"></i> Save Changes</button>' +
+                banBtn +
+                '  </div>' +
+                '</div>';
+        }).catch(function () {
+            target.innerHTML = '<div class="p-8 text-center opacity-40"><p class="text-[10px] font-black uppercase tracking-[0.3em]">Failed to load profile</p></div>';
+        });
+    },
+
+    submitAppUserEdit: function () {
+        var self = this;
+        var form = document.getElementById('app-user-edit-form');
+        if (!form) return;
+        var fd = new FormData(form);
+        var payload = { action: 'update_name' };
+        fd.forEach(function (v, k) { payload[k] = v; });
+
+        ApiClient.post('users', 'app_action', payload).then(function (res) {
+            toast.success('Profile Updated', res.message);
+            self.loadAppUsers(self.appUserPage);
+        }).catch(function (err) {
+            toast.error('Error', err.error || 'Failed to update profile.');
+        });
+    },
+
+    openBanModal: function (userId) {
+        var inp = document.getElementById('ban-target-user-id');
+        var reason = document.getElementById('ban-reason-input');
+        if (inp)    inp.value    = userId;
+        if (reason) reason.value = '';
+        window.openModal('ban-user-modal');
+    },
+
+    confirmBanUser: function () {
+        var self    = this;
+        var userId  = (document.getElementById('ban-target-user-id')  || {}).value;
+        var reason  = ((document.getElementById('ban-reason-input')   || {}).value || '').trim();
+        if (!userId) return;
+
+        ApiClient.post('users', 'app_action', { action: 'ban', user_id: userId, reason: reason || 'Banned by administrator.' }).then(function (res) {
+            toast.success('Account Suspended', res.message);
+            window.closeModal();
+            window.closeDrawer();
+            self.loadAppUsers(self.appUserPage);
+        }).catch(function (err) {
+            toast.error('Ban Failed', err.error || 'Could not apply ban.');
+        });
+    },
+
+    unbanAppUser: function (userId) {
+        var self = this;
+        this.confirm({
+            title: 'Lift Account Ban',
+            message: 'Remove the ban from this user and restore their access?',
+            icon: 'ph-check-circle',
+            confirmLabel: 'Lift Ban',
+            type: 'success'
+        }).then(function (confirmed) {
+            if (!confirmed) return;
+            ApiClient.post('users', 'app_action', { action: 'unban', user_id: userId }).then(function (res) {
+                toast.success('Ban Lifted', res.message);
+                window.closeDrawer();
+                self.loadAppUsers(self.appUserPage);
+            }).catch(function (err) {
+                toast.error('Error', err.error || 'Failed to unban user.');
+            });
+        });
+    },
+
+    // Keep old loadUserList/changeUserPage as stubs for backward compat with handshake calls
+    loadUserList: function () {},
+    changeUserPage: function () {},
     exportUserCSV: function () {
         toast.info('Preparing Export', 'Gathering identity records...');
-        ApiClient.get('users', 'list', { page: 1, limit: 1000 }).then(function(data) {
-            var users = data.users;
-            var headers = ['ID', 'Username', 'Email', 'Status', 'Joined'];
-            var rows = users.map(function(u) {
-                return [
-                    u.id,
-                    u.username,
-                    u.email,
-                    u.blocked == 1 ? 'Blocked' : 'Active',
-                    u.created_at
-                ];
+        ApiClient.get('users', 'app_list', { page: 1, limit: 200, filter: this.appUserFilter, status: this.appUserStatus }).then(function (data) {
+            var users = data.users || [];
+            var headers = ['ID', 'Full Name', 'Username', 'Email', 'Status', 'Onboarded', 'Joined'];
+            var rows = users.map(function (u) {
+                return [u.id, u.full_name || '', u.username || '', u.email || '', (u.is_banned ? 'Banned' : 'Active'), (u.onboarding_completed ? 'Yes' : 'No'), u.created_at || ''];
             });
-
-            var csvContent = "data:text/csv;charset=utf-8," +
-                [headers].concat(rows).map(function(e) { return e.join(","); }).join("\n");
-
-            var encodedUri = encodeURI(csvContent);
+            var csv = "data:text/csv;charset=utf-8," + [headers].concat(rows).map(function (e) { return e.join(","); }).join("\n");
             var link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "honlor_users_export_" + new Date().getTime() + ".csv");
+            link.setAttribute("href", encodeURI(csv));
+            link.setAttribute("download", "honlor_users_" + Date.now() + ".csv");
             document.body.appendChild(link);
             link.click();
-            toast.success('Export Ready', 'Identity vault downloaded successfully.');
+            toast.success('Export Ready', 'Identity vault downloaded.');
         });
     },
-
-    changeUserPage: function (delta) {
-        var newPage = this.userPage + delta;
-        if (newPage < 1) return;
-        this.userPage = newPage;
-        var filterEl = document.getElementById('user-filter');
-        var filter = (filterEl) ? filterEl.value : '';
-        this.loadUserList(this.userPage, filter);
-    },
-
-    loadUserList: function (page, filter) {
-        page = page || 1;
-        filter = filter || '';
-        var tbody = document.getElementById('users-table-body');
-        if (!tbody) return;
-
-        ApiClient.get('users', 'list', { page: page, filter: filter }).then(function(data) {
-            var html = '';
-            var users = data.users || [];
-            for (var i = 0; i < users.length; i++) {
-                var user = users[i];
-                var badge = user.blocked == 1 ? 'badge-danger' : (user.active == 1 ? 'badge-success' : 'badge-neutral');
-                var status = user.blocked == 1 ? 'Blocked' : (user.active == 1 ? 'Active' : 'Inactive');
-                var name = user.firstname ? user.firstname : user.username;
-
-                html += '<tr class="hover:bg-white/5 transition-colors">' +
-                        '    <td class="px-6 py-4">' +
-                        '        <div class="flex items-center gap-3">' +
-                        '            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.username + '" class="w-10 h-10 rounded-xl bg-primary/10 p-0.5" alt="Avatar">' +
-                        '            <div>' +
-                        '                <p class="font-bold text-sm">' + name + ' ' + (user.lastname || '') + '</p>' +
-                        '                <p class="text-[11px] text-gray-500 font-medium">' + user.email + '</p>' +
-                        '            </div>' +
-                        '        </div>' +
-                        '    </td>' +
-                        '    <td class="px-6 py-4">' + AdminApp.renderRoleBadge(user) + '</td>' +
-                        '    <td class="px-6 py-4"><span class="' + badge + '">' + status + '</span></td>' +
-                        '    <td class="px-6 py-4">' +
-                        '        <div class="flex items-center gap-2">' +
-                        '            <div class="w-16 h-1.5 rounded-full bg-gray-800">' +
-                        '                <div class="bg-primary h-full rounded-full" style="width: ' + (user.active == 1 ? 85 : 10) + '%"></div>' +
-                        '            </div>' +
-                        '            <span class="text-[10px] font-bold text-gray-400">' + (user.active == 1 ? 85 : 10) + '%</span>' +
-                        '        </div>' +
-                        '    </td>' +
-                        '    <td class="px-6 py-4 text-xs font-semibold text-gray-400">' + new Date(user.created_at).toLocaleDateString() + '</td>' +
-                        '    <td class="px-6 py-4 text-right">' +
-                        '        <div class="flex justify-end gap-2">' +
-                        '            <button onclick="AdminApp.openDrawer(\'user\', \'' + user.id + '\')" class="p-2 hover:bg-primary/10 hover:text-primary rounded-xl transition-all text-gray-500"><i class="ph ph-eye text-lg"></i></button>' +
-                        '            <button onclick="AdminApp.executeAction(\'toggle_block\', \'' + user.id + '\')" class="p-2 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all text-gray-500"><i class="ph ph-prohibit text-lg"></i></button>' +
-                        '        </div>' +
-                        '    </td>' +
-                        '</tr>';
-            }
-            tbody.innerHTML = html || '<tr><td colspan="5" class="p-8 text-center text-gray-500">No users found</td></tr>';
-
-            if (document.getElementById('users-total-count')) {
-                document.getElementById('users-total-count').innerText = (data.total / 1000).toFixed(1) + 'k Total';
-            }
-
-            if (document.getElementById('users-count-text')) {
-                var start = (page - 1) * 10 + 1;
-                var end = Math.min(page * 10, data.total);
-                document.getElementById('users-count-text').innerText = 'Showing ' + start + '-' + end + ' of ' + data.total + ' identities';
-            }
-        });
-    },
+    // ── END APP USER MANAGEMENT ───────────────────────────────────────────────
 
     initChannels: function () {
         this.loadChannelList();
@@ -1984,8 +2297,7 @@ var AdminApp = {
                            '    <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>' +
                            '    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Fetching Intelligence...</p>' +
                            '</div>';
-        // Mobile: slide up (remove translate-y-full); Desktop: slide in from right (remove translate-x-full)
-        drawer.classList.remove('translate-y-full', 'translate-x-full');
+        drawer.classList.remove('translate-x-full');
         document.body.style.overflow = 'hidden';
 
         if (type === 'user') {

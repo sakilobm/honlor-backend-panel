@@ -195,11 +195,9 @@
     </div>
 
     <!-- Side Drawer (Record Inspection) -->
-    <!-- Mobile: full-width sheet from bottom. sm+: right-side panel at 520px -->
+    <!-- Mobile: full-width panel. sm+: 520px panel. Always slides in from right. -->
     <div id="side-drawer"
-        class="fixed z-[9999] transition-all duration-500 backdrop-blur-3xl shadow-[-20px_0_50px_rgba(0,0,0,0.5)] border-l
-               bottom-0 left-0 right-0 h-[90vh] translate-y-full rounded-t-[2.5rem]
-               sm:inset-y-0 sm:left-auto sm:right-0 sm:h-auto sm:w-[520px] sm:translate-y-0 sm:translate-x-full sm:rounded-none"
+        class="fixed inset-y-0 right-0 z-[9999] w-full sm:w-[520px] translate-x-full transition-transform duration-500 backdrop-blur-3xl shadow-[-20px_0_50px_rgba(0,0,0,0.5)] border-l"
         style="background-color: var(--surface-glass); border-color: var(--border-color);">
         <div id="drawer-content-target" class="h-full flex flex-col overflow-hidden">
             <!-- Dynamic Drawer Content injected here -->

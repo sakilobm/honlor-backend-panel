@@ -301,4 +301,39 @@
 
     /* Custom classes for PHP framework integration */
     .section-content { @apply flex-grow overflow-y-auto p-8 space-y-8 pb-32; }
+
+    /* App User Management */
+    .app-status-chip {
+        @apply opacity-50;
+        background-color: var(--glass-bg);
+        border-color: var(--border-color);
+        color: var(--text-muted);
+    }
+    .app-status-chip.active {
+        @apply opacity-100 bg-primary/10 text-primary border-primary/30;
+    }
+    .app-status-chip:hover:not(.active) { @apply opacity-80; }
+
+    .view-toggle-btn {
+        color: var(--text-muted);
+    }
+    .view-toggle-btn.active {
+        @apply bg-primary/15 text-primary shadow-inner;
+    }
+    .view-toggle-btn:hover:not(.active) { @apply bg-white/5; }
+
+    .user-card {
+        @apply relative rounded-[2rem] border overflow-hidden transition-all duration-300 cursor-pointer;
+        background-color: var(--glass-bg);
+        border-color: var(--border-color);
+    }
+    .user-card:hover {
+        @apply border-primary/30 shadow-2xl shadow-primary/5 -translate-y-1;
+        background-color: var(--surface-2);
+    }
+    .user-card.banned {
+        @apply border-red-500/20;
+        background: linear-gradient(135deg, rgba(239,68,68,0.04) 0%, var(--glass-bg) 60%);
+    }
+    .user-card.banned:hover { @apply border-red-500/40; }
 </style>

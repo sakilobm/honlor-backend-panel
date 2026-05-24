@@ -242,6 +242,171 @@ class SupabaseClient
         ];
     }
 
+    // =========================================================
+    // Direct Supabase REST Table Operations (Service Role)
+    // =========================================================
+
+    /**
+     * Query a Supabase table via PostgREST REST API (Service Role).
+     *
+     * @param  string $table   Table name (e.g. 'profiles')
+     * @param  array  $params  Query params: select, order, limit, offset, filters (raw string appended to URL)
+     * @return array           ['success' => bool, 'data' => array, 'http_code' => int, 'error' => string|null]
+     */
+    public static function queryTable(string $table, array $params = []): array
+    {
+        $url        = get_config('supabase_url');
+        $serviceKey = get_config('supabase_service_key');
+
+        if (empty($url) || empty($serviceKey)) {
+            return ['success' => false, 'data' => [], 'http_code' => 0, 'error' => 'Supabase credentials not configured.'];
+        }
+
+        $endpoint = rtrim($url, '/') . '/rest/v1/' . ltrim($table, '/');
+        if (!empty($params)) {
+            $endpoint .= '?' . implode('&', array_map(
+                fn($k, $v) => is_int($k) ? $v : rawurlencode($k) . '=' . $v,
+                array_keys($params), $params
+            ));
+        }
+
+        $ch = curl_init($endpoint);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_HTTPHEADER     => [
+                'apikey: '       . $serviceKey,
+                'Authorization: Bearer ' . $serviceKey,
+                'Content-Type: application/json',
+                'Prefer: count=exact',
+            ],
+        ]);
+
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $totalCount = curl_getinfo($ch, CURLINFO_SIZE_DOWNLOAD); // unused — see header below
+        // Extract Content-Range header for total count
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_close($ch);
+
+        $decoded = json_decode($response, true);
+        $success = ($httpCode >= 200 && $httpCode < 300);
+
+        return [
+            'success'   => $success,
+            'data'      => is_array($decoded) ? $decoded : [],
+            'http_code' => $httpCode,
+            'error'     => $success ? null : (is_array($decoded) ? ($decoded['message'] ?? "HTTP $httpCode") : "HTTP $httpCode"),
+        ];
+    }
+
+    /**
+     * Query a Supabase table and return total count via Content-Range header.
+     * Returns ['data' => array, 'total' => int, 'success' => bool, 'error' => ?string]
+     */
+    public static function queryTableWithCount(string $table, array $queryParts = []): array
+    {
+        $url        = get_config('supabase_url');
+        $serviceKey = get_config('supabase_service_key');
+
+        if (empty($url) || empty($serviceKey)) {
+            return ['success' => false, 'data' => [], 'total' => 0, 'http_code' => 0, 'error' => 'Supabase credentials not configured.'];
+        }
+
+        $qs = !empty($queryParts) ? '?' . implode('&', $queryParts) : '';
+        $endpoint = rtrim($url, '/') . '/rest/v1/' . ltrim($table, '/') . $qs;
+
+        $responseHeaders = [];
+        $ch = curl_init($endpoint);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_HEADERFUNCTION => function ($ch, $header) use (&$responseHeaders) {
+                $responseHeaders[] = trim($header);
+                return strlen($header);
+            },
+            CURLOPT_HTTPHEADER => [
+                'apikey: '               . $serviceKey,
+                'Authorization: Bearer ' . $serviceKey,
+                'Content-Type: application/json',
+                'Prefer: count=exact',
+            ],
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        // Parse Content-Range: 0-9/30
+        $total = 0;
+        foreach ($responseHeaders as $h) {
+            if (stripos($h, 'content-range:') === 0) {
+                if (preg_match('/\/(\d+)$/', $h, $m)) {
+                    $total = (int)$m[1];
+                }
+            }
+        }
+
+        $decoded = json_decode($response, true);
+        $success = ($httpCode >= 200 && $httpCode < 300);
+
+        return [
+            'success'   => $success,
+            'data'      => is_array($decoded) ? $decoded : [],
+            'total'     => $total,
+            'http_code' => $httpCode,
+            'error'     => $success ? null : (is_array($decoded) ? ($decoded['message'] ?? "HTTP $httpCode") : "HTTP $httpCode"),
+        ];
+    }
+
+    /**
+     * PATCH a single row in a Supabase table by UUID primary key.
+     *
+     * @param  string $table     Table name (e.g. 'profiles')
+     * @param  string $idColumn  PK column name (e.g. 'id')
+     * @param  string $idValue   PK value (UUID string)
+     * @param  array  $data      Key-value pairs to update
+     */
+    public static function patchRow(string $table, string $idColumn, string $idValue, array $data): array
+    {
+        $url        = get_config('supabase_url');
+        $serviceKey = get_config('supabase_service_key');
+
+        if (empty($url) || empty($serviceKey)) {
+            return ['success' => false, 'data' => null, 'http_code' => 0, 'error' => 'Supabase credentials not configured.'];
+        }
+
+        $endpoint = rtrim($url, '/') . '/rest/v1/' . ltrim($table, '/') . '?' . $idColumn . '=eq.' . urlencode($idValue);
+
+        $ch = curl_init($endpoint);
+        curl_setopt_array($ch, [
+            CURLOPT_CUSTOMREQUEST  => 'PATCH',
+            CURLOPT_POSTFIELDS     => json_encode($data),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_HTTPHEADER     => [
+                'apikey: '               . $serviceKey,
+                'Authorization: Bearer ' . $serviceKey,
+                'Content-Type: application/json',
+                'Prefer: return=representation',
+            ],
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $decoded = json_decode($response, true);
+        $success = ($httpCode >= 200 && $httpCode < 300);
+
+        return [
+            'success'   => $success,
+            'data'      => $decoded,
+            'http_code' => $httpCode,
+            'error'     => $success ? null : (is_array($decoded) ? ($decoded['message'] ?? "HTTP $httpCode") : "HTTP $httpCode"),
+        ];
+    }
+
     /**
      * Sync the active app version to Supabase via the manage-app-version edge function.
      *
