@@ -177,9 +177,46 @@ Sends audit/admin logging strings to a specified channel to track major administ
 
 ---
 
-## 6. Miscellaneous
+## 6. App Version Control
 
-### 6.1 `hellow-world`
+### 6.1 `manage-app-version`
+Manages the active app version for client update notifications. Called by the Admin Panel on the server side (`sync_active`) and by the mobile app on launch (`get_active`, `check_version`). JWT verification is **disabled** — the `sync_active` action performs its own service-key check internally.
+
+* **Base URL:** `https://zloyckonnkiywllkyghf.supabase.co/functions/v1/manage-app-version`
+
+#### Action: `get_active`
+Returns the currently active version record. Used by the mobile app to display version info.
+* **Method:** `GET` (query param `?action=get_active`) or `POST`
+* **Auth:** None required
+* **Response:**
+  ```json
+  { "success": true, "version": "v1.2.3", "is_mandatory": true, "update_url": "https://...", "description": "...", "synced_at": "2025-01-01T00:00:00Z" }
+  ```
+
+#### Action: `check_version`
+Compares the client's current version against the active version and returns whether an update is needed.
+* **Method:** `POST`
+* **Auth:** None required
+* **Payload:** `{ "action": "check_version", "current_version": "v1.0.0" }`
+* **Response:**
+  ```json
+  { "success": true, "needs_update": true, "is_mandatory": true, "latest_version": "v1.2.3", "update_url": "https://...", "description": "..." }
+  ```
+  When no update is needed: `{ "success": true, "needs_update": false, "is_mandatory": false, "latest_version": "v1.2.3", "update_url": null, "description": null }`
+
+#### Action: `sync_active`
+Upserts the active version to the `app_versions` Supabase table. **Called only by the Admin Panel server** — requires the `SUPABASE_SERVICE_ROLE_KEY` in the `Authorization` header.
+* **Method:** `POST`
+* **Auth:** `Authorization: Bearer <SERVICE_ROLE_KEY>`
+* **Payload:** `{ "action": "sync_active", "version": "v1.2.3", "is_mandatory": true, "update_url": "https://...", "description": "Release notes" }`
+* **Response:** `{ "success": true, "message": "Version v1.2.3 synced as active build target." }`
+* **Admin Panel Integration:** Called automatically by `SupabaseClient::syncAppVersion()` whenever an admin clicks "Set Active" or publishes a new version with "Set as Active Build Target" toggled on.
+
+---
+
+## 7. Miscellaneous
+
+### 7.1 `hellow-world`
 Simple health-check or testing endpoint.
 * **Method:** `POST` / `GET`
 * **Response:** Typically returns a basic hello message.

@@ -243,6 +243,36 @@ class SupabaseClient
     }
 
     /**
+     * Sync the active app version to Supabase via the manage-app-version edge function.
+     *
+     * Called by the admin panel whenever an admin sets a version as active or
+     * publishes a new version with auto-activate enabled.
+     *
+     * The mobile app will then call get_active / check_version on the same
+     * edge function to determine if an update is required.
+     *
+     * @param  string $version      Semantic version string, e.g. "v1.2.3"
+     * @param  bool   $isMandatory  Whether the update is mandatory
+     * @param  string $updateUrl    Download / store URL
+     * @param  string $description  Release notes
+     * @return array                ['success' => bool, 'error' => string|null]
+     */
+    public static function syncAppVersion(
+        string $version,
+        bool   $isMandatory,
+        string $updateUrl,
+        string $description = ''
+    ): array {
+        return self::invokeFunction('manage-app-version', [
+            'action'       => 'sync_active',
+            'version'      => $version,
+            'is_mandatory' => $isMandatory,
+            'update_url'   => $updateUrl,
+            'description'  => $description,
+        ]);
+    }
+
+    /**
      * Quick health check: ping the hellow-world function to verify connectivity.
      * Returns true if the edge runtime is reachable.
      */

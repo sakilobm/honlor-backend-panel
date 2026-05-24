@@ -7,6 +7,7 @@
  */
 
 use App\AppConfig;
+use Aether\SupabaseClient;
 
 ${basename(__FILE__, '.php')} = function () {
 
@@ -15,10 +16,11 @@ ${basename(__FILE__, '.php')} = function () {
         $this->response($this->json(['error' => 'Unauthorized access.']), 401);
     }
 
-    $version     = $this->_request['latest_version'] ?? null;
-    $isMandatory = isset($this->_request['is_mandatory']) ? (bool)$this->_request['is_mandatory'] : false;
-    $url         = $this->_request['update_url']     ?? null;
-    $description = $this->_request['description']    ?? null;
+    $version      = $this->_request['latest_version'] ?? null;
+    $isMandatory  = isset($this->_request['is_mandatory']) ? (bool)$this->_request['is_mandatory'] : false;
+    $url          = $this->_request['update_url']     ?? null;
+    $description  = $this->_request['description']    ?? null;
+    $autoActivate = isset($this->_request['auto_activate']) ? (bool)$this->_request['auto_activate'] : false;
 
     // Validate inputs
     if (empty($version) || empty($url)) {
@@ -31,12 +33,20 @@ ${basename(__FILE__, '.php')} = function () {
     }
 
     try {
-        $newId = AppConfig::create($version, $isMandatory, $url, $description);
+        $newId = AppConfig::create($version, $isMandatory, $url, $description, $autoActivate);
 
         if ($newId > 0) {
+            $syncStatus = 'skipped';
+            if ($autoActivate) {
+                // Sync the newly active version to Supabase
+                $syncResult = SupabaseClient::syncAppVersion($version, $isMandatory, $url, $description ?? '');
+                $syncStatus = $syncResult['success'] ? 'ok' : ('warn: ' . ($syncResult['error'] ?? 'unknown'));
+            }
+
             $this->response($this->json([
-                'message' => 'App configuration published successfully.',
-                'id' => $newId
+                'message'       => 'App configuration published successfully.',
+                'id'            => $newId,
+                'supabase_sync' => $syncStatus
             ]), 200);
         } else {
             throw new Exception("SQL execution failed to return last insert ID.");

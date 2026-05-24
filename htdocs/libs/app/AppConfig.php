@@ -21,25 +21,33 @@ class AppConfig
     {
         try {
             $db = Database::getConnection();
-            
+
             // Create Table if missing (MySQL syntax)
             $db->exec("CREATE TABLE IF NOT EXISTS `app_config` (
                 `id` bigint NOT NULL AUTO_INCREMENT,
                 `latest_version` varchar(255) NOT NULL,
                 `is_mandatory` tinyint(1) NULL DEFAULT 0,
+                `is_active` tinyint(1) NULL DEFAULT 0,
                 `update_url` text NOT NULL,
                 `description` text NULL,
                 `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;");
 
+            // Add is_active column if it doesn't exist (migration for existing installs)
+            try {
+                $db->exec("ALTER TABLE `app_config` ADD COLUMN `is_active` tinyint(1) NULL DEFAULT 0 AFTER `is_mandatory`");
+            } catch (Exception $e) {
+                // Column already exists — ignore
+            }
+
             // Seed if empty
             $stmt = $db->query("SELECT COUNT(*) as count FROM `app_config`");
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if ((int)($result['count'] ?? 0) === 0) {
-                $db->exec("INSERT INTO `app_config` (`latest_version`, `is_mandatory`, `update_url`, `description`) VALUES
-                ('v1.2.0', 1, 'https://apps.apple.com/app/honlor', 'Critical security patch resolving core credential encryption flaws.'),
-                ('v1.1.5', 0, 'https://play.google.com/store/apps/honlor', 'Performance optimization for real-time telemetry streams.');");
+                $db->exec("INSERT INTO `app_config` (`latest_version`, `is_mandatory`, `is_active`, `update_url`, `description`) VALUES
+                ('v1.2.0', 1, 1, 'https://apps.apple.com/app/honlor', 'Critical security patch resolving core credential encryption flaws.'),
+                ('v1.1.5', 0, 0, 'https://play.google.com/store/apps/honlor', 'Performance optimization for real-time telemetry streams.');");
             }
         } catch (Exception $e) {
             error_log("Failsafe Table Check Error inside AppConfig: " . $e->getMessage());
@@ -58,6 +66,49 @@ class AppConfig
     }
 
     /**
+     * Get the currently active version configuration.
+     */
+    public static function getActive(): ?array
+    {
+        self::ensureTable();
+        $db = Database::getConnection();
+        $stmt = $db->query("SELECT * FROM `app_config` WHERE `is_active` = 1 ORDER BY `id` DESC LIMIT 1");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    /**
+     * Set a specific config row as the active version.
+     * Atomically clears all other rows' is_active flag first.
+     */
+    public static function setActive(int $id): bool
+    {
+        self::ensureTable();
+        $db = Database::getConnection();
+
+        // Verify target exists
+        $target = self::get($id);
+        if (!$target) return false;
+
+        $db->beginTransaction();
+        try {
+            // Clear all active flags
+            $db->exec("UPDATE `app_config` SET `is_active` = 0");
+            // Set the target as active
+            $stmt = $db->prepare("UPDATE `app_config` SET `is_active` = 1 WHERE `id` = ?");
+            $stmt->execute([$id]);
+            $db->commit();
+
+            self::logAction("Set version {$target['latest_version']} (ID: {$id}) as the active build target");
+            return true;
+        } catch (Exception $e) {
+            $db->rollBack();
+            error_log("AppConfig::setActive transaction failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Fetch a single version configuration by ID.
      */
     public static function get(int $id): ?array
@@ -72,22 +123,28 @@ class AppConfig
 
     /**
      * Create a new version release configuration.
+     * If $autoActivate is true, immediately marks this row as the active version.
      */
-    public static function create(string $version, bool $isMandatory, string $url, ?string $description): int
+    public static function create(string $version, bool $isMandatory, string $url, ?string $description, bool $autoActivate = false): int
     {
         self::ensureTable();
         $db = Database::getConnection();
-        $stmt = $db->prepare("INSERT INTO `app_config` (`latest_version`, `is_mandatory`, `update_url`, `description`) VALUES (?, ?, ?, ?)");
+        $stmt = $db->prepare("INSERT INTO `app_config` (`latest_version`, `is_mandatory`, `is_active`, `update_url`, `description`) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([
             trim($version),
             $isMandatory ? 1 : 0,
+            0, // not active by default; caller calls setActive() separately if needed
             trim($url),
             $description ? trim($description) : null
         ]);
         $insertId = (int)$db->lastInsertId();
 
-        // Audit Logging (Rule 5 Visibility)
+        // Audit Logging
         self::logAction("Published new app configuration version: {$version} (ID: {$insertId})");
+
+        if ($autoActivate && $insertId > 0) {
+            self::setActive($insertId);
+        }
 
         return $insertId;
     }

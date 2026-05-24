@@ -4,15 +4,50 @@
  * API Endpoint: /api/app_config/update
  * ====================================
  * Updates an existing app configuration record (metadata or inline flags).
+ * Also handles set_active action to switch the live build target.
  */
 
 use App\AppConfig;
+use Aether\SupabaseClient;
 
 ${basename(__FILE__, '.php')} = function () {
 
     // Ensure session is active (Admin only)
     if (!$this->isAuthenticated()) {
         $this->response($this->json(['error' => 'Unauthorized access.']), 401);
+    }
+
+    // --- Action: set_active ---
+    // Switches the active build target. Syncs to Supabase edge function.
+    if (($this->_request['action'] ?? null) === 'set_active') {
+        $id = $this->_request['id'] ?? null;
+        if (!$id) {
+            $this->response($this->json(['error' => 'Missing target configuration ID.']), 400);
+        }
+
+        $config = AppConfig::get((int)$id);
+        if (!$config) {
+            $this->response($this->json(['error' => 'Target configuration record not found.']), 404);
+        }
+
+        $success = AppConfig::setActive((int)$id);
+        if (!$success) {
+            $this->response($this->json(['error' => 'Failed to set active version.']), 500);
+        }
+
+        // Sync to Supabase so the mobile app can pick it up
+        $syncResult = SupabaseClient::syncAppVersion(
+            $config['latest_version'],
+            (bool)$config['is_mandatory'],
+            $config['update_url'],
+            $config['description'] ?? ''
+        );
+
+        $this->response($this->json([
+            'message'      => 'Active build target updated successfully.',
+            'version'      => $config['latest_version'],
+            'supabase_sync' => $syncResult['success'] ? 'ok' : ('warn: ' . ($syncResult['error'] ?? 'unknown'))
+        ]), 200);
     }
 
     $id = $this->_request['id'] ?? null;

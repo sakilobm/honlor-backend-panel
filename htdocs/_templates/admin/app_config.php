@@ -165,6 +165,18 @@ use Aether\Session;
                     </label>
                 </div>
 
+                <!-- Auto Activate Toggle -->
+                <div class="p-6 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-tight text-emerald-400">Set as Active Build Target</p>
+                        <p class="text-[10px] font-bold opacity-40 mt-1 uppercase tracking-widest">Immediately make this the live version for all clients</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="ac-new-auto-activate" class="sr-only peer" checked>
+                        <div class="w-14 h-7 bg-white/10 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500 shadow-lg"></div>
+                    </label>
+                </div>
+
                 <!-- Notes / Description -->
                 <div class="space-y-2">
                     <label class="text-[10px] font-black uppercase tracking-widest opacity-60">Release Description & Shard Notes</label>

@@ -22,15 +22,20 @@ ${basename(__FILE__, '.php')} = function () {
         $total = count($configs);
         $mandatoryCount = 0;
         $activeVersion = 'v0.0.0';
-        
+
         if ($total > 0) {
-            // Latest in table (sorted desc by ID) represents active targeted build
-            $activeVersion = $configs[0]['latest_version'] ?? 'v0.0.0';
-            
+            // Use is_active flag; fallback to latest ID if none is set
             foreach ($configs as $cfg) {
+                if ((int)($cfg['is_active'] ?? 0) === 1) {
+                    $activeVersion = $cfg['latest_version'];
+                }
                 if ((int)($cfg['is_mandatory'] ?? 0) === 1) {
                     $mandatoryCount++;
                 }
+            }
+            // Fallback: no row has is_active set yet
+            if ($activeVersion === 'v0.0.0') {
+                $activeVersion = $configs[0]['latest_version'] ?? 'v0.0.0';
             }
         }
 

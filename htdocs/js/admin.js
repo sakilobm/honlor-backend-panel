@@ -1984,7 +1984,9 @@ var AdminApp = {
                            '    <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>' +
                            '    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Fetching Intelligence...</p>' +
                            '</div>';
-        drawer.classList.remove('translate-x-full');
+        // Mobile: slide up (remove translate-y-full); Desktop: slide in from right (remove translate-x-full)
+        drawer.classList.remove('translate-y-full', 'translate-x-full');
+        document.body.style.overflow = 'hidden';
 
         if (type === 'user') {
             ApiClient.get('users', 'details', { id: id }).then(function (data) {
@@ -3633,17 +3635,30 @@ var AdminApp = {
             for (var i = 0; i < self.appConfigs.length; i++) {
                 var cfg = self.appConfigs[i];
                 var isMandatory = (cfg.is_mandatory == 1 || cfg.is_mandatory === true);
-                var badgeColor = isMandatory ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-                var badgeLabel = isMandatory ? 'MANDATORY' : 'OPTIONAL';
-                
-                html += '<tr class="hover:bg-white/[0.03] transition-all duration-300 group">' +
+                var isActive    = (cfg.is_active == 1 || cfg.is_active === true);
+                var badgeColor  = isMandatory ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+                var badgeLabel  = isMandatory ? 'MANDATORY' : 'OPTIONAL';
+                var rowBg       = isActive ? 'bg-emerald-500/[0.04]' : '';
+                var iconColor   = isActive ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-purple-500/10 border-purple-500/20 text-purple-400';
+                var activeBadge = isActive
+                    ? '<span class="ml-2 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[8px] font-black text-emerald-400 uppercase tracking-widest"><i class="ph-bold ph-broadcast mr-1"></i>LIVE</span>'
+                    : '';
+                var setActiveBtn = isActive
+                    ? '<button disabled title="Already active" class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center opacity-50 cursor-not-allowed shadow-xl"><i class="ph-bold ph-broadcast text-lg"></i></button>'
+                    : '<button onclick="AdminApp.setActiveVersion(\'' + cfg.id + '\')" title="Set as Active Build" class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-xl shadow-emerald-500/5"><i class="ph-bold ph-broadcast text-lg"></i></button>';
+                var escapedUrl = cfg.update_url.replace(/'/g, "\\'");
+
+                html += '<tr class="hover:bg-white/[0.03] transition-all duration-300 group ' + rowBg + '">' +
                         '    <td class="px-8 py-6">' +
                         '        <div class="flex items-center gap-4">' +
-                        '            <div class="w-12 h-12 rounded-[1.25rem] bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shadow-2xl shadow-purple-500/10">' +
+                        '            <div class="w-12 h-12 rounded-[1.25rem] ' + iconColor + ' border flex items-center justify-center shadow-2xl">' +
                         '                <i class="ph-bold ph-git-branch text-xl"></i>' +
                         '            </div>' +
                         '            <div>' +
-                        '                <p class="text-xs font-black uppercase tracking-tight">' + cfg.latest_version + '</p>' +
+                        '                <div class="flex items-center gap-2">' +
+                        '                    <p class="text-xs font-black uppercase tracking-tight">' + cfg.latest_version + '</p>' +
+                        activeBadge +
+                        '                </div>' +
                         '                <p class="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-0.5">X-Class Deployment</p>' +
                         '            </div>' +
                         '        </div>' +
@@ -3654,7 +3669,7 @@ var AdminApp = {
                         '    <td class="px-8 py-6 font-mono text-xs text-primary/80 truncate max-w-xs">' +
                         '        <div class="flex items-center gap-2 group/url">' +
                         '            <span class="truncate">' + cfg.update_url + '</span>' +
-                        '            <button onclick="navigator.clipboard.writeText(\'' + cfg.update_url + '\'); toast.success(\'Copied\', \'URL copied to clipboard.\')" class="opacity-0 group-hover/url:opacity-100 p-1 hover:bg-white/10 rounded transition-all text-gray-500"><i class="ph ph-copy text-xs"></i></button>' +
+                        '            <button onclick="navigator.clipboard.writeText(\'' + escapedUrl + '\'); toast.success(\'Copied\', \'URL copied to clipboard.\')" class="opacity-0 group-hover/url:opacity-100 p-1 hover:bg-white/10 rounded transition-all text-gray-500"><i class="ph ph-copy text-xs"></i></button>' +
                         '        </div>' +
                         '    </td>' +
                         '    <td class="px-8 py-6">' +
@@ -3666,6 +3681,7 @@ var AdminApp = {
                         '    </td>' +
                         '    <td class="px-8 py-6 text-right">' +
                         '        <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">' +
+                        setActiveBtn +
                         '            <button onclick="AdminApp.openDrawer(\'app_config\', \'' + cfg.id + '\')" class="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5">' +
                         '                <i class="ph-bold ph-pencil text-lg"></i>' +
                         '            </button>' +
@@ -3687,6 +3703,11 @@ var AdminApp = {
     openPublishReleaseModal: function () {
         var m = document.getElementById('publish-release-modal');
         if (m) {
+            // Auto-fill URL from the most recent entry (default URL convenience)
+            var urlInput = document.getElementById('ac-new-url');
+            if (urlInput && !urlInput.value && this.appConfigs && this.appConfigs.length > 0) {
+                urlInput.value = this.appConfigs[0].update_url || '';
+            }
             m.classList.remove('hidden');
             m.classList.add('flex');
             document.body.style.overflow = 'hidden';
@@ -3695,17 +3716,17 @@ var AdminApp = {
 
     publishNewVersion: function () {
         var self = this;
-        var version = document.getElementById('ac-new-version').value.trim();
-        var url = document.getElementById('ac-new-url').value.trim();
-        var isMandatory = document.getElementById('ac-new-mandatory').checked;
-        var description = document.getElementById('ac-new-description').value.trim();
+        var version      = document.getElementById('ac-new-version').value.trim();
+        var url          = document.getElementById('ac-new-url').value.trim();
+        var isMandatory  = document.getElementById('ac-new-mandatory').checked;
+        var autoActivate = document.getElementById('ac-new-auto-activate').checked;
+        var description  = document.getElementById('ac-new-description').value.trim();
 
         if (!version || !url) {
             toast.error('Required Fields', 'Version Identifier and Target Deployment URL are required.');
             return;
         }
 
-        // Validate URL format
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
             toast.error('Invalid Protocol', 'URL must start with http:// or https://');
             return;
@@ -3713,24 +3734,49 @@ var AdminApp = {
 
         var payload = {
             latest_version: version,
-            update_url: url,
-            is_mandatory: isMandatory ? 1 : 0,
-            description: description
+            update_url:     url,
+            is_mandatory:   isMandatory  ? 1 : 0,
+            auto_activate:  autoActivate ? 1 : 0,
+            description:    description
         };
 
         ApiClient.post('app_config', 'create', payload).then(function (res) {
-            toast.success('App Upgrade', res.message);
-            
+            var syncMsg = res.supabase_sync === 'ok'
+                ? ' Synced to Supabase.'
+                : (res.supabase_sync && res.supabase_sync !== 'skipped' ? ' (Supabase: ' + res.supabase_sync + ')' : '');
+            toast.success('App Upgrade', res.message + syncMsg);
+
             // Reset fields
             document.getElementById('ac-new-version').value = '';
             document.getElementById('ac-new-url').value = '';
             document.getElementById('ac-new-mandatory').checked = false;
+            document.getElementById('ac-new-auto-activate').checked = true;
             document.getElementById('ac-new-description').value = '';
 
             window.closeModal();
             self.initAppConfig();
         }).catch(function (err) {
             toast.error('Deployment Failure', err.error || 'Failed to publish configuration.');
+        });
+    },
+
+    setActiveVersion: function (id) {
+        var self = this;
+        this.confirm({
+            title: 'Switch Active Build Target',
+            message: 'Set this version as the live build target? The mobile app will immediately use this version for update checks.',
+            icon: 'ph-broadcast',
+            confirmLabel: 'Set Active',
+            type: 'success'
+        }).then(function (confirmed) {
+            if (!confirmed) return;
+            ApiClient.post('app_config', 'update', { action: 'set_active', id: id }).then(function (res) {
+                var syncMsg = res.supabase_sync === 'ok' ? ' Synced to Supabase.' : (res.supabase_sync ? ' (' + res.supabase_sync + ')' : '');
+                toast.success('Build Target', 'Version ' + res.version + ' is now the active target.' + syncMsg);
+                self.initAppConfig();
+            }).catch(function (err) {
+                toast.error('Error', err.error || 'Failed to switch active version.');
+            });
         });
     },
 
@@ -3745,7 +3791,7 @@ var AdminApp = {
             purge: true
         }).then(function (confirmed) {
             if (confirmed) {
-                ApiClient.post('app_config', 'delete', { id: id }).then(function (res) {
+                ApiClient.post('app_config', 'delete', { id: id }).then(function () {
                     toast.success('Decommissioned', 'Upgrade target removed.');
                     self.initAppConfig();
                 });
@@ -3816,8 +3862,13 @@ window.closeDrawer = function () {
     
     var drawer = document.getElementById('side-drawer');
     if (drawer) {
-        drawer.classList.add('translate-x-full');
-        setTimeout(() => { drawer.classList.add('hidden'); }, 500);
+        // Mobile: slide down; Desktop: slide out to right
+        if (window.innerWidth < 640) {
+            drawer.classList.add('translate-y-full');
+        } else {
+            drawer.classList.add('translate-x-full');
+        }
+        document.body.style.overflow = '';
     }
 };
 
