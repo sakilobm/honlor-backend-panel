@@ -23,17 +23,20 @@ ${basename(__FILE__, '.php')} = function () {
         $this->response($this->json(['error' => 'Invalid parameters.']), 400);
     }
 
-    try {
-        if (SupabaseClient::updateReport($id, $action, $reply)) {
-            $this->response($this->json([
-                'success' => true,
-                'message' => 'Report updated successfully.'
-            ]), 200);
-        } else {
-            $this->response($this->json(['error' => 'Action failed.']), 500);
-        }
-    } catch (Exception $e) {
-        error_log("API Error /supabase_reports/action: " . $e->getMessage());
-        $this->response($this->json(['error' => 'Internal Server Error']), 500);
+    $patch = ['status' => $action];
+    if (!empty($reply)) {
+        $patch['admin_reply'] = $reply;
+    }
+
+    $result = SupabaseClient::patchRow('app_feedback', 'id', $id, $patch);
+
+    if ($result['success']) {
+        $this->response($this->json([
+            'success' => true,
+            'message' => 'Report updated successfully.',
+        ]), 200);
+    } else {
+        error_log("API Error /supabase_reports/action: " . ($result['error'] ?? 'unknown'));
+        $this->response($this->json(['error' => 'Action failed.']), 500);
     }
 };

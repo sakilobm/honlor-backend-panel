@@ -168,6 +168,34 @@
 
     <!-- Tab Content: Supabase Reports -->
     <div id="tab-content-supabase" class="tab-content hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <!-- Filter Bar -->
+        <div class="flex flex-wrap items-center gap-3">
+            <button data-filter="all" onclick="AdminApp.setSbReportFilter('all')"
+                class="sb-report-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid rgba(124,106,255,0.5);background:rgba(124,106,255,0.12);color:#7c6aff;">
+                All
+                <span id="filter-badge-sb-all" class="px-2 py-0.5 rounded-lg text-[8px] font-black" style="background:rgba(124,106,255,0.15);color:#7c6aff;">0</span>
+            </button>
+            <button data-filter="pending" onclick="AdminApp.setSbReportFilter('pending')"
+                class="sb-report-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid var(--border-color);background:transparent;color:var(--text-muted);">
+                Pending
+                <span id="filter-badge-sb-pending" class="px-2 py-0.5 rounded-lg bg-yellow-500/20 text-yellow-600 text-[8px] font-black">0</span>
+            </button>
+            <button data-filter="resolved" onclick="AdminApp.setSbReportFilter('resolved')"
+                class="sb-report-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid var(--border-color);background:transparent;color:var(--text-muted);">
+                Resolved
+                <span id="filter-badge-sb-resolved" class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-600 text-[8px] font-black">0</span>
+            </button>
+            <button data-filter="dismissed" onclick="AdminApp.setSbReportFilter('dismissed')"
+                class="sb-report-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid var(--border-color);background:transparent;color:var(--text-muted);">
+                Dismissed
+                <span id="filter-badge-sb-dismissed" class="px-2 py-0.5 rounded-lg bg-red-500/20 text-red-500 text-[8px] font-black">0</span>
+            </button>
+        </div>
+
         <!-- Telemetry Stats Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="stat-card border-purple-500/20 bg-gradient-to-br from-purple-500/[0.05] to-transparent relative overflow-hidden group">
@@ -223,14 +251,18 @@
                         Real-time App Report Ingress Listener Active
                     </p>
                 </div>
-                <div class="flex gap-4 w-full md:w-auto">
+                <div class="flex gap-3 w-full md:w-auto">
                     <div class="relative flex-grow md:flex-none">
                         <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-purple-400 opacity-60"></i>
-                        <input type="text" id="supabase-report-filter" placeholder="Filter Supabase Reports..." 
-                               onkeyup="AdminApp.loadSupabaseReportList()"
-                               class="w-full md:w-64 rounded-xl pl-12 pr-4 py-3 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                        <input type="text" id="supabase-report-filter" placeholder="Filter reports..."
+                               oninput="AdminApp.renderSupabaseReportTable()"
+                               class="w-full md:w-56 rounded-xl pl-12 pr-4 py-3 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
                                style="background-color: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-main);">
                     </div>
+                    <button onclick="AdminApp.loadSupabaseReportList()"
+                        class="btn-primary !p-3 !rounded-xl !bg-purple-500/10 !border-purple-500/20 !text-purple-400 hover:!bg-purple-500 hover:!text-white transition-all shadow-xl shadow-purple-500/5">
+                        <i class="ph-bold ph-arrows-clockwise text-lg"></i>
+                    </button>
                 </div>
             </div>
             <div class="overflow-x-auto">

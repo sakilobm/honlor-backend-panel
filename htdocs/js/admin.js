@@ -1223,6 +1223,7 @@ var AdminApp = {
      * Safety Center (Reports) Logic
      */
     initReports: function () {
+        this._sbReportFilter = 'all';
         this.loadReportList();
         this.loadSupabaseReportList();
     },
@@ -1338,127 +1339,184 @@ var AdminApp = {
         });
     },
 
-    loadSupabaseReportList: function () {
-        var tbody = document.getElementById('supabase-reports-table-body');
-        var totalMetric = document.getElementById('metric-sb-total');
-        var resolvedMetric = document.getElementById('metric-sb-resolved');
-        var velocityMetric = document.getElementById('metric-sb-velocity');
-        var filterInput = document.getElementById('supabase-report-filter');
-        var filterValue = filterInput ? filterInput.value.toLowerCase() : '';
+    _sbReportAll: [],
+    _sbReportFilter: 'all',
 
+    loadSupabaseReportList: function () {
+        var self = this;
+        var tbody = document.getElementById('supabase-reports-table-body');
         if (!tbody) return;
 
+        tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center">' +
+            '<div class="flex flex-col items-center gap-5">' +
+            '<div class="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>' +
+            '<p class="font-black text-[10px] uppercase tracking-[0.3em] opacity-30">Syncing Report Stream...</p>' +
+            '</div></td></tr>';
+
         ApiClient.get('supabase_reports', 'list').then(function (data) {
-            if (totalMetric) totalMetric.innerText = data.metrics.total < 10 ? '0' + data.metrics.total : data.metrics.total;
-            if (resolvedMetric) resolvedMetric.innerText = data.metrics.resolved < 10 ? '0' + data.metrics.resolved : data.metrics.resolved;
-            if (velocityMetric) velocityMetric.innerText = data.metrics.velocity + '%';
+            self._sbReportAll = data.reports || [];
 
-            var html = '';
-            var reports = data.reports || [];
-            
-            // Apply filtering if filter value exists
-            if (filterValue) {
-                reports = reports.filter(function (rep) {
-                    return (
-                        (rep.reason && rep.reason.toLowerCase().indexOf(filterValue) !== -1) ||
-                        (rep.details && rep.details.toLowerCase().indexOf(filterValue) !== -1) ||
-                        (rep.reporter_id && rep.reporter_id.toLowerCase().indexOf(filterValue) !== -1) ||
-                        (rep.reported_id && rep.reported_id.toLowerCase().indexOf(filterValue) !== -1) ||
-                        (rep.status && rep.status.toLowerCase().indexOf(filterValue) !== -1)
-                    );
-                });
-            }
+            var t = data.metrics.total    || 0;
+            var r = data.metrics.resolved || 0;
+            var v = data.metrics.velocity || 0;
+            var p = data.metrics.pending  || 0;
+            var d = 0;
+            self._sbReportAll.forEach(function (rep) {
+                if ((rep.status || '').toLowerCase() === 'dismissed') d++;
+            });
 
-            for (var i = 0; i < reports.length; i++) {
-                var rep = reports[i];
-                var status = (rep.status || 'pending').toLowerCase();
-                
-                // Color badges for status
-                var statusClass = 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
-                if (status === 'resolved' || status === 'solved') {
-                    statusClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-                } else if (status === 'dismissed') {
-                    statusClass = 'bg-red-500/10 text-red-500 border-red-500/20';
-                }
+            var totalM    = document.getElementById('metric-sb-total');
+            var resolvedM = document.getElementById('metric-sb-resolved');
+            var velocityM = document.getElementById('metric-sb-velocity');
+            if (totalM)    totalM.innerText    = t < 10 ? '0' + t : t;
+            if (resolvedM) resolvedM.innerText = r < 10 ? '0' + r : r;
+            if (velocityM) velocityM.innerText = v + '%';
 
-                // Cyberpunk badge colors for report reasons
-                var reason = rep.reason || 'Other';
-                var reasonClass = 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-                if (reason === 'Spam') reasonClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-                else if (reason === 'Violence') reasonClass = 'bg-red-500/10 text-red-400 border-red-500/20';
-                else if (reason === 'Abuse or Harassment') reasonClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-                else if (reason === 'Nudity or Pornography') reasonClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-                else if (reason === 'Illegal Drugs/Content') reasonClass = 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20';
-                else if (reason === 'Personal Details') reasonClass = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+            var fb = {
+                all:       document.getElementById('filter-badge-sb-all'),
+                pending:   document.getElementById('filter-badge-sb-pending'),
+                resolved:  document.getElementById('filter-badge-sb-resolved'),
+                dismissed: document.getElementById('filter-badge-sb-dismissed'),
+            };
+            if (fb.all)       fb.all.innerText       = t;
+            if (fb.pending)   fb.pending.innerText   = p;
+            if (fb.resolved)  fb.resolved.innerText  = r;
+            if (fb.dismissed) fb.dismissed.innerText = d;
 
-                // Truncate UUIDs elegantly
-                var repUuidShort = rep.reporter_id ? 'usr_' + rep.reporter_id.substring(0, 4) : 'usr_anon';
-                var targetUuidShort = rep.reported_id ? 'usr_' + rep.reported_id.substring(0, 4) : 'usr_anon';
-                if (rep.channel_id) {
-                    targetUuidShort = 'ch_' + rep.channel_id.substring(0, 4);
-                }
-
-                // Synchronization timestamp
-                var localTimeStr = rep.created_at ? new Date(rep.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A';
-                var localDateStr = rep.created_at ? new Date(rep.created_at).toLocaleDateString([], {month: 'short', day: 'numeric'}) : 'N/A';
-
-                // Admin reply speech bubble indicator
-                var replyBubble = '';
-                if (rep.admin_reply) {
-                    replyBubble = ' <i class="ph-bold ph-chat-circle-text text-emerald-400 ml-1.5 cursor-help" title="Reply: &quot;' + rep.admin_reply + '&quot;"></i>';
-                }
-
-                html += '<tr class="hover:bg-white/[0.03] transition-all duration-300 group">' +
-                        '    <td class="px-8 py-6">' +
-                        '        <div class="flex items-center gap-4">' +
-                        '            <div class="flex -space-x-3 transition-transform group-hover:scale-105">' +
-                        '                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + rep.reporter_id + '" class="w-10 h-10 rounded-xl bg-purple-500/10 border-2 border-[var(--bg-main)] z-20 shadow-xl">' +
-                        '                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + (rep.reported_id || rep.channel_id) + '" class="w-10 h-10 rounded-xl bg-red-500/10 border-2 border-[var(--bg-main)] z-10 shadow-xl">' +
-                        '            </div>' +
-                        '            <div>' +
-                        '                <p class="text-[11px] font-black uppercase tracking-widest text-purple-400 truncate max-w-[150px]" title="Reporter UUID: ' + rep.reporter_id + '">By @' + repUuidShort + '</p>' +
-                        '                <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5" title="Reported UUID: ' + (rep.reported_id || rep.channel_id) + '">Reported @' + targetUuidShort + '</p>' +
-                        '            </div>' +
-                        '        </div>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6 text-center">' +
-                        '        <span class="px-3 py-1.5 ' + reasonClass + ' border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">' + reason + '</span>' +
-                        '        <p class="text-[8px] font-bold opacity-20 uppercase mt-2">App Report</p>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6 max-w-[300px]">' +
-                        '        <p class="text-[10px] font-medium opacity-70 italic" style="color: var(--text-main);">' + (rep.details ? '"' + rep.details + '"' : '<span class="opacity-30">No details provided</span>') + '</p>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6 text-center">' +
-                        '         <span class="px-3 py-1.5 ' + statusClass + ' border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">' + status.toUpperCase() + replyBubble + '</span>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6 text-center">' +
-                        '        <p class="text-[10px] font-black" style="color: var(--text-main);">' + localTimeStr + '</p>' +
-                        '        <p class="text-[8px] font-bold opacity-40 uppercase mt-0.5">' + localDateStr + '</p>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6 text-right">' +
-                        '         <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">';
-                
-                if (status === 'pending') {
-                    var detailsEscaped = (rep.details || '').replace(/['"\\]/g, '\\$&');
-                    html += '            <button onclick="AdminApp.openSupabaseReplyModal(\'' + rep.id + '\', \'' + reason + '\', \'' + detailsEscaped + '\')" class="px-3 py-2 rounded-xl bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all text-[8px] font-black uppercase tracking-widest border border-purple-500/20 shadow-xl">' +
-                            '                Reply & Solve' +
-                            '            </button>' +
-                            '            <button onclick="AdminApp.executeSupabaseAction(\'' + rep.id + '\', \'resolved\', \'Resolved by quick action\')" class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-xl shadow-emerald-500/5" title="Quick Resolve">' +
-                            '                <i class="ph-bold ph-check text-lg"></i>' +
-                            '            </button>' +
-                            '            <button onclick="AdminApp.executeSupabaseAction(\'' + rep.id + '\', \'dismissed\')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5" title="Dismiss Report">' +
-                            '                <i class="ph-bold ph-x text-lg"></i>' +
-                            '            </button>';
-                } else {
-                    html += '            <span class="text-[8px] font-black uppercase tracking-widest opacity-25">Resolved</span>';
-                }
-                
-                html += '         </div>' +
-                        '    </td>' +
-                        '</tr>';
-            }
-            tbody.innerHTML = html || '<tr><td colspan="6" class="p-24 text-center opacity-30 font-black uppercase tracking-[0.3em] text-[10px]">No Supabase reports in queue</td></tr>';
+            self.renderSupabaseReportTable();
+        })['catch'](function () {
+            tbody.innerHTML = '<tr><td colspan="6" class="p-20 text-center opacity-30 font-black uppercase tracking-[0.2em] text-[10px]">Failed to load reports</td></tr>';
         });
+    },
+
+    renderSupabaseReportTable: function () {
+        var tbody = document.getElementById('supabase-reports-table-body');
+        if (!tbody) return;
+
+        var filterInput = document.getElementById('supabase-report-filter');
+        var search = filterInput ? filterInput.value.toLowerCase().trim() : '';
+
+        var list = this._sbReportAll;
+        if (this._sbReportFilter !== 'all') {
+            list = list.filter(function (r) { return (r.status || 'pending').toLowerCase() === this._sbReportFilter; }, this);
+        }
+        if (search) {
+            list = list.filter(function (rep) {
+                return (rep.reason  || '').toLowerCase().indexOf(search) !== -1 ||
+                       (rep.details || '').toLowerCase().indexOf(search) !== -1 ||
+                       (rep.status  || '').toLowerCase().indexOf(search) !== -1 ||
+                       (rep.reporter_id || '').toLowerCase().indexOf(search) !== -1;
+            });
+        }
+
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="p-24 text-center"><div class="flex flex-col items-center gap-4 opacity-30"><i class="ph-bold ph-shield-check text-4xl"></i><p class="font-black text-[10px] uppercase tracking-[0.3em]">No reports found</p></div></td></tr>';
+            return;
+        }
+
+        var html = '';
+        list.forEach(function (rep) {
+            var status = (rep.status || 'pending').toLowerCase();
+            var isPending = status === 'pending';
+
+            var statusClass = isPending
+                ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                : status === 'dismissed'
+                    ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                    : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+
+            var reason = rep.reason || 'Other';
+            var reasonClass = 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+            if (reason === 'Spam')                  reasonClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+            else if (reason === 'Violence')          reasonClass = 'bg-red-500/10 text-red-400 border-red-500/20';
+            else if (reason === 'Abuse or Harassment') reasonClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+            else if (reason === 'Nudity or Pornography') reasonClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+            else if (reason === 'Illegal Drugs/Content') reasonClass = 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20';
+            else if (reason === 'Personal Details') reasonClass = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+            else if (reason.toLowerCase().indexOf('bug') !== -1 || reason.toLowerCase().indexOf('glitch') !== -1)
+                reasonClass = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+
+            var repUuidShort = rep.reporter_id ? 'usr_' + rep.reporter_id.substring(0, 4) : 'usr_anon';
+            var localTimeStr = rep.created_at ? new Date(rep.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A';
+            var localDateStr = rep.created_at ? new Date(rep.created_at).toLocaleDateString([], {month: 'short', day: 'numeric'}) : 'N/A';
+            var replyBubble  = rep.admin_reply
+                ? ' <i class="ph-bold ph-chat-circle-text text-emerald-400 ml-1.5 cursor-help" title="' + rep.admin_reply.replace(/"/g, '&quot;') + '"></i>'
+                : '';
+
+            var safeId      = String(rep.id      || '').replace(/'/g, '&#39;');
+            var safeReason  = reason.replace(/'/g, '&#39;');
+            var safeDetails = (rep.details || '').replace(/'/g, '&#39;').replace(/\\/g, '&#92;');
+
+            var actionsHtml;
+            if (isPending) {
+                actionsHtml =
+                    '<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">' +
+                    '  <button onclick="AdminApp.openSupabaseReplyModal(\'' + safeId + '\',\'' + safeReason + '\',\'' + safeDetails + '\')" ' +
+                    '    class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white transition-all text-[8px] font-black uppercase tracking-widest border border-purple-500/20">' +
+                    '    <i class="ph-bold ph-chat-circle-dots text-sm"></i>Reply & Solve' +
+                    '  </button>' +
+                    '  <button onclick="AdminApp.executeSupabaseAction(\'' + safeId + '\',\'resolved\',\'Resolved by quick action\')" ' +
+                    '    class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20" title="Quick Resolve">' +
+                    '    <i class="ph-bold ph-check text-base"></i>' +
+                    '  </button>' +
+                    '  <button onclick="AdminApp.executeSupabaseAction(\'' + safeId + '\',\'dismissed\')" ' +
+                    '    class="w-9 h-9 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all border border-red-500/20" title="Dismiss">' +
+                    '    <i class="ph-bold ph-x text-base"></i>' +
+                    '  </button>' +
+                    '</div>';
+            } else {
+                var reviewedDate = rep.reviewed_at ? new Date(rep.reviewed_at).toLocaleDateString() : '';
+                actionsHtml =
+                    '<div class="flex flex-col items-end gap-1">' +
+                    '  <span class="text-[9px] font-black uppercase tracking-widest opacity-40">' + status + '</span>' +
+                    (reviewedDate ? '<span class="text-[8px] opacity-25">' + reviewedDate + '</span>' : '') +
+                    '</div>';
+            }
+
+            html +=
+                '<tr class="hover:bg-white/[0.025] transition-all duration-300 group border-b border-white/[0.03]">' +
+                '  <td class="px-6 py-5">' +
+                '    <div class="flex items-center gap-3">' +
+                '      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + rep.reporter_id + '" class="w-9 h-9 rounded-xl shrink-0 border-2 border-[var(--bg-main)] shadow-xl">' +
+                '      <div class="min-w-0">' +
+                '        <p class="text-[11px] font-black uppercase tracking-widest text-purple-400 truncate max-w-[120px]">@' + repUuidShort + '</p>' +
+                '        <p class="text-[8px] font-bold opacity-25 uppercase tracking-widest mt-0.5">App User</p>' +
+                '      </div>' +
+                '    </div>' +
+                '  </td>' +
+                '  <td class="px-6 py-5 text-center">' +
+                '    <span class="px-2.5 py-1.5 ' + reasonClass + ' border rounded-xl text-[8px] font-black uppercase tracking-widest whitespace-nowrap">' + reason + '</span>' +
+                '  </td>' +
+                '  <td class="px-6 py-5 max-w-[200px]">' +
+                '    <p class="text-[10px] font-medium opacity-60 italic leading-relaxed line-clamp-2" style="color:var(--text-main);">"' + (rep.details || 'No details provided') + '"</p>' +
+                '  </td>' +
+                '  <td class="px-6 py-5 text-center">' +
+                '    <span class="px-2.5 py-1.5 ' + statusClass + ' border rounded-xl text-[8px] font-black uppercase tracking-widest">' + status + replyBubble + '</span>' +
+                '  </td>' +
+                '  <td class="px-6 py-5 text-center">' +
+                '    <p class="text-[10px] font-black" style="color:var(--text-main);">' + localTimeStr + '</p>' +
+                '    <p class="text-[8px] font-bold opacity-30 uppercase mt-0.5">' + localDateStr + '</p>' +
+                '  </td>' +
+                '  <td class="px-6 py-5 text-right">' + actionsHtml + '</td>' +
+                '</tr>';
+        });
+        tbody.innerHTML = html;
+    },
+
+    setSbReportFilter: function (filter) {
+        this._sbReportFilter = filter;
+        document.querySelectorAll('.sb-report-filter-btn').forEach(function (btn) {
+            if (btn.dataset.filter === filter) {
+                btn.style.border     = '1px solid rgba(124,106,255,0.5)';
+                btn.style.background = 'rgba(124,106,255,0.12)';
+                btn.style.color      = '#7c6aff';
+            } else {
+                btn.style.border     = '1px solid var(--border-color)';
+                btn.style.background = 'transparent';
+                btn.style.color      = 'var(--text-muted)';
+            }
+        });
+        this.renderSupabaseReportTable();
     },
 
     executeSupabaseAction: function (id, action, reply) {
@@ -1466,11 +1524,11 @@ var AdminApp = {
         var payload = { id: id, action: action };
         if (reply) payload.reply = reply;
 
-        ApiClient.post('supabase_reports', 'action', payload).then(function (res) {
-            toast.success('Supabase Sync', 'Report resolved and database entry updated.');
+        ApiClient.post('supabase_reports', 'action', payload).then(function () {
+            toast.success('Report Updated', action === 'dismissed' ? 'Report dismissed.' : 'Report resolved successfully.');
             self.loadSupabaseReportList();
-        }).catch(function (err) {
-            toast.error('Action Failed', err.error || 'Failed to update Supabase record.');
+        })['catch'](function (err) {
+            toast.error('Action Failed', err.error || 'Failed to update report.');
         });
     },
 
@@ -1479,55 +1537,108 @@ var AdminApp = {
         var existing = document.getElementById('supabase-reply-modal');
         if (existing) existing.remove();
 
-        var modalHtml = '<div id="supabase-reply-modal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[99999] flex items-center justify-center p-6 animate-in fade-in duration-300">' +
-                        '    <div class="w-full max-w-lg rounded-[2.5rem] border border-white/10 p-8 shadow-2xl space-y-6" style="background: rgba(20, 10, 30, 0.85);">' +
-                        '        <div class="flex justify-between items-center">' +
-                        '            <div>' +
-                        '                <h4 class="text-xl font-black uppercase tracking-tight text-white">App Report <span class="text-purple-400">Resolution</span></h4>' +
-                        '                <p class="text-[8px] font-bold uppercase tracking-widest text-purple-300/40 mt-1">ID: ' + id + '</p>' +
-                        '            </div>' +
-                        '            <button onclick="document.getElementById(\'supabase-reply-modal\').remove()" class="w-8 h-8 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 hover:text-white flex items-center justify-center transition-all">' +
-                        '                <i class="ph ph-x text-lg"></i>' +
-                        '            </button>' +
-                        '        </div>' +
-                        '        <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-white/80 space-y-3">' +
-                        '            <div class="flex justify-between">' +
-                        '                <span class="opacity-40 uppercase tracking-widest text-[9px] font-black">Reason</span>' +
-                        '                <span class="text-purple-400 font-bold">' + reason + '</span>' +
-                        '            </div>' +
-                        '            <div>' +
-                        '                <span class="opacity-40 uppercase tracking-widest text-[9px] font-black block mb-1">Details</span>' +
-                        '                <p class="italic text-white/95">"' + (details || 'No additional details provided.') + '"</p>' +
-                        '            </div>' +
-                        '        </div>' +
-                        '        <div class="space-y-2">' +
-                        '            <label class="text-[10px] font-black uppercase tracking-widest opacity-60 text-white">Reply message to the reporter</label>' +
-                        '            <textarea id="supabase-reply-message" placeholder="Type a message to the user... (e.g. We have solved the issue and taken action)" ' +
-                        '                      class="w-full h-32 rounded-2xl bg-black/40 border border-white/10 p-4 text-xs text-white placeholder-white/30 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all resize-none"></textarea>' +
-                        '        </div>' +
-                        '        <div class="flex gap-4 pt-2">' +
-                        '            <button onclick="document.getElementById(\'supabase-reply-modal\').remove()" class="btn-secondary !rounded-2xl flex-grow justify-center py-4 text-xs font-black uppercase tracking-widest">Cancel</button>' +
-                        '            <button id="supabase-submit-btn" class="btn-primary !rounded-2xl flex-grow justify-center py-4 text-xs font-black uppercase tracking-widest shadow-lg shadow-purple-500/20">Submit Resolution</button>' +
-                        '        </div>' +
-                        '    </div>' +
-                        '</div>';
+        var templates = [
+            { label: 'Issue Investigated & Resolved',    text: 'We have investigated your report and resolved the issue. Thank you for helping us improve the app.' },
+            { label: 'Fixed in Latest App Update',       text: 'This bug has been fixed in our latest app update. Please update to the newest version and let us know if the issue persists.' },
+            { label: 'Forwarded to Dev Team',            text: 'Thank you for your feedback. We have forwarded this report to our development team and it will be addressed in an upcoming release.' },
+            { label: 'Unable to Reproduce',              text: 'Our team was unable to reproduce the reported issue. Please try reinstalling the app or contact support with additional details.' },
+        ];
+
+        var templateBtns = templates.map(function (t) {
+            return '<button type="button" onclick="AdminApp._selectSbTemplate(this)"' +
+                ' data-reply="' + t.text.replace(/"/g, '&quot;') + '"' +
+                ' class="sb-reply-template-btn text-left p-4 rounded-2xl transition-all group"' +
+                ' style="border:1px solid var(--border-color);background:transparent;">' +
+                '  <p class="text-[10px] font-black uppercase tracking-widest mb-1" style="color:var(--text-main);">' + t.label + '</p>' +
+                '  <p class="text-[9px] leading-relaxed opacity-40" style="color:var(--text-muted);">' + t.text + '</p>' +
+                '</button>';
+        }).join('');
+
+        var modalHtml =
+            '<div id="supabase-reply-modal" class="modal-overlay" onclick="if(event.target===this) document.getElementById(\'supabase-reply-modal\').remove()">' +
+            '  <div class="modal-card !max-w-2xl" onclick="event.stopPropagation()">' +
+
+            '    <div class="flex items-start justify-between p-8 border-b" style="border-color:var(--border-color);">' +
+            '      <div class="flex items-center gap-5">' +
+            '        <div class="w-14 h-14 rounded-[1.75rem] bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20 shadow-2xl shadow-purple-500/10">' +
+            '          <i class="ph-bold ph-chat-circle-dots text-2xl"></i>' +
+            '        </div>' +
+            '        <div>' +
+            '          <h3 class="text-xl font-black uppercase tracking-tight" style="color:var(--text-main);">App Report <span class="text-purple-400">Resolution</span></h3>' +
+            '          <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mt-1" style="color:var(--text-muted);">A reply will be stored against this report</p>' +
+            '        </div>' +
+            '      </div>' +
+            '      <button onclick="document.getElementById(\'supabase-reply-modal\').remove()" class="w-10 h-10 rounded-2xl flex items-center justify-center transition-all" style="color:var(--text-muted);" onmouseover="this.style.background=\'rgba(124,106,255,0.1)\'" onmouseout="this.style.background=\'transparent\'">' +
+            '        <i class="ph ph-x text-xl"></i>' +
+            '      </button>' +
+            '    </div>' +
+
+            '    <div class="p-8 space-y-7 overflow-y-auto" style="max-height:65vh;">' +
+
+            '      <div class="flex items-start gap-4 p-5 rounded-2xl" style="background:rgba(124,106,255,0.05);border:1px solid rgba(124,106,255,0.15);">' +
+            '        <i class="ph-bold ph-warning-circle text-purple-400 text-lg mt-0.5 shrink-0"></i>' +
+            '        <div class="min-w-0 space-y-1">' +
+            '          <div class="flex items-center gap-3">' +
+            '            <span class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40" style="color:var(--text-muted);">Category</span>' +
+            '            <span class="text-[10px] font-black text-purple-400 uppercase tracking-widest">' + reason + '</span>' +
+            '          </div>' +
+            '          <p class="text-[11px] italic opacity-60 leading-relaxed" style="color:var(--text-main);">"' + (details || 'No details provided.') + '"</p>' +
+            '        </div>' +
+            '      </div>' +
+
+            '      <div>' +
+            '        <p class="text-[9px] font-black uppercase tracking-[0.25em] opacity-40 mb-4" style="color:var(--text-muted);">Quick Reply Templates</p>' +
+            '        <div class="grid grid-cols-1 gap-2.5">' + templateBtns + '</div>' +
+            '      </div>' +
+
+            '      <div>' +
+            '        <label class="text-[9px] font-black uppercase tracking-[0.25em] opacity-40 block mb-3" style="color:var(--text-muted);">Custom Reply <span class="opacity-60">(or edit a template above)</span></label>' +
+            '        <textarea id="supabase-reply-message" rows="4"' +
+            '          class="w-full rounded-2xl p-5 text-sm font-medium resize-none focus:outline-none transition-all"' +
+            '          style="background:var(--glass-bg);border:1px solid var(--border-color);color:var(--text-main);"' +
+            '          placeholder="Type your reply to the user..."></textarea>' +
+            '        <p class="text-[9px] font-bold opacity-25 mt-2 uppercase tracking-widest" style="color:var(--text-muted);">This reply will be saved to the report record.</p>' +
+            '      </div>' +
+            '    </div>' +
+
+            '    <div class="p-8 border-t flex gap-4" style="border-color:var(--border-color);">' +
+            '      <button type="button" onclick="document.getElementById(\'supabase-reply-modal\').remove()" class="btn-secondary flex-1 !justify-center py-4 !rounded-2xl">Cancel</button>' +
+            '      <button type="button" id="supabase-submit-btn"' +
+            '        class="flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-purple-500 text-white hover:bg-purple-600 active:scale-95 transition-all shadow-2xl shadow-purple-500/25">' +
+            '        <i class="ph-bold ph-check text-base"></i>Submit Resolution' +
+            '      </button>' +
+            '    </div>' +
+            '  </div>' +
+            '</div>';
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
         var submitBtn = document.getElementById('supabase-submit-btn');
         if (submitBtn) {
             submitBtn.onclick = function () {
-                var text = document.getElementById('supabase-reply-message').value.trim();
+                var text = (document.getElementById('supabase-reply-message') || {}).value || '';
+                text = text.trim();
                 if (!text) {
-                    toast.error('Required Field', 'Please enter a reply message before resolving.');
+                    toast.error('Required', 'Please enter or select a reply before submitting.');
                     return;
                 }
                 submitBtn.disabled = true;
-                submitBtn.innerText = 'Synchronizing...';
+                submitBtn.innerText = 'Submitting...';
                 self.executeSupabaseAction(id, 'resolved', text);
                 document.getElementById('supabase-reply-modal').remove();
             };
         }
+    },
+
+    _selectSbTemplate: function (btn) {
+        document.querySelectorAll('.sb-reply-template-btn').forEach(function (b) {
+            b.style.border     = '1px solid var(--border-color)';
+            b.style.background = 'transparent';
+        });
+        btn.style.border     = '1px solid rgba(124,106,255,0.4)';
+        btn.style.background = 'rgba(124,106,255,0.07)';
+        var textarea = document.getElementById('supabase-reply-message');
+        if (textarea && btn.dataset.reply) textarea.value = btn.dataset.reply;
     },
 
     /**

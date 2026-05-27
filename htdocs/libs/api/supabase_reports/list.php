@@ -15,34 +15,53 @@ ${basename(__FILE__, '.php')} = function () {
         $this->response($this->json(['error' => 'Unauthorized access.']), 401);
     }
 
-    try {
-        $reports = SupabaseClient::getReports();
-        
-        // Calculate metrics
-        $total = count($reports);
-        $resolved = 0;
-        $pending = 0;
-        foreach ($reports as $r) {
-            $status = strtolower($r['status'] ?? 'pending');
-            if ($status === 'resolved' || $status === 'solved') {
-                $resolved++;
-            } else {
-                $pending++;
-            }
-        }
-        $velocity = $total > 0 ? ($resolved / $total) * 100 : 0;
+    $result = SupabaseClient::queryTable('app_feedback', [
+        'select' => '*',
+        'order'  => 'created_at.desc',
+    ]);
 
-        $this->response($this->json([
-            'reports' => $reports,
-            'metrics' => [
-                'total'    => $total,
-                'resolved' => $resolved,
-                'pending'  => $pending,
-                'velocity' => round($velocity, 1)
-            ]
-        ]), 200);
-    } catch (Exception $e) {
-        error_log("API Error /supabase_reports/list: " . $e->getMessage());
-        $this->response($this->json(['error' => 'Internal Server Error']), 500);
+    if (!$result['success']) {
+        error_log("API Error /supabase_reports/list: " . ($result['error'] ?? 'unknown'));
+        $this->response($this->json(['error' => 'Failed to fetch app reports.']), 500);
     }
+
+    $rows     = $result['data'] ?? [];
+    $total    = count($rows);
+    $resolved = 0;
+    $pending  = 0;
+
+    $reports = [];
+    foreach ($rows as $r) {
+        $status = strtolower($r['status'] ?? 'pending');
+        if ($status === 'resolved' || $status === 'solved') {
+            $resolved++;
+        } else {
+            $pending++;
+        }
+
+        // Map app_feedback columns → shape the JS renderer expects
+        $reports[] = [
+            'id'          => $r['id']         ?? '',
+            'reporter_id' => $r['user_id']    ?? null,
+            'reported_id' => null,
+            'channel_id'  => null,
+            'reason'      => $r['category']   ?? 'App Feedback',
+            'details'     => $r['details']    ?? null,
+            'status'      => $r['status']     ?? 'pending',
+            'admin_reply' => $r['admin_reply'] ?? null,
+            'created_at'  => $r['created_at'] ?? null,
+        ];
+    }
+
+    $velocity = $total > 0 ? round(($resolved / $total) * 100, 1) : 0;
+
+    $this->response($this->json([
+        'reports' => $reports,
+        'metrics' => [
+            'total'    => $total,
+            'resolved' => $resolved,
+            'pending'  => $pending,
+            'velocity' => $velocity,
+        ],
+    ]), 200);
 };
