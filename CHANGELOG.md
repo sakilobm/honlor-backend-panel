@@ -1,4 +1,23 @@
 
+## [v11.7.2] – 2026-05-27T11:45:00Z
+
+### Fixed
+- **Edge Function Auth Base64url Padding**: Resolved the remote cURL HTTP 401 Unauthorized block by implementing base64url padding reconstruction in `isServiceRole()` in `supabase/functions/request-account-deletion/index.ts`. This dynamically appends the correct padding characters (`=`) based on string length modulo 4, avoiding `DOMException` failures in Deno standard `atob()` decoders on unpadded JWT tokens.
+
+### Added
+- **Zero-Trust Role-Based Dashboard Guards**:
+  - Implemented dynamic page-level access validation mapping in `htdocs/admin.php` based on custom database-driven permissions (`Session::hasPermission($resource, $action)`). Denied requests gracefully return standard `403 Permission Denied` (for AJAX calls) or redirect to safety (for full page loads).
+  - Wrapped all primary administrative sidebar items inside `Session::hasPermission()` checks in `htdocs/_templates/admin/_nav.php`. Links like Vault, Moderation, Channels, Ads, Compliance, Deletion, and Server Health are now conditionally rendered according to active role clearance.
+- **Backend API Access Controls**:
+  - Added explicit permission validation gates inside the `deletion_requests.php` (requires `deletion:view` or `deletion:manage`) and `process_deletion.php` (requires `deletion:manage`) API endpoints.
+  - Secured the app-user profiles APIs `app_list.php` (requires `users:view` or `users:manage`) and `app_action.php` (requires `users:view` / `users:manage` based on the targeted profile action) to fully prevent unauthorized privilege escalation or data visibility bypass.
+
+### Escape Plan / Rollback Notes
+- **Rollback Path**: Revert code changes in `htdocs/admin.php`, `htdocs/_templates/admin/_nav.php`, and `htdocs/libs/api/users/` files using `git checkout`. Re-deploy the Edge Function if needed.
+- **Forward-Fix Path**: Update or expand the page-to-permission mapping array `$pagePermissionMap` in `htdocs/admin.php` to handle new sections or security systems in future upgrades.
+
+---
+
 ## [v11.7.1] – 2026-05-25T09:55:00Z
 
 ### Fixed

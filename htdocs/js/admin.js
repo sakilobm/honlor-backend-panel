@@ -1533,83 +1533,305 @@ var AdminApp = {
     /**
      * Deletion Requests Logic
      */
+    _deletionAll: [],      // full unfiltered dataset
+    _deletionFilter: 'all', // active filter
+
     initDeletionRequests: function () {
+        this._deletionFilter = 'all';
         this.loadDeletionRequests();
     },
 
     loadDeletionRequests: function () {
+        var self = this;
         var tbody = document.getElementById('deletion-requests-table-body');
         var countBadge = document.getElementById('pending-deletion-count');
         var velocityBadge = document.getElementById('metric-deletion-velocity');
         if (!tbody) return;
 
+        // Show spinner
+        tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center">' +
+            '<div class="flex flex-col items-center gap-5">' +
+            '<div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>' +
+            '<p class="font-black text-[10px] uppercase tracking-[0.3em] opacity-30">Syncing Erasure Stream...</p>' +
+            '</div></td></tr>';
+
         ApiClient.get('users', 'deletion_requests').then(function (data) {
-            if (countBadge) countBadge.innerText = data.stats.pending < 10 ? '0' + data.stats.pending : data.stats.pending;
+            self._deletionAll = data.requests || [];
+
+            var p = data.stats.pending  || 0;
+            var a = data.stats.approved || 0;
+            var r = data.stats.rejected || 0;
+            var t = data.stats.total    || 0;
+
+            if (countBadge)   countBadge.innerText   = p < 10 ? '0' + p : p;
             if (velocityBadge) velocityBadge.innerText = data.stats.velocity + '%';
 
-            var html = '';
-            data.requests.forEach(function (req) {
-                var statusColor = req.status === 'pending' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : (req.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20');
-                var pulseColor = req.status === 'pending' ? 'bg-orange-500' : (req.status === 'approved' ? 'bg-emerald-500' : 'bg-red-500');
+            // Update filter badges
+            var fb = {
+                all:      document.getElementById('filter-badge-all'),
+                pending:  document.getElementById('filter-badge-pending'),
+                approved: document.getElementById('filter-badge-approved'),
+                rejected: document.getElementById('filter-badge-rejected'),
+            };
+            if (fb.all)      fb.all.innerText      = t;
+            if (fb.pending)  fb.pending.innerText  = p;
+            if (fb.approved) fb.approved.innerText = a;
+            if (fb.rejected) fb.rejected.innerText = r;
 
-                html += '<tr class="hover:bg-white/[0.03] transition-all duration-300 group">' +
-                        '    <td class="px-8 py-6">' +
-                        '        <div class="flex items-center gap-4">' +
-                        '            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + req.username + '" class="w-10 h-10 rounded-xl bg-primary/10 border-2 border-[var(--bg-main)] z-10 shadow-xl">' +
-                        '            <div>' +
-                        '                <p class="text-[11px] font-black uppercase tracking-widest text-primary truncate max-w-[150px]">' + req.username + '</p>' +
-                        '                <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">' + req.email + '</p>' +
-                        '            </div>' +
-                        '        </div>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6">' +
-                        '        <p class="text-[10px] font-medium opacity-60 max-w-[200px] italic leading-relaxed" style="color: var(--text-main);">"' + (req.reason || 'Sovereign data removal request.') + '"</p>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6">' +
-                        '         <div class="flex items-center justify-center gap-3">' +
-                        '            <span class="px-3 py-1.5 ' + statusColor + ' border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">' + req.status + '</span>' +
-                        '            <span class="flex h-1.5 w-1.5 relative">' +
-                        '              <span class="animate-ping absolute inline-flex h-full w-full rounded-full ' + pulseColor + ' opacity-75"></span>' +
-                        '              <span class="relative inline-flex rounded-full h-1.5 w-1.5 ' + pulseColor + '"></span>' +
-                        '            </span>' +
-                        '         </div>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6">' +
-                        '         <p class="text-[10px] font-black tracking-tight" style="color: var(--text-main); text-align: center;">' + new Date(req.created_at).toLocaleDateString() + '</p>' +
-                        '         <p class="text-[8px] font-bold opacity-20 uppercase tracking-widest mt-0.5" style="text-align: center;">Sync Logged</p>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6 text-right">' +
-                        '         <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">' +
-                        '            <button onclick="AdminApp.handleDeletion(\'' + req.id + '\', \'approved\')" class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-xl shadow-emerald-500/5">' +
-                        '                <i class="ph-bold ph-shield-check text-lg"></i>' +
-                        '            </button>' +
-                        '            <button onclick="AdminApp.handleDeletion(\'' + req.id + '\', \'rejected\')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5">' +
-                        '                <i class="ph-bold ph-prohibit text-lg"></i>' +
-                        '            </button>' +
-                        '         </div>' +
-                        '    </td>' +
-                        '</tr>';
-            });
-            tbody.innerHTML = html || '<tr><td colspan="5" class="p-32 text-center opacity-30 font-black uppercase tracking-[0.2em] text-[10px]">No active erasure packets in queue</td></tr>';
+            self.renderDeletionTable();
+        })['catch'](function () {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center opacity-30 font-black uppercase tracking-[0.2em] text-[10px]">Failed to load erasure queue</td></tr>';
         });
     },
 
-    handleDeletion: function (id, status) {
-        var self = this;
-        this.confirm({
-            title: 'Erasure Protocol',
-            message: 'Are you sure you want to ' + status + ' this deletion request? This will impact the subject\'s identity visibility.',
-            icon: status === 'approved' ? 'ph-shield-check' : 'ph-prohibit',
-            confirmLabel: status === 'approved' ? 'Authorize Erasure' : 'Deny Request',
-            type: status === 'approved' ? 'info' : 'danger'
-        }).then(function (confirmed) {
-            if (confirmed) {
-                ApiClient.post('users', 'process_deletion', { id: id, status: status }).then(function (res) {
-                    toast.success('Governance', res.message);
-                    self.loadDeletionRequests();
-                })['catch'](function (err) {
-                    toast.error('Error', err.error || 'Failed to process request.');
-                });
+    renderDeletionTable: function () {
+        var self   = this;
+        var tbody  = document.getElementById('deletion-requests-table-body');
+        if (!tbody) return;
+
+        var list = self._deletionAll;
+        if (self._deletionFilter !== 'all') {
+            list = list.filter(function (r) { return r.status === self._deletionFilter; });
+        }
+
+        if (!list.length) {
+            var label = self._deletionFilter === 'all' ? 'No erasure packets in queue' : 'No ' + self._deletionFilter + ' requests';
+            tbody.innerHTML = '<tr><td colspan="5" class="p-24 text-center">' +
+                '<div class="flex flex-col items-center gap-4 opacity-30">' +
+                '<i class="ph-bold ph-shield-check text-4xl"></i>' +
+                '<p class="font-black text-[10px] uppercase tracking-[0.3em]">' + label + '</p>' +
+                '</div></td></tr>';
+            return;
+        }
+
+        var html = '';
+        list.forEach(function (req) {
+            var isPending  = req.status === 'pending';
+            var isApproved = req.status === 'approved';
+            var isRejected = req.status === 'rejected';
+
+            var statusColor  = isPending  ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                             : isApproved ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                             :              'bg-red-500/10 text-red-500 border-red-500/20';
+            var pulseColor   = isPending  ? 'bg-orange-500'
+                             : isApproved ? 'bg-emerald-500'
+                             :              'bg-red-500';
+
+            // Sanitise for inline attr (no single-quotes)
+            var safeEmail = (req.email               || '').replace(/'/g, '&#39;');
+            var safeName  = (req.username            || '').replace(/'/g, '&#39;');
+            var safeId    = String(req.id            || '').replace(/'/g, '&#39;');
+
+            // Actions column
+            var actionsHtml;
+            if (isPending) {
+                actionsHtml =
+                    '<div class="flex justify-end gap-2.5">' +
+                    '  <button title="Approve &amp; notify" onclick="AdminApp.openDeletionApproveModal(\'' + safeId + '\',\'' + safeEmail + '\',\'' + safeName + '\')"' +
+                    '    class="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 shadow-xl shadow-emerald-500/5">' +
+                    '    <i class="ph-bold ph-shield-check text-sm"></i>Approve' +
+                    '  </button>' +
+                    '  <button title="Reject &amp; notify" onclick="AdminApp.openDeletionRejectModal(\'' + safeId + '\',\'' + safeEmail + '\',\'' + safeName + '\')"' +
+                    '    class="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all text-[9px] font-black uppercase tracking-widest border border-red-500/20 shadow-xl shadow-red-500/5">' +
+                    '    <i class="ph-bold ph-prohibit text-sm"></i>Reject' +
+                    '  </button>' +
+                    '</div>';
+            } else {
+                var reviewedDate = req.reviewed_at ? new Date(req.reviewed_at).toLocaleDateString() : '—';
+                var reviewedBy   = req.reviewed_by ? 'by ' + req.reviewed_by : '';
+                actionsHtml =
+                    '<div class="flex flex-col items-end gap-1">' +
+                    '  <span class="text-[9px] font-black uppercase tracking-widest opacity-40">' + (isApproved ? 'Authorized' : 'Denied') + '</span>' +
+                    '  <span class="text-[9px] font-bold opacity-25">' + reviewedDate + ' ' + reviewedBy + '</span>' +
+                    '</div>';
+            }
+
+            // Admin note tooltip (truncated)
+            var noteHtml = '';
+            if (!isPending && req.admin_note) {
+                var shortNote = req.admin_note.length > 55 ? req.admin_note.substring(0, 55) + '…' : req.admin_note;
+                noteHtml = '<p class="text-[8px] font-bold opacity-25 mt-1 italic leading-relaxed max-w-[180px]">' + shortNote + '</p>';
+            }
+
+            html +=
+                '<tr class="hover:bg-white/[0.025] transition-all duration-300 border-b border-white/[0.03]">' +
+                '  <td class="px-8 py-5">' +
+                '    <div class="flex items-center gap-4">' +
+                '      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + req.username + '" class="w-10 h-10 rounded-xl bg-primary/10 border-2 border-[var(--bg-main)] z-10 shadow-xl shrink-0">' +
+                '      <div class="min-w-0">' +
+                '        <p class="text-[11px] font-black uppercase tracking-widest text-primary truncate max-w-[140px]">' + (req.username || '—') + '</p>' +
+                '        <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5 truncate max-w-[140px]">' + (req.email || '') + '</p>' +
+                '      </div>' +
+                '    </div>' +
+                '  </td>' +
+                '  <td class="px-8 py-5 max-w-[220px]">' +
+                '    <p class="text-[10px] font-medium opacity-55 italic leading-relaxed line-clamp-2" style="color:var(--text-main);">"' + (req.reason || 'Sovereign data removal request.') + '"</p>' +
+                noteHtml +
+                '  </td>' +
+                '  <td class="px-8 py-5">' +
+                '    <div class="flex items-center justify-center gap-3">' +
+                '      <span class="px-3 py-1.5 ' + statusColor + ' border rounded-xl text-[8px] font-black uppercase tracking-widest">' + req.status + '</span>' +
+                '      <span class="flex h-1.5 w-1.5 relative">' +
+                '        <span class="' + (isPending ? 'animate-ping ' : '') + 'absolute inline-flex h-full w-full rounded-full ' + pulseColor + ' opacity-75"></span>' +
+                '        <span class="relative inline-flex rounded-full h-1.5 w-1.5 ' + pulseColor + '"></span>' +
+                '      </span>' +
+                '    </div>' +
+                '  </td>' +
+                '  <td class="px-8 py-5 text-center">' +
+                '    <p class="text-[10px] font-black tracking-tight" style="color:var(--text-main);">' + new Date(req.created_at).toLocaleDateString() + '</p>' +
+                '    <p class="text-[8px] font-bold opacity-20 uppercase tracking-widest mt-0.5">Sync Logged</p>' +
+                '  </td>' +
+                '  <td class="px-8 py-5 text-right">' + actionsHtml + '</td>' +
+                '</tr>';
+        });
+
+        tbody.innerHTML = html;
+    },
+
+    setDeletionFilter: function (filter) {
+        this._deletionFilter = filter;
+
+        document.querySelectorAll('.deletion-filter-btn').forEach(function (btn) {
+            if (btn.dataset.filter === filter) {
+                btn.style.border     = '1px solid rgba(124,106,255,0.5)';
+                btn.style.background = 'rgba(124,106,255,0.12)';
+                btn.style.color      = '#7c6aff';
+            } else {
+                btn.style.border     = '1px solid var(--border-color)';
+                btn.style.background = 'transparent';
+                btn.style.color      = 'var(--text-muted)';
+            }
+        });
+
+        this.renderDeletionTable();
+    },
+
+    // ── Approval modal ────────────────────────────────────────────────────────
+    openDeletionApproveModal: function (id, email, name) {
+        var modal    = document.getElementById('deletion-approve-modal');
+        var idEl     = document.getElementById('approve-target-id');
+        var emailEl  = document.getElementById('approve-target-email');
+        var nameEl   = document.getElementById('approve-target-name');
+        var nameDisp = document.getElementById('approve-name-display');
+        var emailDisp= document.getElementById('approve-email-display');
+        var avatar   = document.getElementById('approve-avatar');
+
+        if (!modal) return;
+        if (idEl)      idEl.value      = id;
+        if (emailEl)   emailEl.value   = email;
+        if (nameEl)    nameEl.value    = name;
+        if (nameDisp)  nameDisp.innerText  = name  || '—';
+        if (emailDisp) emailDisp.innerText = email || '—';
+        if (avatar)    avatar.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(name || id);
+
+        modal.classList.remove('hidden');
+    },
+
+    closeDeletionApproveModal: function () {
+        var modal = document.getElementById('deletion-approve-modal');
+        if (modal) modal.classList.add('hidden');
+    },
+
+    submitDeletionApproval: function () {
+        var self     = this;
+        var id       = (document.getElementById('approve-target-id')    || {}).value || '';
+        var email    = (document.getElementById('approve-target-email') || {}).value || '';
+        var name     = (document.getElementById('approve-target-name')  || {}).value || '';
+        var btn      = document.getElementById('approve-submit-btn');
+
+        if (!id) return;
+
+        if (btn) { btn.disabled = true; btn.innerText = 'Processing...'; }
+
+        ApiClient.post('users', 'process_deletion', {
+            id: id, status: 'approved',
+            user_email: email, user_name: name
+        }).then(function (res) {
+            self.closeDeletionApproveModal();
+            toast.success('Erasure Authorized', res.email_sent
+                ? 'Request approved — confirmation email sent.'
+                : 'Request approved. (Email notification failed.)');
+            self.loadDeletionRequests();
+        })['catch'](function (err) {
+            toast.error('Error', err.error || 'Failed to process request.');
+        })['finally'](function () {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph-bold ph-shield-check text-base"></i> Authorize &amp; Notify User'; }
+        });
+    },
+
+    // ── Rejection modal ───────────────────────────────────────────────────────
+    openDeletionRejectModal: function (id, email, name) {
+        var modal     = document.getElementById('deletion-reject-modal');
+        var idEl      = document.getElementById('reject-target-id');
+        var emailEl   = document.getElementById('reject-target-email');
+        var nameEl    = document.getElementById('reject-target-name');
+        var emailDisp = document.getElementById('reject-email-display');
+        var textarea  = document.getElementById('rejection-reason-input');
+
+        if (!modal) return;
+        if (idEl)      idEl.value      = id;
+        if (emailEl)   emailEl.value   = email;
+        if (nameEl)    nameEl.value    = name;
+        if (emailDisp) emailDisp.innerText = email || '—';
+        if (textarea)  textarea.value  = '';
+
+        // Reset template highlights
+        document.querySelectorAll('.rejection-template-btn').forEach(function (b) {
+            b.classList.remove('!border-red-500/50', '!bg-red-500/10');
+        });
+
+        modal.classList.remove('hidden');
+    },
+
+    closeDeletionRejectModal: function () {
+        var modal = document.getElementById('deletion-reject-modal');
+        if (modal) modal.classList.add('hidden');
+    },
+
+    selectRejectionTemplate: function (btn) {
+        // Highlight selected template
+        document.querySelectorAll('.rejection-template-btn').forEach(function (b) {
+            b.classList.remove('!border-red-500/50', '!bg-red-500/10');
+        });
+        btn.classList.add('!border-red-500/50', '!bg-red-500/10');
+
+        // Fill textarea
+        var textarea = document.getElementById('rejection-reason-input');
+        if (textarea && btn.dataset.reason) {
+            textarea.value = btn.dataset.reason;
+            textarea.focus();
+        }
+    },
+
+    submitDeletionRejection: function () {
+        var self   = this;
+        var id     = (document.getElementById('reject-target-id')    || {}).value || '';
+        var email  = (document.getElementById('reject-target-email') || {}).value || '';
+        var name   = (document.getElementById('reject-target-name')  || {}).value || '';
+        var reason = ((document.getElementById('rejection-reason-input') || {}).value || '').trim();
+        var btn    = document.getElementById('reject-submit-btn');
+
+        if (!id)     { toast.error('Error', 'Missing request ID.'); return; }
+        if (!reason) { toast.error('Required', 'Please provide a rejection reason.'); return; }
+
+        if (btn) { btn.disabled = true; btn.innerText = 'Processing...'; }
+
+        ApiClient.post('users', 'process_deletion', {
+            id: id, status: 'rejected',
+            user_email: email, user_name: name,
+            rejection_reason: reason
+        }).then(function (res) {
+            self.closeDeletionRejectModal();
+            toast.success('Request Rejected', res.email_sent
+                ? 'Rejection logged — reason email sent to user.'
+                : 'Rejection logged. (Email notification failed.)');
+            self.loadDeletionRequests();
+        })['catch'](function (err) {
+            toast.error('Error', err.error || 'Failed to process request.');
+        })['finally'](function () {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph-bold ph-prohibit text-base"></i> Confirm Rejection &amp; Send Email';
             }
         });
     },

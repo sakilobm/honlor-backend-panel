@@ -70,6 +70,34 @@
             </div>
         </div>
 
+        <!-- Filter Bar -->
+        <div class="flex flex-wrap items-center gap-3">
+            <button data-filter="all" onclick="AdminApp.setDeletionFilter('all')"
+                class="deletion-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid rgba(124,106,255,0.5);background:rgba(124,106,255,0.12);color:#7c6aff;">
+                All
+                <span id="filter-badge-all" class="px-2 py-0.5 rounded-lg text-[8px] font-black" style="background:rgba(124,106,255,0.15);color:#7c6aff;">0</span>
+            </button>
+            <button data-filter="pending" onclick="AdminApp.setDeletionFilter('pending')"
+                class="deletion-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid var(--border-color);background:transparent;color:var(--text-muted);">
+                Pending
+                <span id="filter-badge-pending" class="px-2 py-0.5 rounded-lg bg-orange-500/20 text-orange-500 text-[8px] font-black">0</span>
+            </button>
+            <button data-filter="approved" onclick="AdminApp.setDeletionFilter('approved')"
+                class="deletion-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid var(--border-color);background:transparent;color:var(--text-muted);">
+                Approved
+                <span id="filter-badge-approved" class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-600 text-[8px] font-black">0</span>
+            </button>
+            <button data-filter="rejected" onclick="AdminApp.setDeletionFilter('rejected')"
+                class="deletion-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid var(--border-color);background:transparent;color:var(--text-muted);">
+                Rejected
+                <span id="filter-badge-rejected" class="px-2 py-0.5 rounded-lg bg-red-500/20 text-red-500 text-[8px] font-black">0</span>
+            </button>
+        </div>
+
         <div class="stat-card !p-0 overflow-hidden shadow-2xl" style="background-color: var(--glass-bg); border: 1px solid var(--border-color);">
             <div class="p-8 border-b border-white/5 bg-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
                 <div>

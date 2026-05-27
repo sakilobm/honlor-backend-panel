@@ -49,8 +49,15 @@ The Honlor Admin Panel serves as the central nervous system for moderation, tele
 - **Database Table:** `public.deletion_requests` in Supabase PostgreSQL with RLS enabled (no public policies — service role only). Contains columns: `id` (UUID), `email`, `full_name`, `reason`, `status`, `admin_note`, `created_at`, `reviewed_at`, `reviewed_by`.
 - **Admin Dashboard Integration:** The existing **Identity Erasure** section (`htdocs/_templates/admin/deletion_requests.php`) fetches and displays these requests via `SupabaseClient` using the service role key.
 
+
+### 7. Zero-Trust Role-Based Access Control (RBAC)
+- **Role Studio Model**: Implements `App\Role` (`htdocs/libs/app/Role.php`) which manages administrative roles and granular permissions.
+- **Permission Checking**: Uses `Session::hasPermission(string $resource, string $action)` inside `htdocs/libs/src/Session.php` to check if a user is a Master Admin (absolute bypass) or has the specified privilege mapped in their role permissions matrix JSON.
+- **Dashboard Routing Guard**: `htdocs/admin.php` maps all administrative pages (Identity Vault, Moderation, Channels, Ads Pipeline, Compliance, Account Deletion, Server Health, Intelligence, and Policy Studio) to system resources. Unauthenticated or unauthorized page requests are blocked and either redirected back to safety (`page=dashboard`) or returned as `403 Permission Denied` (AJAX).
+- **Navigation Visibility**: Sidebar anchors in `htdocs/_templates/admin/_nav.php` are wrapped dynamically inside `Session::hasPermission()` checks to present a clean interface tailored exclusively to the logged-in agent's authorization level.
+- **Server API Security Gates**: All administrative user APIs in `libs/api/users/` (app user profile updates, lists, and account deletion requests) enforce server-side permission gates to fully prevent privilege escalation or horizontal data visibility bypasses.
+
 ---
 
 ## Data Flow Diagram
 For the visual Mermaid representation of components, refer to [ARCHITECTURE_DIAGRAM.mmd](file:///var/www/html/honlor-admin-panel/ARCHITECTURE_DIAGRAM.mmd).
-

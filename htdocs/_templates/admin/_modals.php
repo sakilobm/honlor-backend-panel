@@ -827,4 +827,161 @@
             </div>
         </div>
     </div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- Modal: Deletion Rejection Protocol                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="deletion-reject-modal" class="modal-overlay hidden" onclick="if(event.target===this) AdminApp.closeDeletionRejectModal()">
+    <div class="modal-card !max-w-2xl" onclick="event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="flex items-start justify-between p-8 border-b" style="border-color:var(--border-color);">
+            <div class="flex items-center gap-5">
+                <div class="w-14 h-14 rounded-[1.75rem] bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20 shadow-2xl shadow-red-500/10">
+                    <i class="ph-bold ph-prohibit text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black uppercase tracking-tight">Rejection Protocol</h3>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mt-1">An email notification will be dispatched to the identity node</p>
+                </div>
+            </div>
+            <button onclick="AdminApp.closeDeletionRejectModal()" class="w-10 h-10 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Hidden state -->
+        <input type="hidden" id="reject-target-id">
+        <input type="hidden" id="reject-target-email">
+        <input type="hidden" id="reject-target-name">
+
+        <div class="p-8 space-y-7 overflow-y-auto" style="max-height:65vh;">
+
+            <!-- Email preview badge -->
+            <div class="flex items-center gap-3 p-4 rounded-2xl border" style="background:rgba(239,68,68,0.04);border-color:rgba(239,68,68,0.15);">
+                <i class="ph-bold ph-envelope text-red-400 text-lg shrink-0"></i>
+                <div class="min-w-0">
+                    <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-0.5">Notification will be sent to</p>
+                    <p class="text-sm font-black text-red-400 truncate" id="reject-email-display">—</p>
+                </div>
+            </div>
+
+            <!-- Quick-select reason templates -->
+            <div>
+                <p class="text-[9px] font-black uppercase tracking-[0.25em] opacity-40 mb-4">Ready-made Rejection Reasons</p>
+                <div class="grid grid-cols-1 gap-2.5" id="rejection-templates">
+                    <button type="button" onclick="AdminApp.selectRejectionTemplate(this)"
+                        data-reason="We were unable to verify your identity. Please ensure your account information is up to date and resubmit your request."
+                        class="rejection-template-btn text-left p-4 rounded-2xl border border-white/5 hover:border-red-500/30 bg-white/[0.015] hover:bg-red-500/[0.04] transition-all group">
+                        <p class="text-[10px] font-black uppercase tracking-widest mb-1.5 group-hover:text-red-400 transition-colors" style="color:var(--text-main);">Insufficient Verification</p>
+                        <p class="text-[10px] leading-relaxed opacity-40">We could not verify your identity. Please ensure account information is up to date and resubmit.</p>
+                    </button>
+                    <button type="button" onclick="AdminApp.selectRejectionTemplate(this)"
+                        data-reason="Your account currently has an active subscription or pending transactions. Please resolve these before requesting account deletion."
+                        class="rejection-template-btn text-left p-4 rounded-2xl border border-white/5 hover:border-red-500/30 bg-white/[0.015] hover:bg-red-500/[0.04] transition-all group">
+                        <p class="text-[10px] font-black uppercase tracking-widest mb-1.5 group-hover:text-red-400 transition-colors" style="color:var(--text-main);">Active Subscription or Pending Transaction</p>
+                        <p class="text-[10px] leading-relaxed opacity-40">Account has active subscription or pending transactions that must be resolved first.</p>
+                    </button>
+                    <button type="button" onclick="AdminApp.selectRejectionTemplate(this)"
+                        data-reason="A deletion request for this account is already in progress. Please allow up to 30 days for the existing request to be processed."
+                        class="rejection-template-btn text-left p-4 rounded-2xl border border-white/5 hover:border-red-500/30 bg-white/[0.015] hover:bg-red-500/[0.04] transition-all group">
+                        <p class="text-[10px] font-black uppercase tracking-widest mb-1.5 group-hover:text-red-400 transition-colors" style="color:var(--text-main);">Duplicate Request</p>
+                        <p class="text-[10px] leading-relaxed opacity-40">A deletion request is already being processed. Please allow up to 30 days.</p>
+                    </button>
+                    <button type="button" onclick="AdminApp.selectRejectionTemplate(this)"
+                        data-reason="Your account is currently under review due to a reported policy violation. Deletion requests cannot be processed until the review is complete."
+                        class="rejection-template-btn text-left p-4 rounded-2xl border border-white/5 hover:border-red-500/30 bg-white/[0.015] hover:bg-red-500/[0.04] transition-all group">
+                        <p class="text-[10px] font-black uppercase tracking-widest mb-1.5 group-hover:text-red-400 transition-colors" style="color:var(--text-main);">Account Under Policy Review</p>
+                        <p class="text-[10px] leading-relaxed opacity-40">Account is under review for a policy violation. Deletion is suspended until review completes.</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Custom reason textarea -->
+            <div>
+                <label class="text-[9px] font-black uppercase tracking-[0.25em] opacity-40 block mb-3">Custom Reason <span class="opacity-60">(or edit a template above)</span></label>
+                <textarea id="rejection-reason-input" rows="4"
+                    class="w-full rounded-2xl p-5 text-sm font-medium resize-none focus:outline-none focus:border-red-500/40 transition-all"
+                    style="background:rgba(255,255,255,0.03);border:1px solid var(--border-color);color:var(--text-main);"
+                    placeholder="Describe the reason for rejecting this deletion request..."></textarea>
+                <p class="text-[9px] font-bold opacity-30 mt-2 uppercase tracking-widest">This reason will be included verbatim in the email sent to the user.</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-8 border-t flex gap-4" style="border-color:var(--border-color);">
+            <button type="button" onclick="AdminApp.closeDeletionRejectModal()"
+                class="btn-secondary flex-1 !justify-center py-4 !rounded-2xl">
+                Cancel
+            </button>
+            <button type="button" id="reject-submit-btn" onclick="AdminApp.submitDeletionRejection()"
+                class="flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-red-500 text-white hover:bg-red-600 active:scale-95 transition-all shadow-2xl shadow-red-500/25">
+                <i class="ph-bold ph-prohibit text-base"></i>
+                Confirm Rejection &amp; Send Email
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- Modal: Deletion Approval Confirm                                       -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="deletion-approve-modal" class="modal-overlay hidden" onclick="if(event.target===this) AdminApp.closeDeletionApproveModal()">
+    <div class="modal-card !max-w-lg" onclick="event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="flex items-start justify-between p-8 border-b" style="border-color:var(--border-color);">
+            <div class="flex items-center gap-5">
+                <div class="w-14 h-14 rounded-[1.75rem] bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 shadow-2xl shadow-emerald-500/10 animate-pulse">
+                    <i class="ph-bold ph-shield-check text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black uppercase tracking-tight">Authorize Erasure</h3>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mt-1">This action cannot be undone</p>
+                </div>
+            </div>
+            <button onclick="AdminApp.closeDeletionApproveModal()" class="w-10 h-10 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+        </div>
+
+        <input type="hidden" id="approve-target-id">
+        <input type="hidden" id="approve-target-email">
+        <input type="hidden" id="approve-target-name">
+
+        <div class="p-8 space-y-6">
+            <!-- Identity preview -->
+            <div class="flex items-center gap-4 p-5 rounded-2xl border" style="background:rgba(16,185,129,0.04);border-color:rgba(16,185,129,0.15);">
+                <img id="approve-avatar" src="" class="w-12 h-12 rounded-xl border-2" style="border-color:rgba(16,185,129,0.3);" alt="Avatar">
+                <div>
+                    <p class="font-black text-[11px] uppercase tracking-widest text-emerald-400" id="approve-name-display">—</p>
+                    <p class="text-[9px] font-bold opacity-40 uppercase tracking-widest mt-0.5" id="approve-email-display">—</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex items-start gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                    <i class="ph-bold ph-envelope text-emerald-400 text-base mt-0.5 shrink-0"></i>
+                    <p class="text-[11px] leading-relaxed opacity-60">An approval confirmation email will be dispatched to the user immediately after authorization.</p>
+                </div>
+                <div class="flex items-start gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                    <i class="ph-bold ph-warning text-amber-400 text-base mt-0.5 shrink-0"></i>
+                    <p class="text-[11px] leading-relaxed opacity-60">Account data will be permanently deleted within 30 days. This action is irreversible.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-8 border-t flex gap-4" style="border-color:var(--border-color);">
+            <button type="button" onclick="AdminApp.closeDeletionApproveModal()"
+                class="btn-secondary flex-1 !justify-center py-4 !rounded-2xl">
+                Cancel
+            </button>
+            <button type="button" id="approve-submit-btn" onclick="AdminApp.submitDeletionApproval()"
+                class="flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 active:scale-95 transition-all shadow-2xl shadow-emerald-500/25">
+                <i class="ph-bold ph-shield-check text-base"></i>
+                Authorize &amp; Notify User
+            </button>
+        </div>
+    </div>
+</div>
 </div>

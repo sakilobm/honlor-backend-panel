@@ -21,6 +21,16 @@ ${basename(__FILE__, '.php')} = function () {
     }
 
     $action = $this->_request['action'] ?? null;
+
+    if ($action === 'get_profile') {
+        if (!\Session::hasPermission('users', 'view') && !\Session::hasPermission('users', 'manage')) {
+            $this->response($this->json(['error' => 'Permission Denied']), 403);
+        }
+    } else {
+        if (!\Session::hasPermission('users', 'manage')) {
+            $this->response($this->json(['error' => 'Permission Denied']), 403);
+        }
+    }
     $userId = $this->_request['user_id'] ?? null;
 
     if (!$action) {

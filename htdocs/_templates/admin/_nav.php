@@ -90,73 +90,95 @@
                     <div class="nav-duotone nav-blue"><i class="ph-bold ph-squares-four text-lg"></i></div>
                     <span class="sidebar-hide">Overview</span>
                 </a>
+                <?php if (Session::hasPermission('users', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('users')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'users' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-purple"><i class="ph-bold ph-users text-lg"></i></div>
                     <span class="sidebar-hide">Identity Vault</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Session::hasPermission('messages', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('messages')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'messages' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-green"><i class="ph-bold ph-chats-circle text-lg"></i></div>
                     <span class="sidebar-hide">Moderation</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Session::hasPermission('channels', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('channels')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'channels' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-indigo"><i class="ph-bold ph-graph text-lg"></i></div>
                     <span class="sidebar-hide">Channels</span>
                 </a>
+                <?php endif; ?>
             </nav>
         </div>
 
         <div class="mb-10">
             <h3 class="nav-group-title sidebar-hide">Governance</h3>
             <nav class="space-y-1.5">
+                <?php if (Session::hasPermission('ads', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('ads')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'ads' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-orange"><i class="ph-bold ph-megaphone text-lg"></i></div>
                     <span class="sidebar-hide">Ads Pipeline</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Session::hasPermission('reports', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('reports')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'reports' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-red"><i class="ph-bold ph-shield-warning text-lg"></i></div>
                     <span class="sidebar-hide">Compliance</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Session::hasPermission('deletion', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('deletion_requests')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'deletion_requests' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-amber"><i class="ph-bold ph-user-minus text-lg"></i></div>
                     <span class="sidebar-hide">Account Deletion</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Session::hasPermission('analytics', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('analytics')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'analytics' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-cyan"><i class="ph-bold ph-activity text-lg"></i></div>
                     <span class="sidebar-hide">Intelligence</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Session::hasPermission('policy', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('policy_editor')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'policy_editor' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-rose"><i class="ph-bold ph-read-cv-logo text-lg"></i></div>
                     <span class="sidebar-hide">Policy Studio</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Session::hasPermission('settings', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('app_config')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'app_config' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-purple"><i class="ph-bold ph-git-branch text-lg"></i></div>
                     <span class="sidebar-hide">App version Control</span>
                 </a>
+                <?php endif; ?>
             </nav>
         </div>
 
         <div class="mb-4">
             <h3 class="nav-group-title sidebar-hide">System</h3>
             <nav class="space-y-1.5">
+                <?php if (Session::hasPermission('settings', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('settings')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'settings' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-primary"><i class="ph-bold ph-sliders text-lg"></i></div>
                     <span class="sidebar-hide">Control Center</span>
                 </a>
+                <?php endif; ?>
+                <?php if (Session::hasPermission('logs', 'view')): ?>
                 <a href="javascript:AdminApp.switchSection('logs')"
                     class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'logs' ? 'active' : '' ?>">
                     <div class="nav-duotone nav-emerald"><i class="ph-bold ph-terminal-window text-lg"></i></div>
                     <span class="sidebar-hide">Server Health</span>
                 </a>
+                <?php endif; ?>
                 <?php if (Session::isMaster()): ?>
                     <a href="javascript:AdminApp.switchSection('roles')"
                         class="nav-link-premium <?= Session::getCurrentPageIdentifier() === 'roles' ? 'active' : '' ?>">

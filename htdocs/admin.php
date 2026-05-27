@@ -39,6 +39,36 @@ if (Session::isAuthenticated()) {
         exit;
     }
 
+    // --- DYNAMIC PERMISSION CONTROL ---
+    $pagePermissionMap = [
+        'users'             => ['users', 'view'],
+        'messages'          => ['messages', 'view'],
+        'channels'          => ['channels', 'view'],
+        'ads'               => ['ads', 'view'],
+        'reports'           => ['reports', 'view'],
+        'deletion_requests' => ['deletion', 'view'],
+        'analytics'         => ['analytics', 'view'],
+        'policy_editor'     => ['policy', 'view'],
+        'app_config'        => ['settings', 'view'],
+        'settings'          => ['settings', 'view'],
+        'logs'              => ['logs', 'view'],
+    ];
+
+    if (isset($pagePermissionMap[$page])) {
+        list($resource, $action) = $pagePermissionMap[$page];
+        if (!Session::hasPermission($resource, $action)) {
+            if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
+                http_response_code(403);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Permission Denied']);
+                exit;
+            } else {
+                header('Location: ' . Session::url('admin?page=dashboard'));
+                exit;
+            }
+        }
+    }
+
     // If AJAX request, render only the partial template
     if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
         Session::loadTemplate('admin/' . $page);

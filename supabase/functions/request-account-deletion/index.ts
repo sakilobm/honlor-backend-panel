@@ -89,7 +89,9 @@ function isServiceRole(req: Request): boolean {
 
     // Decode base64url payload
     const payloadB64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const payloadJson = atob(payloadB64);
+    const padLength = (4 - (payloadB64.length % 4)) % 4;
+    const padded = payloadB64 + "=".repeat(padLength);
+    const payloadJson = atob(padded);
     const payload = JSON.parse(payloadJson);
 
     return payload.role === "service_role";

@@ -18,48 +18,64 @@ ${basename(__FILE__, '.php')} = function()
         $this->response($this->json(['error' => 'Unauthorized']), 401);
     }
 
-    // ── Try Supabase Edge Function first ────────────────────────────────────
+    if (!\Session::hasPermission('deletion', 'view') && !\Session::hasPermission('deletion', 'manage')) {
+        $this->response($this->json(['error' => 'Permission Denied']), 403);
+    }
+
+    // ── Try Supabase REST API directly ──────────────────────────────────────
     $supabaseUrl = get_config('supabase_url');
     $supabaseKey = get_config('supabase_service_key');
 
     if (!empty($supabaseUrl) && !empty($supabaseKey)) {
-        $result = SupabaseClient::invokeFunction('request-account-deletion', [
-            'action' => 'list_requests',
+        $result = SupabaseClient::queryTable('deletion_requests', [
+            'select' => '*',
+            'order'  => 'created_at.desc',
         ]);
 
-        if ($result['success'] && !empty($result['data'])) {
-            $data = $result['data'];
+        if ($result['success']) {
+            $rows = $result['data'] ?? [];
 
-            // Map Supabase response fields to dashboard expected format
+            $pending  = 0;
+            $approved = 0;
+            $rejected = 0;
+
             $requests = [];
-            foreach (($data['requests'] ?? []) as $req) {
+            foreach ($rows as $req) {
+                $status = $req['status'] ?? 'pending';
+                if ($status === 'pending')  $pending++;
+                if ($status === 'approved') $approved++;
+                if ($status === 'rejected') $rejected++;
+
                 $requests[] = [
-                    'id'         => $req['id'] ?? '',
-                    'username'   => $req['full_name'] ?? ($req['email'] ?? 'Unknown'),
-                    'email'      => $req['email'] ?? '',
-                    'reason'     => $req['reason'] ?? null,
-                    'status'     => $req['status'] ?? 'pending',
-                    'created_at' => $req['created_at'] ?? null,
-                    'admin_note' => $req['admin_note'] ?? null,
-                    'reviewed_at'=> $req['reviewed_at'] ?? null,
-                    'reviewed_by'=> $req['reviewed_by'] ?? null,
+                    'id'          => $req['id']          ?? '',
+                    'username'    => $req['full_name']   ?? ($req['email'] ?? 'Unknown'),
+                    'email'       => $req['email']       ?? '',
+                    'reason'      => $req['reason']      ?? null,
+                    'status'      => $status,
+                    'created_at'  => $req['created_at']  ?? null,
+                    'admin_note'  => $req['admin_note']  ?? null,
+                    'reviewed_at' => $req['reviewed_at'] ?? null,
+                    'reviewed_by' => $req['reviewed_by'] ?? null,
                 ];
             }
 
+            $total    = count($requests);
+            $velocity = $total > 0 ? round((($approved + $rejected) / $total) * 100, 1) : 0;
+
             $this->response($this->json([
                 'requests' => $requests,
-                'stats'    => $data['stats'] ?? [
-                    'total'    => count($requests),
-                    'pending'  => 0,
-                    'approved' => 0,
-                    'velocity' => 0,
+                'stats'    => [
+                    'total'    => $total,
+                    'pending'  => $pending,
+                    'approved' => $approved,
+                    'rejected' => $rejected,
+                    'velocity' => $velocity,
                 ],
             ]), 200);
             return;
         }
 
-        // If the edge function call failed, log and fall through to local DB
-        error_log("Supabase deletion_requests failed: " . ($result['error'] ?? 'Unknown error'));
+        error_log("Supabase deletion_requests query failed: " . ($result['error'] ?? 'Unknown error'));
     }
 
     // ── Fallback: Local MySQL ───────────────────────────────────────────────

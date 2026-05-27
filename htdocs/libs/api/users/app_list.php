@@ -15,6 +15,10 @@ ${basename(__FILE__, '.php')} = function () {
         $this->response($this->json(['error' => 'Unauthorized.']), 401);
     }
 
+    if (!\Session::hasPermission('users', 'view') && !\Session::hasPermission('users', 'manage')) {
+        $this->response($this->json(['error' => 'Permission Denied']), 403);
+    }
+
     $page   = max(1, (int)($this->_request['page']   ?? 1));
     $limit  = min(24, max(1, (int)($this->_request['limit']  ?? 12)));
     $filter = trim($this->_request['filter'] ?? '');
