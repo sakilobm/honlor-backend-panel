@@ -1,4 +1,67 @@
 
+## [v11.7.1] – 2026-05-25T09:55:00Z
+
+### Fixed
+- **Edge Function Auth**: Changed `isServiceRole()` from direct string comparison against `SUPABASE_SERVICE_ROLE_KEY` env var to JWT payload decoding with `role === "service_role"` claim check. The env var comparison was failing because the Supabase platform may store the key differently than what's sent in the Authorization header.
+
+### Changed
+- **Dashboard → Supabase Integration**: Rewrote `deletion_requests.php` and `process_deletion.php` API endpoints to use `SupabaseClient::invokeFunction('request-account-deletion', ...)` as primary data source, with automatic fallback to local MySQL if Supabase credentials are not configured or the edge function call fails.
+  - `deletion_requests.php`: Now calls `list_requests` action → maps `full_name` to `username` field for dashboard compatibility.
+  - `process_deletion.php`: Now calls `update_request` action → sends `admin_note` and `reviewed_by` for audit trail.
+
+### Escape Plan / Rollback Notes
+- **PHP Endpoints**: Revert `htdocs/libs/api/users/deletion_requests.php` and `process_deletion.php` to previous versions (MySQL-only). Both files have fallback logic, so if Supabase is unavailable, they automatically fall through to local MySQL.
+- **Edge Function**: Re-deploy with `supabase functions deploy request-account-deletion --no-verify-jwt`
+
+---
+
+## [v11.7.0] – 2026-05-25T08:41:00Z
+
+### Added
+- **Account Data Deletion Edge Function (`request-account-deletion`)**:
+  - Created Supabase Edge Function at `supabase/functions/request-account-deletion/index.ts` with three actions:
+    - `submit_request` (public): Accepts user email, reason, and full_name. Validates email format, enforces 24h duplicate prevention, and inserts into `deletion_requests` Supabase table.
+    - `list_requests` (service role only): Returns all deletion requests with computed metrics (total, pending, approved, rejected, velocity) for the admin dashboard.
+    - `update_request` (service role only): Approves or rejects a request with optional admin note and reviewer identifier.
+  - Created migration helper script `scratch/migrate_supabase_deletion_requests.php` with SQL for creating the `deletion_requests` table, RLS policies (no public access), and performance indexes.
+  - Updated `supabase_edge_functions_api_docs.md` with full Section 8 documentation covering all three actions, payloads, and response formats.
+
+### Security
+- **RLS Enabled**: The `deletion_requests` table has Row Level Security enabled with no public policies — only the service role key can read/write.
+- **Input Validation**: Email format validated via regex, all text fields sanitized and length-limited.
+- **Duplicate Prevention**: 24-hour window check prevents spam submissions from the same email.
+- **Service Role Authentication**: Admin-facing actions (`list_requests`, `update_request`) require the `SUPABASE_SERVICE_ROLE_KEY` in the Authorization header.
+- **No PII in Errors**: Error responses are generic and do not expose user data.
+
+### Architectural Decision
+- **Single Multi-Action Edge Function**: Consolidated all deletion request operations into one function (matching the `manage-app-version` pattern) rather than creating separate functions for each action.
+- **Public Submit Endpoint**: The `submit_request` action does not require JWT authentication because the `honlor.com/data-deletion` page is a public GDPR/App Store compliance page accessible to users who may have already uninstalled the app.
+
+### Escape Plan / Rollback Notes
+- **Database**: Run `DROP TABLE IF EXISTS public.deletion_requests;` in Supabase SQL Editor.
+- **Edge Function**: Delete `supabase/functions/request-account-deletion/` directory.
+- **API Docs**: Revert Section 8 from `supabase_edge_functions_api_docs.md`.
+
+---
+
+## [v11.6.0] – 2026-05-25T07:58:00Z
+
+### Fixed
+- **Sidebar Toggle Button Overlay**:
+  - Added Tailwind CSS stacking utility `z-50` to `aside#sidebar` inside `htdocs/_templates/admin/_nav.php`.
+  - This elevates the sidebar layout context above its sibling `<main>` panel's child `<header>` (which has `z-40` and escapes `<main>`'s auto-stacking context due to `relative` without an explicit z-index class on `<main>`).
+  - Prevents the `<header>` background and container boundaries from cropping/hiding the right half of the absolutely-positioned `-right-4` sidebar toggle handle.
+
+### Architectural Decision
+- **Tailwind Stacking elevation**: Integrated the fix directly in the class list of the primary navigation component (`_nav.php`) rather than mutating base stylesheets in `_head.php`. This maintains localized, highly visible styling classes for ease of maintenance.
+
+### Escape Plan / Rollback Notes
+- **Database Implications**: None.
+- **Rollback Path**: Revert `htdocs/_templates/admin/_nav.php` by removing the `z-50` Tailwind class from the `<aside>` element or running `git checkout htdocs/_templates/admin/_nav.php`.
+- **Forward-Fix Path**: Increase or decrease the sidebar z-index value inside the class list to coordinate spacing in complex future overlay integrations.
+
+---
+
 ## [v11.5.0] – 2026-05-23T18:31:00Z
 
 ### Added

@@ -1,5 +1,5 @@
 <aside id="sidebar"
-    class="w-80 shrink-0 border-r transition-all duration-500 flex flex-col backdrop-blur-3xl relative"
+    class="w-80 shrink-0 border-r transition-all duration-500 flex flex-col backdrop-blur-3xl relative z-50"
     style="background-color: var(--surface-glass); border-color: var(--border-color); overflow: visible !important;">
     <!-- Mobile Close Button (hidden — sidebar is always visible) -->
     <button

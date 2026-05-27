@@ -41,6 +41,14 @@ The Honlor Admin Panel serves as the central nervous system for moderation, tele
   - `delete.php`: Safely purges obsolete release lines.
 - **Interactive UI:** Placed under **Governance** named **App Version Control**, showing real-time stats cards, custom switch toggles for instant enforcement, slide-out edit drawers, and custom modal inputs.
 
+### 6. Account Data Deletion Module (GDPR/App Store Compliance)
+- **Edge Function:** `request-account-deletion` (`supabase/functions/request-account-deletion/index.ts`) handles three actions:
+  - `submit_request` (public): Accepts email, reason, and full_name from the user-facing `honlor.com/data-deletion` page. Validates email format, enforces 24h duplicate prevention, and inserts into the Supabase `deletion_requests` table.
+  - `list_requests` (service role only): Returns all deletion requests with computed metrics for the admin dashboard.
+  - `update_request` (service role only): Approves or rejects requests with optional admin notes.
+- **Database Table:** `public.deletion_requests` in Supabase PostgreSQL with RLS enabled (no public policies — service role only). Contains columns: `id` (UUID), `email`, `full_name`, `reason`, `status`, `admin_note`, `created_at`, `reviewed_at`, `reviewed_by`.
+- **Admin Dashboard Integration:** The existing **Identity Erasure** section (`htdocs/_templates/admin/deletion_requests.php`) fetches and displays these requests via `SupabaseClient` using the service role key.
+
 ---
 
 ## Data Flow Diagram

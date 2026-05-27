@@ -2,6 +2,7 @@ graph TD
     %% Nodes & Client Apps
     RNApp["React Native App (Expo/Client)"]
     AdminPanel["Honlor Admin Panel (Web Dashboard)"]
+    DataDeletionPage["honlor.com/data-deletion (Public Page)"]
 
     %% Databases & Storage
     SupabaseDB[("Supabase DB (PostgreSQL)")]
@@ -32,11 +33,26 @@ graph TD
         AppConfigModel --> LocalMySQL
     end
 
+    %% Edge Functions
+    subgraph Supabase Edge Functions
+        DeletionEF["request-account-deletion"]
+        AppVersionEF["manage-app-version"]
+    end
+
     %% Client and Database Interactions
     RNApp -- "Submits Reports via API" --> SupabaseDB
     
     SBC -- "HTTP REST Request (cURL)" --> SupabaseDB
     SBC -- "Dynamically falls back if no .env config" --> LocalMockDB
+
+    %% Data Deletion Flow
+    DataDeletionPage -- "POST submit_request" --> DeletionEF
+    DeletionEF -- "INSERT into deletion_requests" --> SupabaseDB
+    AdminPanel -- "list_requests / update_request (Service Key)" --> DeletionEF
+
+    %% App Version Flow
+    RNApp -- "check_version / get_active" --> AppVersionEF
+    AppVersionEF --> SupabaseDB
 
     %% Dashboard Interactions
     AdminPanel -- "GET/POST AJAX Calls" --> Router

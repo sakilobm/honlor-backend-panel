@@ -214,9 +214,93 @@ Upserts the active version to the `app_versions` Supabase table. **Called only b
 
 ---
 
-## 7. Miscellaneous
+## 8. Account Data Deletion (GDPR/App Store Compliance)
 
-### 7.1 `hellow-world`
+### 8.1 `request-account-deletion`
+Handles user data deletion requests for GDPR and App Store compliance. Called by the public `honlor.com/data-deletion` page (for submissions) and by the Admin Panel server (for listing and processing).
+
+* **Base URL:** `https://zloyckonnkiywllkyghf.supabase.co/functions/v1/request-account-deletion`
+
+#### Action: `submit_request`
+Submits a new account deletion request. Public — no authentication required.
+* **Method:** `POST`
+* **Auth:** None required
+* **Payload:**
+  ```json
+  {
+    "action": "submit_request",
+    "email": "user@example.com",
+    "reason": "I no longer use this app",
+    "full_name": "John Doe"
+  }
+  ```
+  * `email` (required): User's account email address, max 255 chars.
+  * `reason` (optional): Why the user wants deletion, max 1000 chars.
+  * `full_name` (optional): User's display name, max 100 chars.
+* **Response (Success):**
+  ```json
+  { "success": true, "message": "Your account deletion request has been submitted successfully. Our team will review it within 30 days." }
+  ```
+* **Response (Duplicate):** `409` — A pending request for this email already exists within 24h.
+* **Response (Invalid Email):** `400` — Email format validation failed.
+
+#### Action: `list_requests`
+Returns all deletion requests with computed metrics. **Admin Panel only** — requires Service Role Key.
+* **Method:** `POST`
+* **Auth:** `Authorization: Bearer <SERVICE_ROLE_KEY>`
+* **Payload:** `{ "action": "list_requests" }`
+* **Response:**
+  ```json
+  {
+    "success": true,
+    "requests": [
+      {
+        "id": "uuid",
+        "email": "user@example.com",
+        "full_name": "John Doe",
+        "reason": "I no longer use this app",
+        "status": "pending",
+        "admin_note": null,
+        "created_at": "2026-05-25T08:00:00Z",
+        "reviewed_at": null,
+        "reviewed_by": null
+      }
+    ],
+    "stats": {
+      "total": 5,
+      "pending": 3,
+      "approved": 1,
+      "rejected": 1,
+      "velocity": 40.0
+    }
+  }
+  ```
+
+#### Action: `update_request`
+Approves or rejects a deletion request. **Admin Panel only** — requires Service Role Key.
+* **Method:** `POST`
+* **Auth:** `Authorization: Bearer <SERVICE_ROLE_KEY>`
+* **Payload:**
+  ```json
+  {
+    "action": "update_request",
+    "id": "uuid",
+    "status": "approved",
+    "admin_note": "User data purged from all systems.",
+    "reviewed_by": "admin_username"
+  }
+  ```
+  * `id` (required): UUID of the deletion request.
+  * `status` (required): `"approved"` or `"rejected"`.
+  * `admin_note` (optional): Internal admin note, max 500 chars.
+  * `reviewed_by` (optional): Admin identifier, max 100 chars.
+* **Response:** `{ "success": true, "message": "Deletion request approved successfully." }`
+
+---
+
+## 9. Miscellaneous
+
+### 9.1 `hellow-world`
 Simple health-check or testing endpoint.
 * **Method:** `POST` / `GET`
 * **Response:** Typically returns a basic hello message.

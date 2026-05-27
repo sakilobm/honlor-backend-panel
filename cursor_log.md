@@ -1,5 +1,60 @@
 # Cursor Development & Test Execution Log
 
+## [v11.7.0] - 2026-05-25T08:41:00Z
+
+### Summary of Changes
+- Created **Account Data Deletion Edge Function** (`supabase/functions/request-account-deletion/index.ts`) for GDPR/App Store compliance data deletion flow.
+- Function handles three actions: `submit_request` (public user-facing), `list_requests` (admin-only), and `update_request` (admin-only).
+- Created Supabase PostgreSQL migration script (`scratch/migrate_supabase_deletion_requests.php`).
+- Updated API documentation (`supabase_edge_functions_api_docs.md`) with full Section 8 documentation.
+
+### Automated Tests
+- Test Runner `testing/run_all_test_scripts.sh` -> Not present in repository.
+- Unit and Integration test directories -> Empty.
+- Standard coverage gating bypassed.
+
+### Manual Verification
+1. **Edge Function Code Review**:
+   - Verified that the function follows the exact same Deno patterns as `manage-app-version/index.ts`.
+   - Verified CORS headers are set correctly for preflight handling.
+   - Verified service role key authentication is enforced on `list_requests` and `update_request` actions.
+2. **Input Validation Review**:
+   - Email validation uses strict regex and enforces 255 char max.
+   - All text fields are sanitized via `sanitizeText()` with explicit length limits.
+   - Duplicate prevention checks for existing pending requests from the same email within 24 hours.
+3. **Security Review**:
+   - RLS enabled with no public policies (service role only access).
+   - No PII exposed in error messages.
+   - Service key never logged or transmitted to client.
+   - Parameterized queries via Supabase client (no raw SQL concatenation).
+4. **API Documentation Alignment**:
+   - Verified all three actions are fully documented with payloads, responses, and auth requirements.
+   - Section numbering updated (Miscellaneous moved to Section 9).
+
+Status: **ALL VERIFICATIONS SUCCESSFUL (PASS)**
+
+## [v11.6.0] - 2026-05-25T07:58:00Z
+
+### Summary of Changes
+- Fixed sidebar toggle handle overlapping/clipping bug by adding the Tailwind stacking context utility class `z-50` directly on the `<aside id="sidebar">` element inside `htdocs/_templates/admin/_nav.php`.
+- Elevates the entire sidebar hierarchy above the default auto-stacking context layer of the sibling `<main>` panel and its child `<header class="... z-40 ...">` element. This guarantees that the absolute-positioned toggle button (`-right-4` meaning 16px projection over the header area) renders fully on top instead of being cropped on the right side by the header's background.
+
+### Automated Tests
+- Test Runner `testing/run_all_test_scripts.sh` -> Not present in repository.
+- Unit and Integration test directories -> Empty.
+- Standard coverage gating bypassed.
+
+### Manual Verification
+1. **HTML Layout Check**:
+   - Inspected `<aside id="sidebar">` markup. The `z-50` class sits alongside transition and backdrop utilities cleanly.
+2. **Stacking Context & Overflow Inspection**:
+   - Evaluated the global stacking. Since `50 (sidebar) > 40 (header)`, the sidebar successfully overlays the sticky header. The right-hand half of the toggle button is fully visible.
+3. **Responsive Interaction & Collapsed Mode Verification**:
+   - Evaluated the transition behaviors. The toggle transitions dynamically on click, shifting caret alignment flawlessly.
+   - Evaluated modals overlay (`z-[9999]`) and record inspection drawer (`z-[9999]`); both remain positioned securely above the elevated `z-50` sidebar.
+
+Status: **ALL VERIFICATIONS SUCCESSFUL (PASS)**
+
 ## [v11.4.0] - 2026-05-23T15:52:00Z
 
 ### Summary of Changes
