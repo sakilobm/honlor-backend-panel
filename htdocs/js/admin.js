@@ -1436,10 +1436,12 @@ var AdminApp = {
             else if (reason.toLowerCase().indexOf('bug') !== -1 || reason.toLowerCase().indexOf('glitch') !== -1)
                 reasonClass = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
 
-            var repUuidShort = rep.reporter_id ? 'usr_' + rep.reporter_id.substring(0, 4) : 'usr_anon';
-            var localTimeStr = rep.created_at ? new Date(rep.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A';
-            var localDateStr = rep.created_at ? new Date(rep.created_at).toLocaleDateString([], {month: 'short', day: 'numeric'}) : 'N/A';
-            var replyBubble  = rep.admin_reply
+            var displayName   = rep.username   || rep.full_name || ('usr_' + (rep.reporter_id || 'anon').substring(0, 6));
+            var avatarSeed    = rep.reporter_id || displayName;
+            var avatarSrc     = rep.avatar_url  || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + avatarSeed);
+            var localTimeStr  = rep.created_at ? new Date(rep.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A';
+            var localDateStr  = rep.created_at ? new Date(rep.created_at).toLocaleDateString([], {month: 'short', day: 'numeric'}) : 'N/A';
+            var replyBubble   = rep.admin_reply
                 ? ' <i class="ph-bold ph-chat-circle-text text-emerald-400 ml-1.5 cursor-help" title="' + rep.admin_reply.replace(/"/g, '&quot;') + '"></i>'
                 : '';
 
@@ -1465,11 +1467,9 @@ var AdminApp = {
                     '  </button>' +
                     '</div>';
             } else {
-                var reviewedDate = rep.reviewed_at ? new Date(rep.reviewed_at).toLocaleDateString() : '';
                 actionsHtml =
                     '<div class="flex flex-col items-end gap-1">' +
                     '  <span class="text-[9px] font-black uppercase tracking-widest opacity-40">' + status + '</span>' +
-                    (reviewedDate ? '<span class="text-[8px] opacity-25">' + reviewedDate + '</span>' : '') +
                     '</div>';
             }
 
@@ -1477,10 +1477,11 @@ var AdminApp = {
                 '<tr class="hover:bg-white/[0.025] transition-all duration-300 group border-b border-white/[0.03]">' +
                 '  <td class="px-6 py-5">' +
                 '    <div class="flex items-center gap-3">' +
-                '      <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + rep.reporter_id + '" class="w-9 h-9 rounded-xl shrink-0 border-2 border-[var(--bg-main)] shadow-xl">' +
+                '      <img src="' + avatarSrc + '" class="w-9 h-9 rounded-xl shrink-0 border-2 border-[var(--bg-main)] shadow-xl object-cover"' +
+                '           onerror="this.src=\'https://api.dicebear.com/7.x/avataaars/svg?seed=' + avatarSeed + '\'">' +
                 '      <div class="min-w-0">' +
-                '        <p class="text-[11px] font-black uppercase tracking-widest text-purple-400 truncate max-w-[120px]">@' + repUuidShort + '</p>' +
-                '        <p class="text-[8px] font-bold opacity-25 uppercase tracking-widest mt-0.5">App User</p>' +
+                '        <p class="text-[11px] font-black uppercase tracking-widest text-purple-400 truncate max-w-[120px]">@' + displayName + '</p>' +
+                '        <p class="text-[8px] font-bold opacity-25 uppercase tracking-widest mt-0.5">' + (rep.full_name || 'App User') + '</p>' +
                 '      </div>' +
                 '    </div>' +
                 '  </td>' +
