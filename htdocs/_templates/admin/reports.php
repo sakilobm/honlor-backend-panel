@@ -44,6 +44,35 @@
     <!-- Tab Content: Incidents -->
     <div id="tab-content-incidents"
         class="tab-content space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+
+        <!-- Filter Bar -->
+        <div class="flex flex-wrap items-center gap-3">
+            <button data-filter="all" onclick="AdminApp.setIncidentFilter('all')"
+                class="incident-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid rgba(124,106,255,0.5);background:rgba(124,106,255,0.12);color:#7c6aff;">
+                All <span id="filter-badge-inc-all" class="px-2 py-0.5 rounded-lg text-[8px] font-black" style="background:rgba(124,106,255,0.15);color:#7c6aff;">0</span>
+            </button>
+            <button data-filter="pending" onclick="AdminApp.setIncidentFilter('pending')"
+                class="incident-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid var(--border-color);background:transparent;color:var(--text-muted);">
+                Pending <span id="filter-badge-inc-pending" class="px-2 py-0.5 rounded-lg bg-red-500/20 text-red-500 text-[8px] font-black">0</span>
+            </button>
+            <button data-filter="user" onclick="AdminApp.setIncidentFilter('user')"
+                class="incident-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid var(--border-color);background:transparent;color:var(--text-muted);">
+                <i class="ph-bold ph-user text-[10px]"></i>User Reports <span id="filter-badge-inc-user" class="px-2 py-0.5 rounded-lg bg-blue-500/20 text-blue-500 text-[8px] font-black">0</span>
+            </button>
+            <button data-filter="channel" onclick="AdminApp.setIncidentFilter('channel')"
+                class="incident-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid var(--border-color);background:transparent;color:var(--text-muted);">
+                <i class="ph-bold ph-hash text-[10px]"></i>Channel <span id="filter-badge-inc-channel" class="px-2 py-0.5 rounded-lg bg-orange-500/20 text-orange-500 text-[8px] font-black">0</span>
+            </button>
+            <button data-filter="resolved" onclick="AdminApp.setIncidentFilter('resolved')"
+                class="incident-filter-btn flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all"
+                style="border:1px solid var(--border-color);background:transparent;color:var(--text-muted);">
+                Resolved <span id="filter-badge-inc-resolved" class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-600 text-[8px] font-black">0</span>
+            </button>
+        </div>
         <!-- Telemetry Stats Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div
@@ -114,14 +143,18 @@
                         Managed Global Integrity Sink
                     </p>
                 </div>
-                <div class="flex gap-4 w-full md:w-auto">
+                <div class="flex gap-3 w-full md:w-auto">
                     <div class="relative flex-grow md:flex-none">
-                        <i
-                            class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-primary opacity-60"></i>
-                        <input type="text" placeholder="Filter Cases..."
-                            class="w-full md:w-64 rounded-xl pl-12 pr-4 py-3 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                        <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-primary opacity-60"></i>
+                        <input type="text" id="incident-search" placeholder="Filter cases..."
+                            oninput="AdminApp.renderIncidentTable()"
+                            class="w-full md:w-56 rounded-xl pl-12 pr-4 py-3 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                             style="background-color: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-main);">
                     </div>
+                    <button onclick="AdminApp.loadReportList()"
+                        class="btn-primary !p-3 !rounded-xl !bg-primary/10 !border-primary/20 !text-primary hover:!bg-primary hover:!text-white transition-all">
+                        <i class="ph-bold ph-arrows-clockwise text-lg"></i>
+                    </button>
                 </div>
             </div>
             <div class="overflow-x-auto">

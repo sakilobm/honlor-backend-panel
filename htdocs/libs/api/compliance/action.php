@@ -2,34 +2,47 @@
 
 /**
  * API Endpoint: /api/compliance/action
- * ===================================
- * Resolve or dismiss safety incidents.
+ * =====================================
+ * Resolve or dismiss a report in the Supabase `reports` table.
  */
 
-use App\Compliance;
+use Aether\SupabaseClient;
+use Aether\Session;
 
 ${basename(__FILE__, '.php')} = function () {
-    
-    // Auth check
+
     if (!$this->isAuthenticated()) {
         $this->response($this->json(['error' => 'Unauthorized access.']), 401);
     }
 
-    $id = $_POST['id'] ?? null;
-    $action = $_POST['action'] ?? null; // 'Resolved', 'Dismissed'
+    $id     = trim($_POST['id']     ?? '');
+    $action = trim($_POST['action'] ?? ''); // 'resolved' | 'dismissed'
 
     if (!$id || !$action) {
-        $this->response($this->json(['error' => 'Invalid parameters.']), 400);
+        $this->response($this->json(['error' => 'Missing id or action.']), 400);
     }
 
-    try {
-        if (Compliance::updateIncidentStatus((int)$id, $action)) {
-            $this->response($this->json(['success' => true]), 200);
-        } else {
-            $this->response($this->json(['error' => 'Action failed.']), 500);
-        }
-    } catch (Exception $e) {
-        error_log("API Error /compliance/action: " . $e->getMessage());
-        $this->response($this->json(['error' => 'Internal Server Error']), 500);
+    $status = strtolower($action);
+    if (!in_array($status, ['resolved', 'dismissed'], true)) {
+        $this->response($this->json(['error' => 'Invalid action. Use resolved or dismissed.']), 400);
+    }
+
+    $admin     = Session::getUser();
+    $adminName = $admin ? ($admin->username ?? 'admin') : 'admin';
+
+    $result = SupabaseClient::patchRow('reports', 'id', $id, [
+        'status'      => $status,
+        'reviewed_by' => $adminName,
+        'reviewed_at' => date('c'),
+    ]);
+
+    if ($result['success']) {
+        $this->response($this->json([
+            'success' => true,
+            'message' => 'Report ' . $status . ' successfully.',
+        ]), 200);
+    } else {
+        error_log("API /compliance/action — patch failed: " . ($result['error'] ?? 'unknown'));
+        $this->response($this->json(['error' => 'Failed to update report.']), 500);
     }
 };

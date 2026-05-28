@@ -3,26 +3,130 @@
 /**
  * API Endpoint: /api/compliance/list
  * =================================
- * Returns the incident queue and safety telemetry.
+ * Returns the incident queue from the Supabase `reports` table,
+ * enriched with reporter and reported user profile data.
  */
 
-use App\Compliance;
+use Aether\SupabaseClient;
 
 ${basename(__FILE__, '.php')} = function () {
-    
-    // Auth check
+
     if (!$this->isAuthenticated()) {
         $this->response($this->json(['error' => 'Unauthorized access.']), 401);
     }
 
-    try {
-        $this->response($this->json([
-            'incidents' => Compliance::getIncidentQueue(),
-            'history'   => Compliance::getResolutionHistory(),
-            'metrics'   => Compliance::getSafetyTelemetry()
-        ]), 200);
-    } catch (Exception $e) {
-        error_log("API Error /compliance/list: " . $e->getMessage());
-        $this->response($this->json(['error' => 'Internal Server Error']), 500);
+    // ── Fetch all reports ────────────────────────────────────────────────────
+    $result = SupabaseClient::queryTable('reports', [
+        'select' => '*',
+        'order'  => 'created_at.desc',
+    ]);
+
+    if (!$result['success']) {
+        error_log("API /compliance/list — reports query failed: " . ($result['error'] ?? 'unknown'));
+        $this->response($this->json(['error' => 'Failed to fetch reports.']), 500);
     }
+
+    $rows = $result['data'] ?? [];
+
+    // ── Enrich with profile data ─────────────────────────────────────────────
+    $profileMap = [];
+    $userIds = [];
+    foreach ($rows as $r) {
+        if (!empty($r['reporter_id'])) $userIds[] = $r['reporter_id'];
+        if (!empty($r['reported_id'])) $userIds[] = $r['reported_id'];
+    }
+    $userIds = array_values(array_unique(array_filter($userIds)));
+
+    if (!empty($userIds)) {
+        $pResult = SupabaseClient::queryTable('profiles', [
+            'select' => 'id,username,full_name,avatar_url',
+            'id'     => 'in.(' . implode(',', $userIds) . ')',
+        ]);
+        foreach (($pResult['data'] ?? []) as $p) {
+            $profileMap[$p['id']] = $p;
+        }
+    }
+
+    // ── Severity map ─────────────────────────────────────────────────────────
+    $severityMap = [
+        'Violence'             => 'Critical',
+        'Nudity or Pornography'=> 'Critical',
+        'Illegal Drugs/Content'=> 'Critical',
+        'Abuse or Harassment'  => 'Moderate',
+        'Spam'                 => 'Moderate',
+        'Personal Details'     => 'Moderate',
+    ];
+
+    // ── Build response ───────────────────────────────────────────────────────
+    $pending  = 0;
+    $resolved = 0;
+    $dismissed = 0;
+    $incidents = [];
+    $history   = [];
+
+    foreach ($rows as $r) {
+        $status = strtolower($r['status'] ?? 'pending');
+
+        if ($status === 'pending') {
+            $pending++;
+        } elseif ($status === 'resolved') {
+            $resolved++;
+        } elseif ($status === 'dismissed') {
+            $dismissed++;
+        }
+
+        $rid  = $r['reporter_id'] ?? null;
+        $rpro = $rid ? ($profileMap[$rid] ?? []) : [];
+
+        $tid  = $r['reported_id'] ?? null;
+        $tpro = $tid ? ($profileMap[$tid] ?? []) : [];
+
+        $reason   = $r['reason'] ?? 'Other';
+        $severity = $severityMap[$reason] ?? 'Low';
+
+        $row = [
+            'id'                 => $r['id'],
+            'report_type'        => $r['report_type'] ?? 'user',
+            'reporter_id'        => $rid,
+            'reporter_username'  => $rpro['username']   ?? null,
+            'reporter_full_name' => $rpro['full_name']  ?? null,
+            'reporter_avatar'    => $rpro['avatar_url'] ?? null,
+            'reported_id'        => $tid,
+            'reported_username'  => $tpro['username']   ?? null,
+            'reported_full_name' => $tpro['full_name']  ?? null,
+            'reported_avatar'    => $tpro['avatar_url'] ?? null,
+            'channel_id'         => $r['channel_id']   ?? null,
+            'reason'             => $reason,
+            'details'            => $r['details']      ?? null,
+            'status'             => $r['status']       ?? 'pending',
+            'severity'           => $severity,
+            'created_at'         => $r['created_at']   ?? null,
+        ];
+
+        $incidents[] = $row;
+
+        if ($status !== 'pending') {
+            $history[] = [
+                'id'         => $r['id'],
+                'action'     => ucfirst($status),
+                'reason'     => $reason,
+                'created_at' => $r['created_at'] ?? null,
+            ];
+        }
+    }
+
+    $total    = count($rows);
+    $velocity = $total > 0 ? round((($resolved + $dismissed) / $total) * 100, 1) : 0;
+
+    $this->response($this->json([
+        'incidents' => $incidents,
+        'history'   => array_slice($history, 0, 20),
+        'metrics'   => [
+            'active_queue'    => $pending,
+            'resolved'        => $resolved,
+            'dismissed'       => $dismissed,
+            'total_incidents' => $total,
+            'velocity'        => $velocity,
+        ],
+    ]), 200);
 };

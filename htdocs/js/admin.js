@@ -1222,120 +1222,244 @@ var AdminApp = {
     /**
      * Safety Center (Reports) Logic
      */
+    _incidentAll: [],
+    _incidentFilter: 'all',
+
     initReports: function () {
-        this._sbReportFilter = 'all';
+        this._incidentFilter  = 'all';
+        this._sbReportFilter  = 'all';
         this.loadReportList();
         this.loadSupabaseReportList();
     },
 
     loadReportList: function () {
+        var self = this;
         var tbody = document.getElementById('reports-table-body');
-        var historyList = document.getElementById('reports-history-list');
-        var activeMetric = document.getElementById('metric-active-incidents');
-        var velocityMetric = document.getElementById('metric-resolution-velocity');
-        var totalMetric = document.getElementById('metric-total-reports');
         if (!tbody) return;
 
+        tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center">' +
+            '<div class="flex flex-col items-center gap-5">' +
+            '<div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>' +
+            '<p class="font-black text-[10px] uppercase tracking-[0.3em] opacity-30">Loading incidents...</p>' +
+            '</div></td></tr>';
+
         ApiClient.get('compliance', 'list').then(function (data) {
-            if (activeMetric) activeMetric.innerText = data.metrics.active_queue < 10 ? '0' + data.metrics.active_queue : data.metrics.active_queue;
-            if (velocityMetric) velocityMetric.innerText = data.metrics.velocity + '%';
-            if (totalMetric) totalMetric.innerText = data.metrics.total_incidents < 10 ? '0' + data.metrics.total_incidents : data.metrics.total_incidents;
+            self._incidentAll = data.incidents || [];
 
-            var html = '';
-            for (var i = 0; i < data.incidents.length; i++) {
-                var inc = data.incidents[i];
-                var severityColor = inc.severity === 'Critical' ? 'bg-red-500/10 text-red-500 border-red-500/20' : (inc.severity === 'Moderate' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-400/20');
-                var urgencyPulse = inc.severity === 'Critical' ? 'bg-red-500' : (inc.severity === 'Moderate' ? 'bg-orange-500' : 'bg-blue-500');
+            var m  = data.metrics || {};
+            var aq = m.active_queue    || 0;
+            var ti = m.total_incidents || 0;
+            var v  = m.velocity        || 0;
+            var uc = 0; var cc = 0; var rc = 0;
+            self._incidentAll.forEach(function (inc) {
+                if (inc.report_type === 'channel') cc++;
+                else uc++;
+                if ((inc.status || '').toLowerCase() === 'resolved') rc++;
+            });
 
-                html += '<tr class="hover:bg-white/[0.03] transition-all duration-300 group">' +
-                        '    <td class="px-8 py-6">' +
-                        '        <div class="flex items-center gap-4">' +
-                        '            <div class="flex -space-x-3 transition-transform group-hover:scale-105">' +
-                        '                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + inc.reporter_name + '" class="w-10 h-10 rounded-xl bg-primary/10 border-2 border-[var(--bg-main)] z-20 shadow-xl">' +
-                        '                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=' + inc.target_name + '" class="w-10 h-10 rounded-xl bg-red-500/10 border-2 border-[var(--bg-main)] z-10 shadow-xl">' +
-                        '            </div>' +
-                        '            <div>' +
-                        '                <p class="text-[11px] font-black uppercase tracking-widest text-primary truncate max-w-[150px]">Case #' + inc.id + '</p>' +
-                        '                <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest mt-0.5">By @' + inc.reporter_name + '</p>' +
-                        '            </div>' +
-                        '        </div>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6 text-center">' +
-                        '        <span class="text-[10px] font-black opacity-80 uppercase tracking-widest">' + inc.category + '</span>' +
-                        '        <p class="text-[8px] font-bold opacity-20 uppercase mt-0.5">Safety Node 0x' + inc.id + 'F</p>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6">' +
-                        '        <p class="text-[10px] font-medium opacity-60 truncate max-w-[200px] italic" style="color: var(--text-main);">"' + inc.content + '"</p>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6">' +
-                        '         <div class="flex items-center justify-center gap-3">' +
-                        '            <span class="px-3 py-1.5 ' + severityColor + ' border rounded-xl text-[8px] font-black uppercase tracking-widest shadow-xl">' + inc.severity + '</span>' +
-                        '            <span class="flex h-1.5 w-1.5 relative">' +
-                        '              <span class="animate-ping absolute inline-flex h-full w-full rounded-full ' + urgencyPulse + ' opacity-75"></span>' +
-                        '              <span class="relative inline-flex rounded-full h-1.5 w-1.5 ' + urgencyPulse + '"></span>' +
-                        '            </span>' +
-                        '         </div>' +
-                        '    </td>' +
-                        '    <td class="px-8 py-6 text-right">' +
-                        '         <div class="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">' +
-                        '            <button onclick="AdminApp.executeComplianceAction(\'' + inc.id + '\', \'Resolved\')" class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-xl shadow-emerald-500/5">' +
-                        '                <i class="ph-bold ph-check text-lg"></i>' +
-                        '            </button>' +
-                        '            <button onclick="AdminApp.executeComplianceAction(\'' + inc.id + '\', \'Dismissed\')" class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5">' +
-                        '                <i class="ph-bold ph-x text-lg"></i>' +
-                        '            </button>' +
-                        '         </div>' +
-                        '    </td>' +
-                        '</tr>';
-            }
-            tbody.innerHTML = html || '<tr><td colspan="5" class="p-24 text-center opacity-30 font-black uppercase tracking-[0.3em] text-[10px]">No active incidents in queue</td></tr>';
+            var el = function (id) { return document.getElementById(id); };
+            var fmt = function (n) { return n < 10 ? '0' + n : '' + n; };
 
-            var historyData = data.history || (data.metrics && data.metrics.recent_activity) || [];
+            if (el('metric-active-incidents')) el('metric-active-incidents').innerText = fmt(aq);
+            if (el('metric-resolution-velocity')) el('metric-resolution-velocity').innerText = v + '%';
+            if (el('metric-total-reports')) el('metric-total-reports').innerText = fmt(ti);
+
+            if (el('filter-badge-inc-all'))      el('filter-badge-inc-all').innerText      = ti;
+            if (el('filter-badge-inc-pending'))  el('filter-badge-inc-pending').innerText  = aq;
+            if (el('filter-badge-inc-user'))     el('filter-badge-inc-user').innerText     = uc;
+            if (el('filter-badge-inc-channel'))  el('filter-badge-inc-channel').innerText  = cc;
+            if (el('filter-badge-inc-resolved')) el('filter-badge-inc-resolved').innerText = rc;
+
+            self.renderIncidentTable();
+
+            // Resolution history
+            var historyList = el('reports-history-list');
             if (historyList) {
-                var historyHtml = '';
-                if (historyData.length === 0) {
-                    historyHtml = '<div class="p-12 text-center opacity-20 italic text-[10px] font-black uppercase tracking-widest py-20">No recent resolutions recorded</div>';
+                var history = data.history || [];
+                if (!history.length) {
+                    historyList.innerHTML = '<div class="p-12 text-center opacity-20 italic text-[10px] font-black uppercase tracking-widest">No recent resolutions</div>';
                 } else {
-                    for (var j = 0; j < historyData.length; j++) {
-                        var log = historyData[j];
-                        var time = log.created_at ? new Date(log.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'JUST NOW';
-                        
-                        var nodeSource = '0x' + (Math.floor(Math.random() * 99) + 10);
-                        var latency = Math.floor(Math.random() * 20) + 5;
-                        var protocolLabel = (log.message || log.action || 'Protocol Clearance').toUpperCase();
-
-                        historyHtml += '<div class="relative pl-10 py-3 group animate-in slide-in-from-right duration-500 hover:bg-white/[0.02] rounded-2xl transition-all">' +
-                                       '    <div class="absolute left-[0.25rem] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-emerald-500/60 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.3)] z-10"></div>' +
-                                       '    <div class="flex flex-col gap-1">' +
-                                       '        <div class="flex items-center justify-between">' +
-                                       '            <p class="text-[10px] font-black uppercase tracking-widest opacity-80" style="color: var(--text-main);">' + protocolLabel + '</p>' +
-                                       '            <span class="text-[8px] font-black opacity-20 uppercase" style="color: var(--text-main);">' + time + '</span>' +
-                                       '        </div>' +
-                                       '        <div class="flex items-center gap-3">' +
-                                       '            <div class="flex items-center gap-1.5">' +
-                                       '                <i class="ph ph-cpu text-[10px] opacity-20"></i>' +
-                                       '                <span class="text-[8px] font-bold opacity-30 uppercase tracking-widest">Node ' + nodeSource + '</span>' +
-                                       '            </div>' +
-                                       '            <div class="w-1 h-1 rounded-full bg-white/5"></div>' +
-                                       '            <div class="flex items-center gap-1.5">' +
-                                       '                <i class="ph ph-activity text-[10px] text-emerald-500/40"></i>' +
-                                       '                <span class="text-[8px] font-bold text-emerald-500/40 uppercase tracking-widest">' + latency + 'ms SYNC</span>' +
-                                       '            </div>' +
-                                       '        </div>' +
-                                       '    </div>' +
-                                       '</div>';
-                    }
+                    historyList.innerHTML = history.map(function (log) {
+                        var time  = log.created_at ? new Date(log.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+                        var date  = log.created_at ? new Date(log.created_at).toLocaleDateString([], {month:'short', day:'numeric'}) : '';
+                        var isDismissed = (log.action || '').toLowerCase() === 'dismissed';
+                        var dotColor = isDismissed ? 'bg-red-500/60' : 'bg-emerald-500/60';
+                        var label    = isDismissed ? 'Dismissed' : 'Resolved';
+                        var labelCol = isDismissed ? 'text-red-400' : 'text-emerald-400';
+                        return '<div class="relative pl-10 py-3 hover:bg-white/[0.02] rounded-2xl transition-all">' +
+                            '<div class="absolute left-[0.25rem] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full ' + dotColor + ' animate-pulse z-10"></div>' +
+                            '<div class="flex items-center justify-between">' +
+                            '  <div>' +
+                            '    <p class="text-[10px] font-black uppercase tracking-widest ' + labelCol + '">' + label + ' · ' + (log.reason || 'Report') + '</p>' +
+                            '    <p class="text-[8px] font-bold opacity-25 uppercase tracking-widest mt-0.5">' + date + ' at ' + time + '</p>' +
+                            '  </div>' +
+                            '</div>' +
+                            '</div>';
+                    }).join('');
                 }
-                historyList.innerHTML = historyHtml;
+            }
+        })['catch'](function () {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center opacity-30 font-black uppercase tracking-[0.2em] text-[10px]">Failed to load incidents</td></tr>';
+        });
+    },
+
+    renderIncidentTable: function () {
+        var tbody = document.getElementById('reports-table-body');
+        if (!tbody) return;
+
+        var search = ((document.getElementById('incident-search') || {}).value || '').toLowerCase().trim();
+        var filter = this._incidentFilter;
+
+        var list = this._incidentAll;
+        if (filter === 'pending') {
+            list = list.filter(function (i) { return (i.status || 'pending').toLowerCase() === 'pending'; });
+        } else if (filter === 'resolved') {
+            list = list.filter(function (i) { return (i.status || '').toLowerCase() === 'resolved'; });
+        } else if (filter === 'user' || filter === 'channel') {
+            list = list.filter(function (i) { return (i.report_type || 'user') === filter; });
+        }
+        if (search) {
+            list = list.filter(function (i) {
+                return (i.reason             || '').toLowerCase().indexOf(search) !== -1 ||
+                       (i.details            || '').toLowerCase().indexOf(search) !== -1 ||
+                       (i.reporter_username  || '').toLowerCase().indexOf(search) !== -1 ||
+                       (i.reported_username  || '').toLowerCase().indexOf(search) !== -1;
+            });
+        }
+
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-24 text-center"><div class="flex flex-col items-center gap-4 opacity-30"><i class="ph-bold ph-shield-check text-4xl"></i><p class="font-black text-[10px] uppercase tracking-[0.3em]">No incidents found</p></div></td></tr>';
+            return;
+        }
+
+        var html = '';
+        list.forEach(function (inc) {
+            var isChannel  = (inc.report_type || 'user') === 'channel';
+            var isPending  = (inc.status || 'pending').toLowerCase() === 'pending';
+            var severity   = inc.severity || 'Low';
+
+            var sevColor = severity === 'Critical' ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                         : severity === 'Moderate' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                         :                           'bg-blue-500/10 text-blue-400 border-blue-400/20';
+            var sevPulse  = severity === 'Critical' ? 'bg-red-500'
+                         : severity === 'Moderate' ? 'bg-orange-500'
+                         :                           'bg-blue-500';
+
+            // Reporter
+            var repName   = inc.reporter_username || inc.reporter_full_name || 'Unknown';
+            var repAvatar = inc.reporter_avatar   || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + (inc.reporter_id || repName));
+
+            // Reported side
+            var tgtName, tgtAvatar, tgtSub;
+            if (isChannel) {
+                tgtName   = inc.channel_id ? '#' + inc.channel_id.substring(0, 8) + '…' : '#channel';
+                tgtAvatar = 'https://api.dicebear.com/7.x/shapes/svg?seed=' + (inc.channel_id || 'ch');
+                tgtSub    = 'Channel';
+            } else {
+                tgtName   = inc.reported_username || inc.reported_full_name || 'Unknown';
+                tgtAvatar = inc.reported_avatar   || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + (inc.reported_id || tgtName));
+                tgtSub    = 'Reported User';
+            }
+
+            var typeBadge = isChannel
+                ? '<span class="px-2 py-0.5 rounded-lg bg-orange-500/15 text-orange-400 text-[7px] font-black uppercase tracking-widest border border-orange-500/20">Channel</span>'
+                : '<span class="px-2 py-0.5 rounded-lg bg-blue-500/15 text-blue-400 text-[7px] font-black uppercase tracking-widest border border-blue-500/20">User</span>';
+
+            var safeId = String(inc.id || '').replace(/'/g, '&#39;');
+            var statusBadge = '';
+            if (!isPending) {
+                var isResolved = (inc.status || '').toLowerCase() === 'resolved';
+                statusBadge = '<span class="px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-widest border ' +
+                    (isResolved ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20') + '">' +
+                    inc.status + '</span>';
+            }
+
+            html +=
+                '<tr class="hover:bg-white/[0.025] transition-all duration-300 group border-b border-white/[0.03]">' +
+                // Reporter / Reported
+                '  <td class="px-6 py-5">' +
+                '    <div class="flex items-center gap-3">' +
+                '      <div class="flex -space-x-2 shrink-0">' +
+                '        <img src="' + repAvatar + '" onerror="this.src=\'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (inc.reporter_id || 'r') + '\'" class="w-9 h-9 rounded-xl border-2 border-[var(--bg-main)] z-20 shadow-xl object-cover">' +
+                '        <img src="' + tgtAvatar + '" onerror="this.src=\'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (inc.reported_id || 'anon') + '\'" class="w-9 h-9 rounded-xl border-2 border-[var(--bg-main)] z-10 shadow-xl object-cover">' +
+                '      </div>' +
+                '      <div class="min-w-0">' +
+                '        <div class="flex items-center gap-2 mb-0.5">' +
+                '          <p class="text-[11px] font-black uppercase tracking-widest text-primary truncate max-w-[100px]">@' + repName + '</p>' +
+                '          ' + typeBadge +
+                '        </div>' +
+                '        <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest truncate max-w-[130px]">→ @' + tgtName + '</p>' +
+                '      </div>' +
+                '    </div>' +
+                '  </td>' +
+                // Reason
+                '  <td class="px-6 py-5 text-center">' +
+                '    <p class="text-[10px] font-black uppercase tracking-widest" style="color:var(--text-main);">' + (inc.reason || 'Other') + '</p>' +
+                (statusBadge ? '<div class="flex justify-center mt-1.5">' + statusBadge + '</div>' : '') +
+                '  </td>' +
+                // Details
+                '  <td class="px-6 py-5 max-w-[200px]">' +
+                '    <p class="text-[10px] font-medium opacity-55 italic leading-relaxed line-clamp-2" style="color:var(--text-main);">"' + (inc.details || 'No details provided') + '"</p>' +
+                '  </td>' +
+                // Severity
+                '  <td class="px-6 py-5">' +
+                '    <div class="flex items-center justify-center gap-2.5">' +
+                '      <span class="px-3 py-1.5 ' + sevColor + ' border rounded-xl text-[8px] font-black uppercase tracking-widest">' + severity + '</span>' +
+                '      <span class="flex h-1.5 w-1.5 relative">' +
+                '        <span class="animate-ping absolute inline-flex h-full w-full rounded-full ' + sevPulse + ' opacity-75"></span>' +
+                '        <span class="relative inline-flex rounded-full h-1.5 w-1.5 ' + sevPulse + '"></span>' +
+                '      </span>' +
+                '    </div>' +
+                '  </td>' +
+                // Actions
+                '  <td class="px-6 py-5 text-right">' +
+                '    <div class="flex justify-end gap-2 ' + (isPending ? 'opacity-0 group-hover:opacity-100' : '') + ' transition-all duration-300">';
+
+            if (isPending) {
+                html +=
+                    '      <button onclick="AdminApp.executeComplianceAction(\'' + safeId + '\',\'resolved\')" ' +
+                    '        class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20" title="Resolve">' +
+                    '        <i class="ph-bold ph-check text-base"></i>' +
+                    '      </button>' +
+                    '      <button onclick="AdminApp.executeComplianceAction(\'' + safeId + '\',\'dismissed\')" ' +
+                    '        class="w-9 h-9 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all border border-red-500/20" title="Dismiss">' +
+                    '        <i class="ph-bold ph-x text-base"></i>' +
+                    '      </button>';
+            } else {
+                html += '      <span class="text-[8px] font-black uppercase tracking-widest opacity-25">' + inc.status + '</span>';
+            }
+
+            html += '    </div>' +
+                    '  </td>' +
+                    '</tr>';
+        });
+
+        tbody.innerHTML = html;
+    },
+
+    setIncidentFilter: function (filter) {
+        this._incidentFilter = filter;
+        document.querySelectorAll('.incident-filter-btn').forEach(function (btn) {
+            if (btn.dataset.filter === filter) {
+                btn.style.border     = '1px solid rgba(124,106,255,0.5)';
+                btn.style.background = 'rgba(124,106,255,0.12)';
+                btn.style.color      = '#7c6aff';
+            } else {
+                btn.style.border     = '1px solid var(--border-color)';
+                btn.style.background = 'transparent';
+                btn.style.color      = 'var(--text-muted)';
             }
         });
+        this.renderIncidentTable();
     },
 
     executeComplianceAction: function (id, action) {
         var self = this;
-        ApiClient.post('compliance', 'action', { id: id, action: action }).then(function (res) {
-            toast.success('Sync Synchronized', 'Incident #' + id + ' was marked as ' + action + '. Ledger updated.');
+        ApiClient.post('compliance', 'action', { id: id, action: action }).then(function () {
+            toast.success('Incident Updated', 'Report marked as ' + action + '.');
             self.loadReportList();
+        })['catch'](function (err) {
+            toast.error('Error', err.error || 'Failed to update incident.');
         });
     },
 
