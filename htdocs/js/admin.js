@@ -1352,8 +1352,8 @@ var AdminApp = {
             // Reported side
             var tgtName, tgtAvatar, tgtSub;
             if (isChannel) {
-                tgtName   = inc.channel_id ? '#' + inc.channel_id.substring(0, 8) + '…' : '#channel';
-                tgtAvatar = 'https://api.dicebear.com/7.x/shapes/svg?seed=' + (inc.channel_id || 'ch');
+                tgtName   = inc.channel_name ? '#' + inc.channel_name : (inc.channel_id ? '#' + inc.channel_id.substring(0, 8) + '…' : '#channel');
+                tgtAvatar = inc.channel_image || ('https://api.dicebear.com/7.x/shapes/svg?seed=' + (inc.channel_id || 'ch'));
                 tgtSub    = 'Channel';
             } else {
                 tgtName   = inc.reported_username || inc.reported_full_name || 'Unknown';
@@ -1415,18 +1415,27 @@ var AdminApp = {
                 '  <td class="px-6 py-5 text-right">' +
                 '    <div class="flex justify-end gap-2 ' + (isPending ? 'opacity-0 group-hover:opacity-100' : '') + ' transition-all duration-300">';
 
+            var safeReason   = (inc.reason  || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+            var safeDetails  = (inc.details || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+            var safeReporter = (inc.reporter_username || inc.reporter_full_name || 'Unknown').replace(/'/g, '&#39;');
+            var adminNotes   = inc.admin_notes || '';
+            var reviewedBy   = inc.reviewed_by || '';
+
             if (isPending) {
                 html +=
-                    '      <button onclick="AdminApp.executeComplianceAction(\'' + safeId + '\',\'resolved\')" ' +
-                    '        class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20" title="Resolve">' +
-                    '        <i class="ph-bold ph-check text-base"></i>' +
-                    '      </button>' +
-                    '      <button onclick="AdminApp.executeComplianceAction(\'' + safeId + '\',\'dismissed\')" ' +
-                    '        class="w-9 h-9 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all border border-red-500/20" title="Dismiss">' +
-                    '        <i class="ph-bold ph-x text-base"></i>' +
+                    '      <button onclick="AdminApp.openIncidentModal(\'' + safeId + '\',\'' + safeReason + '\',\'' + safeReporter + '\',\'' + safeDetails + '\')" ' +
+                    '        class="flex items-center gap-2 px-4 h-9 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all text-[9px] font-black uppercase tracking-widest" title="Review">' +
+                    '        <i class="ph-bold ph-shield-warning text-sm"></i>Review' +
                     '      </button>';
             } else {
-                html += '      <span class="text-[8px] font-black uppercase tracking-widest opacity-25">' + inc.status + '</span>';
+                var isResolved2 = (inc.status || '').toLowerCase() === 'resolved';
+                html +=
+                    '      <div class="text-right space-y-1.5">' +
+                    '        <span class="inline-block px-3 py-1 rounded-lg text-[7px] font-black uppercase tracking-widest border ' +
+                    (isResolved2 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20') + '">' + inc.status + '</span>' +
+                    (adminNotes ? '<p class="text-[8px] opacity-50 italic max-w-[140px] ml-auto leading-snug" style="color:var(--text-main);">' + adminNotes.substring(0, 60) + (adminNotes.length > 60 ? '…' : '') + '</p>' : '') +
+                    (reviewedBy ? '<p class="text-[7px] font-black uppercase tracking-widest opacity-30">by @' + reviewedBy + '</p>' : '') +
+                    '      </div>';
             }
 
             html += '    </div>' +
@@ -1456,6 +1465,53 @@ var AdminApp = {
     executeComplianceAction: function (id, action) {
         var self = this;
         ApiClient.post('compliance', 'action', { id: id, action: action }).then(function () {
+            toast.success('Incident Updated', 'Report marked as ' + action + '.');
+            self.loadReportList();
+        })['catch'](function (err) {
+            toast.error('Error', err.error || 'Failed to update incident.');
+        });
+    },
+
+    openIncidentModal: function (id, reason, reporter, details) {
+        document.getElementById('incident-modal-id').value    = id;
+        document.getElementById('incident-modal-reason').textContent  = reason  || 'Unknown Reason';
+        document.getElementById('incident-modal-detail').textContent  = details ? '"' + details + '"' : 'No details provided';
+        document.getElementById('incident-modal-notes').value = '';
+        document.querySelectorAll('.incident-tpl-btn').forEach(function (b) {
+            b.style.border     = 'var(--border-color)';
+            b.style.background = 'var(--glass-bg)';
+            b.style.color      = 'var(--text-muted)';
+        });
+        var modal = document.getElementById('incident-review-modal');
+        modal.classList.remove('hidden');
+        setTimeout(function () { modal.classList.add('active'); }, 10);
+    },
+
+    closeIncidentModal: function () {
+        var modal = document.getElementById('incident-review-modal');
+        modal.classList.remove('active');
+        setTimeout(function () { modal.classList.add('hidden'); }, 200);
+    },
+
+    _selectIncidentTemplate: function (el, text) {
+        document.querySelectorAll('.incident-tpl-btn').forEach(function (b) {
+            b.style.border     = '1px solid var(--border-color)';
+            b.style.background = 'var(--glass-bg)';
+            b.style.color      = 'var(--text-muted)';
+        });
+        el.style.border     = '1px solid rgba(124,106,255,0.5)';
+        el.style.background = 'rgba(124,106,255,0.10)';
+        el.style.color      = '#7c6aff';
+        document.getElementById('incident-modal-notes').value = text;
+    },
+
+    submitIncidentAction: function (action) {
+        var self  = this;
+        var id    = document.getElementById('incident-modal-id').value;
+        var notes = document.getElementById('incident-modal-notes').value.trim();
+        if (!id) return;
+        ApiClient.post('compliance', 'action', { id: id, action: action, notes: notes }).then(function () {
+            self.closeIncidentModal();
             toast.success('Incident Updated', 'Report marked as ' + action + '.');
             self.loadReportList();
         })['catch'](function (err) {

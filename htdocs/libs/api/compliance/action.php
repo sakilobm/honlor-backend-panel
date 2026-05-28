@@ -17,6 +17,7 @@ ${basename(__FILE__, '.php')} = function () {
 
     $id     = trim($_POST['id']     ?? '');
     $action = trim($_POST['action'] ?? ''); // 'resolved' | 'dismissed'
+    $notes  = trim($_POST['notes']  ?? '');
 
     if (!$id || !$action) {
         $this->response($this->json(['error' => 'Missing id or action.']), 400);
@@ -30,11 +31,16 @@ ${basename(__FILE__, '.php')} = function () {
     $admin     = Session::getUser();
     $adminName = $admin ? ($admin->username ?? 'admin') : 'admin';
 
-    $result = SupabaseClient::patchRow('reports', 'id', $id, [
+    $patch = [
         'status'      => $status,
         'reviewed_by' => $adminName,
         'reviewed_at' => date('c'),
-    ]);
+    ];
+    if ($notes !== '') {
+        $patch['admin_notes'] = $notes;
+    }
+
+    $result = SupabaseClient::patchRow('reports', 'id', $id, $patch);
 
     if ($result['success']) {
         $this->response($this->json([

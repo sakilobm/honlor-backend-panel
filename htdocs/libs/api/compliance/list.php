@@ -43,7 +43,32 @@ ${basename(__FILE__, '.php')} = function () {
             'id'     => 'in.(' . implode(',', $userIds) . ')',
         ]);
         foreach (($pResult['data'] ?? []) as $p) {
-            $profileMap[$p['id']] = $p;
+            if (is_array($p) && !empty($p['id'])) $profileMap[$p['id']] = $p;
+        }
+    }
+
+    // ── Enrich with channel data ─────────────────────────────────────────────
+    $channelMap = [];
+    $channelIds = [];
+    foreach ($rows as $r) {
+        if (!empty($r['channel_id'])) $channelIds[] = $r['channel_id'];
+    }
+    // Only keep UUID-format channel IDs (Stream Chat DM CIDs like "!members-..." are not in channels table)
+    $channelIds = array_values(array_unique(array_filter($channelIds, function ($cid) {
+        return (bool) preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $cid);
+    })));
+
+    if (!empty($channelIds)) {
+        $cResult = SupabaseClient::queryTable('channels', [
+            'select'            => 'stream_channel_id,name,image_url',
+            'stream_channel_id' => 'in.(' . implode(',', $channelIds) . ')',
+        ]);
+        if ($cResult['success']) {
+            foreach (($cResult['data'] ?? []) as $c) {
+                if (is_array($c) && !empty($c['stream_channel_id'])) {
+                    $channelMap[$c['stream_channel_id']] = $c;
+                }
+            }
         }
     }
 
@@ -96,9 +121,13 @@ ${basename(__FILE__, '.php')} = function () {
             'reported_full_name' => $tpro['full_name']  ?? null,
             'reported_avatar'    => $tpro['avatar_url'] ?? null,
             'channel_id'         => $r['channel_id']   ?? null,
+            'channel_name'       => isset($r['channel_id']) ? ($channelMap[$r['channel_id']]['name']      ?? null) : null,
+            'channel_image'      => isset($r['channel_id']) ? ($channelMap[$r['channel_id']]['image_url'] ?? null) : null,
             'reason'             => $reason,
             'details'            => $r['details']      ?? null,
             'status'             => $r['status']       ?? 'pending',
+            'admin_notes'        => $r['admin_notes']  ?? null,
+            'reviewed_by'        => $r['reviewed_by']  ?? null,
             'severity'           => $severity,
             'created_at'         => $r['created_at']   ?? null,
         ];

@@ -985,4 +985,95 @@
         </div>
     </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- Modal: Incident Review                                                  -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="incident-review-modal" class="modal-overlay hidden" onclick="if(event.target===this) AdminApp.closeIncidentModal()">
+    <div class="modal-card !max-w-2xl" onclick="event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="flex items-start justify-between p-8 border-b" style="border-color:var(--border-color);">
+            <div class="flex items-center gap-5">
+                <div class="w-14 h-14 rounded-[1.75rem] bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-2xl shadow-primary/10">
+                    <i class="ph-bold ph-shield-warning text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black uppercase tracking-tight">Incident Review</h3>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mt-1">Add notes and take action on this report</p>
+                </div>
+            </div>
+            <button onclick="AdminApp.closeIncidentModal()" class="w-10 h-10 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+        </div>
+
+        <input type="hidden" id="incident-modal-id">
+
+        <div class="p-8 space-y-6 overflow-y-auto" style="max-height:65vh;">
+
+            <!-- Incident summary badge -->
+            <div id="incident-modal-summary" class="flex items-center gap-4 p-4 rounded-2xl border" style="background:rgba(124,106,255,0.04);border-color:rgba(124,106,255,0.15);">
+                <i class="ph-bold ph-flag text-primary text-lg shrink-0"></i>
+                <div class="min-w-0">
+                    <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mb-0.5">Report Details</p>
+                    <p id="incident-modal-reason" class="text-sm font-black" style="color:var(--text-main);">—</p>
+                    <p id="incident-modal-detail" class="text-[10px] opacity-50 mt-0.5 italic" style="color:var(--text-main);">—</p>
+                </div>
+            </div>
+
+            <!-- Reply templates -->
+            <div>
+                <p class="text-[9px] font-black uppercase tracking-[0.25em] opacity-40 mb-3">Quick Notes</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="AdminApp._selectIncidentTemplate(this,'Warning issued to the reported user. Behaviour has been flagged on their account.')"
+                        class="incident-tpl-btn text-left p-3.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all"
+                        style="border-color:var(--border-color);background:var(--glass-bg);color:var(--text-muted);">
+                        <i class="ph-bold ph-warning block mb-1.5 text-orange-400 text-base"></i>Warning Issued
+                    </button>
+                    <button type="button" onclick="AdminApp._selectIncidentTemplate(this,'Reported content has been reviewed and removed for violating community guidelines.')"
+                        class="incident-tpl-btn text-left p-3.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all"
+                        style="border-color:var(--border-color);background:var(--glass-bg);color:var(--text-muted);">
+                        <i class="ph-bold ph-trash block mb-1.5 text-red-400 text-base"></i>Content Removed
+                    </button>
+                    <button type="button" onclick="AdminApp._selectIncidentTemplate(this,'Report reviewed — no violation of community guidelines was found.')"
+                        class="incident-tpl-btn text-left p-3.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all"
+                        style="border-color:var(--border-color);background:var(--glass-bg);color:var(--text-muted);">
+                        <i class="ph-bold ph-check-circle block mb-1.5 text-emerald-400 text-base"></i>No Violation
+                    </button>
+                    <button type="button" onclick="AdminApp._selectIncidentTemplate(this,'Account has been reviewed. Appropriate action taken per platform policy.')"
+                        class="incident-tpl-btn text-left p-3.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all"
+                        style="border-color:var(--border-color);background:var(--glass-bg);color:var(--text-muted);">
+                        <i class="ph-bold ph-user-gear block mb-1.5 text-blue-400 text-base"></i>Account Reviewed
+                    </button>
+                </div>
+            </div>
+
+            <!-- Notes textarea -->
+            <div>
+                <p class="text-[9px] font-black uppercase tracking-[0.25em] opacity-40 mb-2">Admin Notes <span class="opacity-50 normal-case font-medium">(optional)</span></p>
+                <textarea id="incident-modal-notes" rows="4" placeholder="Add internal notes about this report…"
+                    class="w-full rounded-2xl px-5 py-4 text-[11px] resize-none focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                    style="background:var(--glass-bg);border:1px solid var(--border-color);color:var(--text-main);"></textarea>
+            </div>
+        </div>
+
+        <!-- Footer actions -->
+        <div class="p-8 border-t flex gap-3" style="border-color:var(--border-color);">
+            <button type="button" onclick="AdminApp.closeIncidentModal()"
+                class="btn-secondary flex-none !px-6 !py-4 !rounded-2xl text-[10px] uppercase font-black tracking-widest">
+                Cancel
+            </button>
+            <button type="button" onclick="AdminApp.submitIncidentAction('dismissed')"
+                class="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 border"
+                style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25);color:rgb(248,113,113);">
+                <i class="ph-bold ph-x text-sm"></i>Dismiss
+            </button>
+            <button type="button" onclick="AdminApp.submitIncidentAction('resolved')"
+                class="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 active:scale-95 transition-all shadow-2xl shadow-emerald-500/20">
+                <i class="ph-bold ph-shield-check text-sm"></i>Resolve
+            </button>
+        </div>
+    </div>
+</div>
 </div>
