@@ -261,13 +261,39 @@
             justify-content: center;
             @apply px-0 h-0 mb-6 overflow-hidden opacity-0; 
         }
-        #sidebar.sidebar-collapsed .nav-link-premium { @apply justify-center px-0 mx-0 w-full; }
-        #sidebar.sidebar-collapsed .nav-duotone { @apply mx-0 scale-90 rounded-full; }
-        #sidebar.sidebar-collapsed .nav-link-premium.active .nav-duotone { @apply scale-100; }
-        #sidebar.sidebar-collapsed .nav-link-premium.active::before { @apply left-0 w-1 rounded-r-lg; }
-        
-        #sidebar .nav-link-premium.active { @apply pl-8; }
-        #sidebar .nav-link-premium.active .nav-duotone { @apply scale-110 shadow-xl shadow-primary/10; }
+        /* ── Collapsed sidebar layout ─────────────────────────── */
+        #sidebar.sidebar-collapsed .nav-link-premium {
+            justify-content: center !important;
+            padding: 6px 0 !important;
+            margin: 2px auto !important;
+            width: calc(100% - 16px) !important;
+            background: transparent !important;
+        }
+        #sidebar.sidebar-collapsed .nav-duotone {
+            margin: 0 !important;
+            transform: scale(0.92);
+            border-radius: 50% !important;
+        }
+
+        /* ── Expanded-only: indent + scale on active ──────────── */
+        #sidebar:not(.sidebar-collapsed) .nav-link-premium.active { @apply pl-8; }
+        #sidebar:not(.sidebar-collapsed) .nav-link-premium.active .nav-duotone {
+            @apply scale-110 shadow-xl shadow-primary/10;
+        }
+
+        /* ── Collapsed active: highlight ONLY the icon circle ─── */
+        #sidebar.sidebar-collapsed .nav-link-premium.active {
+            background: transparent !important;
+            padding-left: 0 !important;
+        }
+        #sidebar.sidebar-collapsed .nav-link-premium.active .nav-duotone {
+            transform: scale(1.08) !important;
+            background-color: rgba(124, 106, 255, 0.18) !important;
+            border-color: rgba(124, 106, 255, 0.45) !important;
+            box-shadow: 0 0 0 3px rgba(124,106,255,0.12), 0 0 18px rgba(124,106,255,0.2) !important;
+        }
+        /* Hide the left-bar indicator when collapsed — icon ring replaces it */
+        #sidebar.sidebar-collapsed .nav-link-premium.active::before { display: none !important; }
         
         /* Profile Card Compression */
         #sidebar.sidebar-collapsed .p-8, #sidebar.sidebar-collapsed .p-6 { @apply px-3; }

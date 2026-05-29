@@ -513,14 +513,9 @@ body:not(.sidebar-collapsed) #sidebar + main {
     flex-shrink: 0;
 }
 
+/* Collapsed sidebar nav — layout controlled in _head.php inline styles */
 #sidebar.sidebar-collapsed .nav-duotone {
     margin: 0 !important;
-}
-
-#sidebar.sidebar-collapsed .nav-link-premium {
-    justify-content: center !important;
-    padding: 12px 0 !important;
-    margin: 4px 10px !important;
 }
 
 /* Duotone Color Variants */

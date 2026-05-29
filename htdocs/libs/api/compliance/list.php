@@ -60,7 +60,7 @@ ${basename(__FILE__, '.php')} = function () {
 
     if (!empty($channelIds)) {
         $cResult = SupabaseClient::queryTable('channels', [
-            'select'            => 'stream_channel_id,name,image_url',
+            'select'            => 'stream_channel_id,name,image_url,is_private',
             'stream_channel_id' => 'in.(' . implode(',', $channelIds) . ')',
         ]);
         if ($cResult['success']) {
@@ -121,8 +121,9 @@ ${basename(__FILE__, '.php')} = function () {
             'reported_full_name' => $tpro['full_name']  ?? null,
             'reported_avatar'    => $tpro['avatar_url'] ?? null,
             'channel_id'         => $r['channel_id']   ?? null,
-            'channel_name'       => isset($r['channel_id']) ? ($channelMap[$r['channel_id']]['name']      ?? null) : null,
-            'channel_image'      => isset($r['channel_id']) ? ($channelMap[$r['channel_id']]['image_url'] ?? null) : null,
+            'channel_name'       => isset($r['channel_id']) ? ($channelMap[$r['channel_id']]['name']       ?? null) : null,
+            'channel_image'      => isset($r['channel_id']) ? ($channelMap[$r['channel_id']]['image_url']  ?? null) : null,
+            'channel_is_private' => isset($r['channel_id']) ? ($channelMap[$r['channel_id']]['is_private'] ?? null) : null,
             'reason'             => $reason,
             'details'            => $r['details']      ?? null,
             'status'             => $r['status']       ?? 'pending',

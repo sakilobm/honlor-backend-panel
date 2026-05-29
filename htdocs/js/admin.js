@@ -1374,6 +1374,25 @@ var AdminApp = {
                     inc.status + '</span>';
             }
 
+            var tgtOnerror = isChannel
+                ? 'https://api.dicebear.com/7.x/shapes/svg?seed=ch-' + (inc.channel_id || 'ch').substring(0, 12)
+                : 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (inc.reported_id || 'anon');
+
+            // Privacy badge for channel reports
+            var privacyBadge = '';
+            if (isChannel && inc.channel_is_private !== null && inc.channel_is_private !== undefined) {
+                privacyBadge = inc.channel_is_private
+                    ? '<span class="px-1.5 py-0.5 rounded-md bg-yellow-500/10 text-yellow-500 text-[6px] font-black uppercase tracking-widest border border-yellow-500/20">Private</span>'
+                    : '<span class="px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 text-[6px] font-black uppercase tracking-widest border border-emerald-500/20">Public</span>';
+            }
+
+            // Channel context for user reports (show where the violation happened)
+            var channelCtx = '';
+            if (!isChannel && inc.channel_name) {
+                channelCtx = '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-orange-500/10 text-orange-400 text-[6px] font-black uppercase tracking-widest border border-orange-500/20">' +
+                             '<i class="ph-bold ph-hash" style="font-size:7px"></i>' + inc.channel_name + '</span>';
+            }
+
             html +=
                 '<tr class="hover:bg-white/[0.025] transition-all duration-300 group border-b border-white/[0.03]">' +
                 // Reporter / Reported
@@ -1381,14 +1400,17 @@ var AdminApp = {
                 '    <div class="flex items-center gap-3">' +
                 '      <div class="flex -space-x-2 shrink-0">' +
                 '        <img src="' + repAvatar + '" onerror="this.src=\'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (inc.reporter_id || 'r') + '\'" class="w-9 h-9 rounded-xl border-2 border-[var(--bg-main)] z-20 shadow-xl object-cover">' +
-                '        <img src="' + tgtAvatar + '" onerror="this.src=\'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (inc.reported_id || 'anon') + '\'" class="w-9 h-9 rounded-xl border-2 border-[var(--bg-main)] z-10 shadow-xl object-cover">' +
+                '        <img src="' + tgtAvatar + '" onerror="this.src=\'' + tgtOnerror + '\'" class="w-9 h-9 rounded-xl border-2 border-[var(--bg-main)] z-10 shadow-xl object-cover">' +
                 '      </div>' +
                 '      <div class="min-w-0">' +
                 '        <div class="flex items-center gap-2 mb-0.5">' +
                 '          <p class="text-[11px] font-black uppercase tracking-widest text-primary truncate max-w-[100px]">@' + repName + '</p>' +
                 '          ' + typeBadge +
                 '        </div>' +
-                '        <p class="text-[8px] font-bold opacity-30 uppercase tracking-widest truncate max-w-[130px]">→ @' + tgtName + '</p>' +
+                '        <p class="text-[8px] font-bold opacity-50 uppercase tracking-widest truncate max-w-[150px]">' +
+                           (isChannel ? '# ' : '→ @') + tgtName +
+                '        </p>' +
+                (privacyBadge || channelCtx ? '        <div class="flex items-center gap-1 mt-1">' + privacyBadge + channelCtx + '</div>' : '') +
                 '      </div>' +
                 '    </div>' +
                 '  </td>' +
