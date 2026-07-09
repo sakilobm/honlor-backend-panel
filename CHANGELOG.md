@@ -1,4 +1,15 @@
 
+## [v11.7.4] – 2026-07-09T06:15:00Z
+
+### Changed
+- **Active App Version Sync on Edit**: Updated the administrative update endpoint `/api/app_config/update` to automatically trigger `SupabaseClient::syncAppVersion` when modifying configuration fields for the currently active version. This guarantees that edits to the active version's update URL, mandatory status, version tag, or description immediately propagate to the remote Supabase database and mobile clients.
+
+### Escape Plan / Rollback Notes
+- **Rollback Path**: Revert `htdocs/libs/api/app_config/update.php` to its original state using `git checkout -- htdocs/libs/api/app_config/update.php`.
+- **Forward-Fix Path**: Add a manual sync trigger button to the UI if automated syncs on edit should be made optional or run asynchronously in a queue in the future.
+
+---
+
 ## [v11.7.3] – 2026-07-09T05:24:00Z
 
 ### Fixed

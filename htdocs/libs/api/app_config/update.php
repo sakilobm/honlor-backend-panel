@@ -94,9 +94,28 @@ ${basename(__FILE__, '.php')} = function () {
         $success = AppConfig::update((int)$id, $updateData);
 
         if ($success) {
-            $this->response($this->json(['message' => 'Configuration protocol updated successfully.']), 200);
+            $syncMsg = '';
+            // If the updated configuration is currently active, sync it to Supabase
+            if ((int)($existing['is_active'] ?? 0) === 1) {
+                // Fetch the updated configuration to get the fresh fields
+                $updated = AppConfig::get((int)$id);
+                if ($updated) {
+                    $syncResult = SupabaseClient::syncAppVersion(
+                        $updated['latest_version'],
+                        (bool)$updated['is_mandatory'],
+                        $updated['update_url'],
+                        $updated['description'] ?? ''
+                    );
+                    if ($syncResult['success']) {
+                        $syncMsg = ' Synced to Supabase.';
+                    } else {
+                        $syncMsg = ' (Supabase Sync Warning: ' . ($syncResult['error'] ?? 'unknown connection error') . ')';
+                    }
+                }
+            }
+            $this->response($this->json(['message' => 'Configuration protocol updated successfully.' . $syncMsg]), 200);
         } else {
-            throw new Exception("Database update operation reported zero affected rows.");
+            throw new Exception("Database update operation failed or returned false.");
         }
 
     } catch (Exception $e) {
