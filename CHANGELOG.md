@@ -1,4 +1,19 @@
 
+## [v11.7.3] – 2026-07-09T05:24:00Z
+
+### Fixed
+- **App Version Control Single-Row Constraint**: Transitioned the Supabase Edge Function `manage-app-version` from a single-row constraint (`id = 1`) to a multi-row database history log. Publishing or syncing versions now inserts a new row instead of performing an upsert on `id: 1` which was causing `duplicate key value violates unique constraint "app_versions_pkey"` or violating the `single_row` check constraint.
+
+### Added
+- **PostgreSQL Database Migration Script**: Created a new database migration file `scratch/migrate_app_versions.sql` to drop the check constraint `single_row` and align the primary key `id` sequence to prevent duplicate key violations.
+- **Dynamic Active Version Resolution**: Updated Deno Edge Function `get_active` and `check_version` actions to order records by `synced_at` and `id` descending, limiting to 1, to retrieve the latest active target.
+
+### Escape Plan / Rollback Notes
+- **Rollback Path**: Revert Deno Edge Function using `git checkout -- supabase/functions/manage-app-version/index.ts`. Recreate the single-row check constraint by running `ALTER TABLE public.app_versions ADD CONSTRAINT single_row CHECK (id = 1);` in the Supabase SQL editor.
+- **Forward-Fix Path**: Update query parameters or add a specific `is_active` boolean column if explicit manual version activation flags are desired in the future.
+
+---
+
 ## [v11.7.2] – 2026-05-27T11:45:00Z
 
 ### Fixed

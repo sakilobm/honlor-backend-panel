@@ -185,7 +185,7 @@ Manages the active app version for client update notifications. Called by the Ad
 * **Base URL:** `https://zloyckonnkiywllkyghf.supabase.co/functions/v1/manage-app-version`
 
 #### Action: `get_active`
-Returns the currently active version record. Used by the mobile app to display version info.
+Returns the currently active version record (resolves to the latest synced entry). Used by the mobile app to display version info.
 * **Method:** `GET` (query param `?action=get_active`) or `POST`
 * **Auth:** None required
 * **Response:**
@@ -205,7 +205,7 @@ Compares the client's current version against the active version and returns whe
   When no update is needed: `{ "success": true, "needs_update": false, "is_mandatory": false, "latest_version": "v1.2.3", "update_url": null, "description": null }`
 
 #### Action: `sync_active`
-Upserts the active version to the `app_versions` Supabase table. **Called only by the Admin Panel server** — requires the `SUPABASE_SERVICE_ROLE_KEY` in the `Authorization` header.
+Inserts the active version to the `app_versions` Supabase table to keep a history log. **Called only by the Admin Panel server** — requires the `SUPABASE_SERVICE_ROLE_KEY` in the `Authorization` header.
 * **Method:** `POST`
 * **Auth:** `Authorization: Bearer <SERVICE_ROLE_KEY>`
 * **Payload:** `{ "action": "sync_active", "version": "v1.2.3", "is_mandatory": true, "update_url": "https://...", "description": "Release notes" }`

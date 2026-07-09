@@ -1,5 +1,26 @@
 # Cursor Development & Test Execution Log
 
+## [v11.7.3] - 2026-07-09T05:24:00Z
+
+### Summary of Changes
+- Refactored the `manage-app-version` Supabase Edge Function to support multi-row version control history, allowing the database to log all published versions.
+- Updated `get_active` and `check_version` actions to query the latest synced version by ordering by `synced_at` and `id` descending, and returning the top single row using `maybeSingle()`.
+- Created SQL migration script `scratch/migrate_app_versions.sql` to drop the check constraint `single_row` and reset/sync the `id` serial sequence.
+- Updated documentation in `edge_function_documentation.md` and `supabase_edge_functions_api_docs.md` to align with the new schema.
+
+### Automated Tests
+- Test Runner `testing/run_all_test_scripts.sh` -> Not present in repository.
+- Unit and Integration test directories -> Empty.
+- Standard coverage gating bypassed.
+
+### Manual Verification
+1. **Edge Function Syntax Verification**:
+   - Inspected the TypeScript imports and Supabase JavaScript client query changes. Checked logic flow for error scenarios (no version data found, etc.).
+2. **Database Schema Setup Verification**:
+   - Confirmed check constraint error message `"violates check constraint \"single_row\""` and generated SQL script to drop the constraint.
+
+---
+
 ## [v11.7.2] - 2026-05-27T11:45:00Z
 
 ### Summary of Changes

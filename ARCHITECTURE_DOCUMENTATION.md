@@ -40,6 +40,7 @@ The Honlor Admin Panel serves as the central nervous system for moderation, tele
   - `update.php`: Updates metadata details or flips mandatory flags.
   - `delete.php`: Safely purges obsolete release lines.
 - **Interactive UI:** Placed under **Governance** named **App Version Control**, showing real-time stats cards, custom switch toggles for instant enforcement, slide-out edit drawers, and custom modal inputs.
+- **Supabase Sync Integration:** Syncs active versions to the remote Supabase database `app_versions` table using a multi-row database history log schema. The `manage-app-version` Deno Edge Function dynamically resolves the active version target by sorting rows descending by sync time.
 
 ### 6. Account Data Deletion Module (GDPR/App Store Compliance)
 - **Edge Function:** `request-account-deletion` (`supabase/functions/request-account-deletion/index.ts`) handles three actions:
