@@ -1,4 +1,15 @@
 
+## [v11.7.5] – 2026-08-03T10:46:00Z
+
+### Added
+- **Framework Architecture Documentation**: Created a detailed, comprehensive developer and framework architecture guide `FRAMEWORK_DOCUMENTATION.md` outlining MVC separation of concerns, directory layout structures, master layout page template inheritance rendering mechanics, and adoption instructions.
+
+### Escape Plan / Rollback Notes
+- **Rollback Path**: Delete the documentation file `rm FRAMEWORK_DOCUMENTATION.md`.
+- **Forward-Fix Path**: Update or modify the documentation file based on project architecture shifts.
+
+---
+
 ## [v11.7.4] – 2026-07-09T06:15:00Z
 
 ### Changed

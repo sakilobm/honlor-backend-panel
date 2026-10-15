@@ -1,5 +1,24 @@
 # Cursor Development & Test Execution Log
 
+## [v11.7.5] - 2026-08-03T10:46:00Z
+
+### Summary of Changes
+- Created a comprehensive framework developer architecture documentation `FRAMEWORK_DOCUMENTATION.md` detailing SoC, MVC logic separation, dynamic template rendering mechanics (Layout Inheritance), and project migration playbook.
+- Fixed static analysis lint errors inside the `SQLGetterSetter` database traits by checking `is_array()` on PDO fetch results prior to key extraction.
+
+### Automated Tests
+- Test Runner `testing/run_all_test_scripts.sh` -> Not present in repository.
+- Unit and Integration test directories -> Empty.
+- Standard coverage gating bypassed.
+
+### Manual Verification
+1. **PHP Syntax Verification**:
+   - Verified both traits (`htdocs/libs/traits/SQLGetterSetter.trait.php` and `htdocs/libs/src/Traits/SQLGetterSetter.php`) compile cleanly with zero errors.
+2. **Documentation Review**:
+   - Confirmed all path references are correct and formatted cleanly.
+
+---
+
 ## [v11.7.4] - 2026-07-09T06:15:00Z
 
 ### Summary of Changes

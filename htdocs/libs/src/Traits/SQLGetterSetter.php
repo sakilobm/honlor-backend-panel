@@ -42,7 +42,7 @@ trait SQLGetterSetter
         $stmt->execute([$this->id]);
         $row = $stmt->fetch();
 
-        if ($row) {
+        if (is_array($row)) {
             return $row[$var];
         }
 
