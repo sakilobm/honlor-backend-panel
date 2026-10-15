@@ -114,23 +114,23 @@ Honlor Admin Panel bridges front-end browser clients, remote mobile applications
 
 ```mermaid
 graph TD
-    subgraph Client Tier
+    subgraph ClientTier ["Client Tier"]
         RNApp["📱 React Native App (iOS / Android)"]
         AdminUI["🖥️ Honlor Admin Web Console"]
         PublicDel["🌐 honlor.com/data-deletion (Public)"]
     end
 
-    subgraph Supabase Cloud & Edge Tier
+    subgraph SupabaseTier ["Supabase Cloud & Edge Tier"]
         DeletionEF["⚡ Edge Function: request-account-deletion"]
         AppVersionEF["⚡ Edge Function: manage-app-version"]
         SupabaseDB[("🗄️ Supabase PostgreSQL (Remote)")]
     end
 
-    subgraph Honlor Backend Engine (Aether Catalyst)
+    subgraph BackendEngine ["Honlor Backend Engine (Aether Catalyst)"]
         Router["🔀 Aether API Router (REST.php / API.php)"]
         SBC["⚡ SupabaseClient (cURL Engine)"]
         
-        subgraph Controllers & Models
+        subgraph SubControllers ["Controllers & Models"]
             LocalApi["Compliance & Config Endpoints"]
             LocalModel["Compliance / AppConfig Models"]
             QueueMgr["🐇 RabbitMQ Event Producer"]
