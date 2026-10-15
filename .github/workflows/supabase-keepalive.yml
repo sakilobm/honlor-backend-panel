@@ -1,0 +1,40 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    # Runs daily at 03:17 UTC (8:47 AM IST)
+    - cron: "17 3 * * *"
+  workflow_dispatch: # Allows manual trigger from Actions tab
+
+permissions:
+  contents: read
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping Supabase Database RPC
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "::error::Missing SUPABASE_URL or SUPABASE_KEY secret."
+            exit 1
+          fi
+
+          response=$(curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --request POST \
+            --url "${SUPABASE_URL}/rest/v1/rpc/keep_alive" \
+            --header "apikey: ${SUPABASE_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_KEY}" \
+            --header "Content-Type: application/json" \
+            --data '{}')
+
+          echo "Supabase Response: $response"
+          echo "Supabase keep-alive ping succeeded."
